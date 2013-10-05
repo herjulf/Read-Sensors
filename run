@@ -1,0 +1,45 @@
+#! /bin/bash
+PKG=com.radio_sensors.rs
+ACTION=Client
+APP=Client-debug.apk
+
+function run()
+{ 
+ ant clean debug 
+ adb install bin/$APP
+ adb shell am start -n $PKG/$PKG.$ACTION
+}
+
+function remove()
+{
+ adb uninstall $PKG
+}
+
+function log()
+{
+#    Log.d ("t1", "t2"); in App
+    adb logcat 
+}
+
+function update_project()
+{ 
+    android update project --subprojects -p /home/robert/workspace/RS --target 1
+}
+
+function sign()
+{
+    ant clean release
+    jarsigner -verbose -keystore RS.keystore bin/Client-release-unsigned.apk RS
+}
+
+function make_key()
+{
+#CN=Robert Olsson, OU=RD, O=Radio Sensors AB, L=Uppsala, ST=Unknown, C=SE
+    keytool -genkey -v -keystore RS.keystore -alias RS -keyalg RSA -validity 10000
+}
+
+
+remove
+run
+
+
