@@ -12,5 +12,11 @@ run script has basic commands to to facilitate development, command line based.
 Check it out!
 
 
+Typical use:
+After connecting your mobile on USB with USB debugging enabled. 
+
+./run
+
+
 Enjoy!
-					--ro
+
