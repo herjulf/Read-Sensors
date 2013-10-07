@@ -19,12 +19,19 @@ import android.content.SharedPreferences;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.widget.TextView;
+import android.widget.ImageView;
+import android.view.Display;
 import android.view.View;
 import android.view.LayoutInflater;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Vector;
+import java.util.Random;
 import android.util.Log;
+import android.os.Message;
+
 
 public class Client extends Activity {
     private Socket socket = null;
@@ -35,14 +42,33 @@ public class Client extends Activity {
     Handler handler = null;
     Thread thread = null;
 
+    private Plot plot;
+    int       seq = 0;
+    private static int PLOTINTERVAL = 500; // interval between plot calls in ms
+    private static int SAMPLEINTERVAL = 200; // interval between sample receives
+    final public static int PLOT = 5;      // Message
+    final public static int SAMPLE = 8;      // Message
+    private Random rnd;
+
     @Override
 	public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        this.handler = new Handler();
+	Log.d("RStrace", "Client");        
+	Display display = getWindowManager().getDefaultDisplay(); 
 
+	// Initialize plotter
+	plot = new Plot(R.id.img, display);
+	plot.xaxis("Time", 1.0);
+	plot.y1axis("Delay [ms]", 1000.0);
+	plot.y2axis("Loss[%]", 1.0);
+	Vector <Pt> vec = new Vector<Pt>();
+	PlotVector pv = new PlotVector(vec, "plot1", 1, Plot.LINES, plot.nextColor());
+	plot.add(pv);
+
+        this.handler = new Handler();
+	rnd = new Random(42); // Init random generator
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setOnClickListener(new View.OnClickListener() {
 		private EditText server_ip = (EditText) findViewById(R.id.server_ip);
@@ -64,6 +90,14 @@ public class Client extends Activity {
 		    Connect();
 		}
 	    });
+	// Initialize messages
+	Message message = Message.obtain();
+	message.what = PLOT;
+	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
+	message = Message.obtain();
+	message.what = SAMPLE;
+	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+
     }
     
 
@@ -105,6 +139,9 @@ public class Client extends Activity {
 		    {
 		    }
 	    }
+	if (mHandler.hasMessages(PLOT))
+	    mHandler.removeMessages(PLOT);
+
     }
 
     public class RunThread implements Runnable 
@@ -173,6 +210,8 @@ public class Client extends Activity {
 			    if(true) runOnUiThread(new Runnable() {
 				    public void run() {
 					Toast.makeText(context, strData, Toast.LENGTH_LONG).show();
+//					oneSample(strData, 0, 0);
+
 				    }
 				});
 		    	}
@@ -242,4 +281,32 @@ public class Client extends Activity {
 	AlertDialog alertDialog = alertDialogBuilder.create();
 	alertDialog.show();
     }
+    private final Handler mHandler = new Handler() {
+	    public void handleMessage(Message msg) {
+		Log.d("RStrace", "handleMessage");
+		Message message;
+		    switch (msg.what) {
+		    case SAMPLE:
+			message = Message.obtain();
+			int y = rnd.nextInt(10);
+			Pt p = new Pt(seq, y, seq);
+			plot.sample(0, p);
+			seq++;
+			message.what = SAMPLE;
+			mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+			break;
+		    case PLOT:
+			message = Message.obtain();
+			ImageView image = (ImageView) findViewById(R.id.img);
+			plot.draw(image);
+			message.what = PLOT;
+			mHandler.sendMessageDelayed(message, PLOTINTERVAL);
+			break;
+		    default:	
+			Log.e("Test handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
+			break;
+		    }
+	    }
+	};
 }
+
