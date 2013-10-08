@@ -39,6 +39,8 @@ public class Client extends Activity {
     private boolean connected = false;
     private String serverAddr = "";
     private String serverPort = "";
+    private String sid = "";
+    private String tag = "";
     Handler handler = null;
     Thread thread = null;
 
@@ -71,14 +73,19 @@ public class Client extends Activity {
 	rnd = new Random(42); // Init random generator
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setOnClickListener(new View.OnClickListener() {
+
 		private EditText server_ip = (EditText) findViewById(R.id.server_ip);
 		private EditText port = (EditText) findViewById(R.id.server_port);
+		private EditText lsid = (EditText) findViewById(R.id.sid);
+		private EditText ltag = (EditText) findViewById(R.id.tag);
 		
 		@Override
 		    public void onClick(View view) {
 
 		    serverAddr = server_ip.getText().toString();
 		    serverPort = port.getText().toString();
+		    sid = lsid.getText().toString();
+		    tag = ltag.getText().toString();
 
 		    // FIXME
 		    SharedPreferences sp  = getSharedPreferences("Read Sensors", context.MODE_PRIVATE);
@@ -237,23 +244,21 @@ public class Client extends Activity {
 
 			    if(true) runOnUiThread(new Runnable() {
 				    public void run() {
-					String f = filter(strData, "0007f", "P0_T=");
+					String f = filter(strData, sid, tag);
 
-					Toast.makeText(context, "Sensor Report " + strData, Toast.LENGTH_LONG).show();
+				
+					if( f == "") 
+					    Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
 
 					if( f != "") 
 					    {
-						Double res = 33.6 * Double.parseDouble(f);
-						Toast.makeText(context, "Power Meter " + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
-
-						
+						Double res = Double.parseDouble(f);
+						Toast.makeText(context, "Filter Match: " + tag + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 						Pt p = new Pt(seq, res, seq);
 						plot.sample(0, p);
 						seq++;
 						ImageView image = (ImageView) findViewById(R.id.img);
 						plot.draw(image);
-
-						//					oneSample(strData, 0, 0);
 					    }
 
 				    }
