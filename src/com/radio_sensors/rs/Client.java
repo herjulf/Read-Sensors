@@ -157,22 +157,24 @@ public class Client extends Activity {
 	{
 	    String s1 = "";
 	    boolean got = true;
+	    
+	    tag = tag + "=";
 
 	    if( id != null) {
 
-		Log.d("RStrace 1", String.format("ID=%s TG=%s", id, tag));
+		Log.d("RStrace 1", String.format("id=%s tag=%s", id, tag));
 		got = false;
 		for (String t: s.split(" ")) {
 		    if(t.indexOf(id) > 0) {
 			got = true;
-			Log.d("RStrace 2", String.format("ID=%s TAG=%s", id, tag));
+			Log.d("RStrace 2", String.format("id=%s tag=%s", id, tag));
 			break;
 		    }
 		} 
 	    }
 
 	    if(got) {
-		Log.d("RStrace 3", String.format("ID=%s TG=%s", id, tag));
+		Log.d("RStrace 3", String.format("id%s tag=%s", id, tag));
 		for (String t: s.split(" ")) {
 		    if(t.indexOf(tag) == 0)
 			s1 = t.substring(tag.length());
@@ -253,7 +255,7 @@ public class Client extends Activity {
 					if( f != "") 
 					    {
 						Double res = Double.parseDouble(f);
-						Toast.makeText(context, "Filter Match: " + tag + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
+						Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 						Pt p = new Pt(seq, res, seq);
 						plot.sample(0, p);
 						seq++;
