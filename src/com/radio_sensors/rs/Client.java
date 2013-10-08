@@ -42,8 +42,9 @@ public class Client extends Activity {
     Handler handler = null;
     Thread thread = null;
 
-    private Plot plot;
-    int       seq = 0;
+    private Plot plot;         // Encompassing plot frame
+    private PlotVector power;  // Single function in plot
+    private int  seq = 0;
     private static int PLOTINTERVAL = 500; // interval between plot calls in ms
     private static int SAMPLEINTERVAL = 200; // interval between sample receives
     final public static int PLOT = 5;      // Message
@@ -60,12 +61,24 @@ public class Client extends Activity {
 
 	// Initialize plotter
 	plot = new Plot(R.id.img, display);
-	plot.xaxis("Time", 1.0);
+	plot.xaxis("Samples", 1.0);  // Customize
 	plot.y1axis("Power [kW]", 5.0);
-	plot.y2axis("Loss[%]", 1.0);
-	Vector <Pt> vec = new Vector<Pt>();
-	PlotVector pv = new PlotVector(vec, "plot1", 1, Plot.LINES, plot.nextColor());
-	plot.add(pv);
+//	plot.y2axis("Loss[%]", 1.0);
+	plot.y2axis("", 1.0);
+	// Add one graph (plotvector) for power
+	Vector <Pt> vec = new Vector<Pt>(); 
+	power = new PlotVector(vec, "power", 1, Plot.LINES, plot.nextColor());
+	plot.add(power);
+	ImageView image = (ImageView) findViewById(R.id.img);
+	plot.autodraw(image);
+
+	// Initialize messages (plot for plotting, samle for fake samples)
+	Message message = Message.obtain();
+	message.what = PLOT;
+	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
+	message = Message.obtain();
+	message.what = SAMPLE;
+	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 
         this.handler = new Handler();
 	rnd = new Random(42); // Init random generator
@@ -90,13 +103,6 @@ public class Client extends Activity {
 		    Connect();
 		}
 	    });
-	// Initialize messages
-	Message message = Message.obtain();
-	message.what = PLOT;
-	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
-	message = Message.obtain();
-	message.what = SAMPLE;
-	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 
     }
     
@@ -238,22 +244,17 @@ public class Client extends Activity {
 			    if(true) runOnUiThread(new Runnable() {
 				    public void run() {
 					String f = filter(strData, "0007f", "P0_T=");
-
 					Toast.makeText(context, "Sensor Report " + strData, Toast.LENGTH_LONG).show();
 
 					if( f != "") 
 					    {
-						Double res = 33.6 * Double.parseDouble(f);
+						Double res = 33.6 * Double.parseDouble(f);					
 						Toast.makeText(context, "Power Meter " + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
 						
 						Pt p = new Pt(seq, res, seq);
-						plot.sample(0, p);
+						power.sample(p);
 						seq++;
-						ImageView image = (ImageView) findViewById(R.id.img);
-						plot.draw(image);
-
-						//					oneSample(strData, 0, 0);
 					    }
 
 				    }
@@ -327,24 +328,23 @@ public class Client extends Activity {
     }
     private final Handler mHandler = new Handler() {
 	    public void handleMessage(Message msg) {
-		Log.d("RStrace", "handleMessage");
 		Message message;
 		    switch (msg.what) {
 		    case SAMPLE:
 			message = Message.obtain();
 			//int y = rnd.nextInt(10);
 			//Pt p = new Pt(seq, y, seq);
-			//plot.sample(0, p);
+			//power.sample(p);
 			//seq++;
 			//message.what = SAMPLE;
 			//mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 			break;
 		    case PLOT:
 			message = Message.obtain();
-			//ImageView image = (ImageView) findViewById(R.id.img);
-			//plot.draw(image);
-			//message.what = PLOT;
-			//mHandler.sendMessageDelayed(message, PLOTINTERVAL);
+			ImageView image = (ImageView) findViewById(R.id.img);
+			plot.autodraw(image);
+			message.what = PLOT;
+			mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 			break;
 		    default:	
 			Log.e("Test handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			

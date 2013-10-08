@@ -54,11 +54,6 @@
         android:onClick="onClick"
         android:text="Ready" >
     </Button>
-	<TextView android:id="@+id/sampleStrData" android:text="null"
-			android:gravity="right" android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:layout_marginRight="100px" />
-
 	<LinearLayout android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:padding="5dip"
 		android:layout_gravity="top" android:orientation="horizontal">

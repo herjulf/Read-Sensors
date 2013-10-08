@@ -66,6 +66,9 @@ final class PlotVector {
     public Vector <Pt> vec;
     public Set <Integer> style = new TreeSet<Integer>(); // XXX: Why must I use TreeSet?
     public int color;
+    public double ymin = Double.POSITIVE_INFINITY;
+    public double ymax = Double.NEGATIVE_INFINITY;
+
     PlotVector(Vector <Pt> v0, String t0, int y0, int s0, int c0){
     	vec = v0;
     	title = t0;
@@ -73,17 +76,27 @@ final class PlotVector {
     	style.add(s0);
     	color = c0;
     }
+    public void sample(Pt pt){
+	Log.d("RStrace 1", String.format("sample: x=%f y=%f seq=%d", pt.x, pt.y, pt.seq));
+	if (pt.y < ymin)
+	    ymin = pt.y;
+	if (pt.y > ymax)
+	    ymax = pt.y;
+	vec.add(pt);
+    }
 } // PlotVector
 
 // The complete plot
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    private static final int FONTSIZE = 12; // font size
+    private static final int FONTSIZE = 30; // font size
     private static final int LEFTMARGIN = 1*(FONTSIZE+2); // left 
     private static final int BOTTOMMARGIN = 1*(FONTSIZE+2); // lower
-    private static final int RIGHTMARGIN = 1*(FONTSIZE+2); // left 
+    private static final int RIGHTMARGIN = 2*(FONTSIZE+2); // right
     private static final int TOPMARGIN = 0; // right and upper
+
+    private static int XWINDOW = 10; // how many seconds to show default
 
     public static final int POINTS = 1; // style
     public static final int LINES = 2; // style
@@ -94,6 +107,8 @@ public final class Plot {
     private int x,y,w,h; // bitmap x,y,width height
     private int px,py,pw,ph; // plotarea x,y,width height
     private Bitmap bitmap;
+    private double xmin, xmax;
+    private double xwin = XWINDOW;   // x window size
 	
     private int nrPlots = 0;	
     private String xlabel;  // text to print on x-axis
@@ -106,8 +121,21 @@ public final class Plot {
     private int id;                 // resource id
 
     Plot(int id0, Display display){ 
-	w = display.getWidth();
-	h = display.getHeight();
+	if (true){ // deprecated in api level 13
+	    w = display.getWidth();
+	    w = 2*w;
+	    h = display.getHeight();
+	    h = h+200;
+	}
+	else{
+	    Point dpt = new Point(0,0);
+	    display.getSize(dpt);
+	    w = dpt.x;
+	    h = dpt.y;
+	}
+//D/RStrace (11273): Plot: w=480, h=854
+
+	Log.d("RStrace", "Plot: w="+w+", h="+h);
 	id = id0;
 	x = 0;
 	y = 0;
@@ -174,37 +202,98 @@ public final class Plot {
 	y2scale = scale;
     }
 
-    public void sample(int i, Pt pt){
-	PlotVector pv = plots.elementAt(i);
-	pv.vec.add(pt);
-    }
+    private static int 
+    points_in_interval(Vector <Pt>vec, double low, double high){
+	int nr = 0;
+	for(int i=0; i < vec.size() ; i++){ 
+	    double x = vec.elementAt(i).x;
+	    if (x < low)
+		continue;
+	    if (x > high)
+		continue;
+	    nr++;
+	}
+	return nr;
+    } // points_in_interval
 
-    // Now draw plot
-    public void draw(ImageView image){
-	image.setImageBitmap(bitmap); // need to reinit image?
-	colornr = 0;
-	
+    // Now draw plot and auto-scale axis depending on plot contents
+    public void autodraw(ImageView image){
 	PlotVector pv;
-
 	boolean y1empty = true;
-	boolean y2empty = true;
 	double y1min = Double.POSITIVE_INFINITY;
 	double y1max = Double.NEGATIVE_INFINITY;
-	// Loop 1a: check active plots, create plot-instances, compute y1 interval, etc
-	for (int i=0; i<plots.size(); i++){
-	    pv = plots.elementAt(i);
-	}
-
-	double xmin = 0;
-	double xmax = 50;
-	y1min = 0;
-	y1max = 50;
+	boolean y2empty = true;
 	double y2min = 0;
 	double y2max = 50;
+	double xmin1 = 0; // Tentative x-interval min
+	double xmax1 = 50;
+	y1min = 0;
+	y1max = 50;
+
+	// Clear bitmap
+	image.setImageBitmap(bitmap); 
+	colornr = 0;
+
+	// Loop 1a: check active plots, create plot-instances, 
+	// compute y1 interval, etc
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.elementAt(i);
+	    if (pv.vec.size() > 0)
+		y1empty = false;
+	    y1max = Math.max(y1max, pv.ymax);
+	    y1min = Math.min(y1min, pv.ymin);
+	}
+	// XXX: ALso y2 plots
+	if (y1empty){
+	    y1min = 0;
+	    y1max = 0.1;
+	}
+	if (y1empty && y2empty){
+	    xmin1 = 0;
+	    xmax1 = 10;
+//	    xmin1 = System.currentTimeMillis()/1000;
+//	    xmax1 = xmin1 + xwin*xscale;
+	}
+	else {
+	    xmin1 = Double.POSITIVE_INFINITY;
+	    xmax1 = Double.NEGATIVE_INFINITY;
+	}
+	// Loop 2: compute tentative x-interval [xmin1, xmax1]
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.elementAt(i);
+	    if (pv.vec.size() > 0){
+		xmin1 = Math.min(xmin1, pv.vec.firstElement().x);
+		xmax1 = Math.max(xmax1, pv.vec.lastElement().x);
+	    }
+	}
+
+	if (true) // liveUpdate
+	    xmax = xmax1;
+	else
+	    if (xmax >= xmax1){
+		//liveUpdate = true;
+		xmax = xmax1;
+	    }
+	if (xmax < xmin1 + xwin*xscale)
+	    xmax = xmin1 + xwin*xscale; 
+	xmin = xmax - xwin*xscale;
+
+
 	Autoscale ax = new Autoscale(xmin, xmax);
 	Autoscale ay = new Autoscale(y1min, y1max);
 	Autoscale ay2 = new Autoscale(y2min, y2max);
-	int       agg = 1;
+	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
+	double aggF = 0.0; 
+
+	// Loop 3: compute level of aggregation in x-axis
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.elementAt(i);
+	    if (pv.vec.size() > 0){
+		int nr = points_in_interval(pv.vec, xmin, xmax);
+		aggF = Math.max(aggF, nr/pix);
+	    }
+	}
+	int agg = Math.max(1, (int)Math.floor(aggF*4));
 	
 	draw(ax, ay, ay2, agg); // Finally draw it.	
     }
@@ -232,6 +321,7 @@ public final class Plot {
 	final Paint paint = new Paint();
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(Color.WHITE);
+	paint.setTextSize(FONTSIZE);
 	float x = (float)(px+0.6*pw);
 	float x1 = x + title.length()*FONTSIZE*(float)0.8;
 	float y = py+(i+1)*2*FONTSIZE;
@@ -249,7 +339,7 @@ public final class Plot {
 	{
 	    final Paint paint = new Paint();
 	    paint.setAntiAlias(true);
-	    paint.setTextSize(15);
+//	    paint.setTextSize(30);
 	    paint.setStyle(Paint.Style.FILL); 
 	    paint.setColor(Color.BLACK);  
 	    int ax1 = ax.ticks-1;
