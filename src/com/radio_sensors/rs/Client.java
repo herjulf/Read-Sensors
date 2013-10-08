@@ -61,7 +61,7 @@ public class Client extends Activity {
 	// Initialize plotter
 	plot = new Plot(R.id.img, display);
 	plot.xaxis("Time", 1.0);
-	plot.y1axis("Delay [ms]", 1000.0);
+	plot.y1axis("Power [kW]", 5.0);
 	plot.y2axis("Loss[%]", 1.0);
 	Vector <Pt> vec = new Vector<Pt>();
 	PlotVector pv = new PlotVector(vec, "plot1", 1, Plot.LINES, plot.nextColor());
@@ -146,6 +146,34 @@ public class Client extends Activity {
 
     public class RunThread implements Runnable 
     {
+    	public String filter(String s, String id, String tag) 
+	{
+	    String s1 = "";
+	    boolean got = true;
+
+	    if( id != null) {
+
+		Log.d("RStrace 1", String.format("ID=%s TG=%s", id, tag));
+		got = false;
+		for (String t: s.split(" ")) {
+		    if(t.indexOf(id) > 0) {
+			got = true;
+			Log.d("RStrace 2", String.format("ID=%s TAG=%s", id, tag));
+			break;
+		    }
+		} 
+	    }
+
+	    if(got) {
+		Log.d("RStrace 3", String.format("ID=%s TG=%s", id, tag));
+		for (String t: s.split(" ")) {
+		    if(t.indexOf(tag) == 0)
+			s1 = t.substring(tag.length());
+		} 
+	    }
+	    return  s1;
+	}
+
     	public void run() 
     	{
 	    try 
@@ -209,8 +237,24 @@ public class Client extends Activity {
 
 			    if(true) runOnUiThread(new Runnable() {
 				    public void run() {
-					Toast.makeText(context, strData, Toast.LENGTH_LONG).show();
-//					oneSample(strData, 0, 0);
+					String f = filter(strData, "0007f", "P0_T=");
+
+					Toast.makeText(context, "Sensor Report " + strData, Toast.LENGTH_LONG).show();
+
+					if( f != "") 
+					    {
+						Double res = 33.6 * Double.parseDouble(f);
+						Toast.makeText(context, "Power Meter " + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
+
+						
+						Pt p = new Pt(seq, res, seq);
+						plot.sample(0, p);
+						seq++;
+						ImageView image = (ImageView) findViewById(R.id.img);
+						plot.draw(image);
+
+						//					oneSample(strData, 0, 0);
+					    }
 
 				    }
 				});
@@ -288,19 +332,19 @@ public class Client extends Activity {
 		    switch (msg.what) {
 		    case SAMPLE:
 			message = Message.obtain();
-			int y = rnd.nextInt(10);
-			Pt p = new Pt(seq, y, seq);
-			plot.sample(0, p);
-			seq++;
-			message.what = SAMPLE;
-			mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+			//int y = rnd.nextInt(10);
+			//Pt p = new Pt(seq, y, seq);
+			//plot.sample(0, p);
+			//seq++;
+			//message.what = SAMPLE;
+			//mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 			break;
 		    case PLOT:
 			message = Message.obtain();
-			ImageView image = (ImageView) findViewById(R.id.img);
-			plot.draw(image);
-			message.what = PLOT;
-			mHandler.sendMessageDelayed(message, PLOTINTERVAL);
+			//ImageView image = (ImageView) findViewById(R.id.img);
+			//plot.draw(image);
+			//message.what = PLOT;
+			//mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 			break;
 		    default:	
 			Log.e("Test handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
