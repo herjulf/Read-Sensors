@@ -21,6 +21,12 @@ function log()
     adb logcat 
 }
 
+function init_project()
+{
+# Generate local.properties file
+    android update project -p .
+}
+
 function update_project()
 { 
     android update project --subprojects -p /home/robert/workspace/RS --target 1
