@@ -329,7 +329,7 @@ public final class Plot {
 	paint.setColor(color);
 	canvas.drawLine(x1,
 			y,	
-			x1 +  10, 
+			x1 +  30, 
 			y,
 			paint);
     } // draw_plot_label

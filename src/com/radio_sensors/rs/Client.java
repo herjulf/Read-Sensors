@@ -39,17 +39,21 @@ public class Client extends Activity {
     private boolean connected = false;
     private String serverAddr = "";
     private String serverPort = "";
+    private String sid = "";
+    private String tag = "";
     Handler handler = null;
     Thread thread = null;
 
     private Plot plot;         // Encompassing plot frame
     private PlotVector power;  // Single function in plot
+    private PlotVector random; // Test
     private int  seq = 0;
     private static int PLOTINTERVAL = 500; // interval between plot calls in ms
-    private static int SAMPLEINTERVAL = 200; // interval between sample receives
+    private static int SAMPLEINTERVAL = 2000; // interval between sample receives
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Message
     private Random rnd;
+    static long nsoffset = 0; // guaranteed monotonic
 
     @Override
 	public void onCreate(Bundle savedInstanceState)
@@ -69,29 +73,36 @@ public class Client extends Activity {
 	Vector <Pt> vec = new Vector<Pt>(); 
 	power = new PlotVector(vec, "power", 1, Plot.LINES, plot.nextColor());
 	plot.add(power);
+	random = new PlotVector(vec, "random", 1, Plot.LINES, plot.nextColor());
+	plot.add(random);
 	ImageView image = (ImageView) findViewById(R.id.img);
 	plot.autodraw(image);
 
-	// Initialize messages (plot for plotting, samle for fake samples)
+	// Initialize messages (plot for plotting, samle for test samples)
 	Message message = Message.obtain();
 	message.what = PLOT;
 	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 	message = Message.obtain();
-	message.what = SAMPLE;
+	message.what = SAMPLE; 
 	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 
         this.handler = new Handler();
 	rnd = new Random(42); // Init random generator
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setOnClickListener(new View.OnClickListener() {
+
 		private EditText server_ip = (EditText) findViewById(R.id.server_ip);
 		private EditText port = (EditText) findViewById(R.id.server_port);
+		private EditText lsid = (EditText) findViewById(R.id.sid);
+		private EditText ltag = (EditText) findViewById(R.id.tag);
 		
 		@Override
 		    public void onClick(View view) {
 
 		    serverAddr = server_ip.getText().toString();
 		    serverPort = port.getText().toString();
+		    sid = lsid.getText().toString();
+		    tag = ltag.getText().toString();
 
 		    // FIXME
 		    SharedPreferences sp  = getSharedPreferences("Read Sensors", context.MODE_PRIVATE);
@@ -105,7 +116,34 @@ public class Client extends Activity {
 	    });
 
     }
-    
+
+	// second & nanosecond to twamp timestamp 
+    private long ns2Timestamp(long s, long ns){ 
+	// Days between 1900-1970: 25569. #seconds in a day: 86400
+	long sec = s; //+ 2208988800L;
+	long q = ns << 32;
+	long subsec = q/1000000000L;
+	return (sec<<32) + subsec;
+    }
+
+    // Get timestamp in owamp/twamp format. Epoch 1970.
+    private long Timestamp(){
+	if (nsoffset == 0){
+	    long ms0 = System.currentTimeMillis();
+	    long ns0 = System.nanoTime();
+	    nsoffset = ms0*1000000 - ns0;
+	}
+	long ns = System.nanoTime() + nsoffset;
+	long ts = ns2Timestamp(ns/1000000000L, ns%1000000000L);
+	return ts;
+    }
+
+    private long Timestamp2ns(long ts){ 
+	long nsfrac = ts&0x00000000ffffffffL;
+	long nsonly = (nsfrac*1000000000L)>>32;
+	long sec = (ts&0xffffffff00000000L)>>32;
+	return sec*1000000000L + nsonly;
+    }
 
     public void onClick(View view) {
 
@@ -156,22 +194,22 @@ public class Client extends Activity {
 	{
 	    String s1 = "";
 	    boolean got = true;
+	    
+	    tag = tag + "=";
 
 	    if( id != null) {
-
-		Log.d("RStrace 1", String.format("ID=%s TG=%s", id, tag));
 		got = false;
 		for (String t: s.split(" ")) {
 		    if(t.indexOf(id) > 0) {
 			got = true;
-			Log.d("RStrace 2", String.format("ID=%s TAG=%s", id, tag));
+			Log.d("RStrace 2", String.format("id=%s tag=%s", id, tag));
 			break;
 		    }
 		} 
 	    }
 
 	    if(got) {
-		Log.d("RStrace 3", String.format("ID=%s TG=%s", id, tag));
+		Log.d("RStrace 3", String.format("id%s tag=%s", id, tag));
 		for (String t: s.split(" ")) {
 		    if(t.indexOf(tag) == 0)
 			s1 = t.substring(tag.length());
@@ -240,21 +278,27 @@ public class Client extends Activity {
 				continue;
 
 			    final String strData = new String(buf, 0, j).replace("\r", "");
-
+			    Log.d("RStrace", "strData="+strData);
 			    if(true) runOnUiThread(new Runnable() {
 				    public void run() {
-					String f = filter(strData, "0007f", "P0_T=");
-					Toast.makeText(context, "Sensor Report " + strData, Toast.LENGTH_LONG).show();
+					Log.d("RStrace", "sid="+sid);
+					Log.d("RStrace", "tag="+tag);
+					String f = filter(strData, sid, tag);
+
+					    Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
 
 					if( f != "") 
 					    {
-						Double res = 33.6 * Double.parseDouble(f);					
-						Toast.makeText(context, "Power Meter " + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
+						Double res = Double.parseDouble(f);
+						Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
-						
-						Pt p = new Pt(seq, res, seq);
+						long ts = Timestamp();
+						double x = ((double)Timestamp2ns(ts))/1000000000.0;
+						Pt p = new Pt(x, res, seq);
 						power.sample(p);
 						seq++;
+//						ImageView image = (ImageView) findViewById(R.id.img);
+//						plot.autodraw(image);
 					    }
 
 				    }
@@ -332,12 +376,17 @@ public class Client extends Activity {
 		    switch (msg.what) {
 		    case SAMPLE:
 			message = Message.obtain();
-			//int y = rnd.nextInt(10);
-			//Pt p = new Pt(seq, y, seq);
-			//power.sample(p);
-			//seq++;
-			//message.what = SAMPLE;
-			//mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+			if (true){
+			    int y = rnd.nextInt(10);
+
+			    long ts = Timestamp();
+			    double x = ((double)Timestamp2ns(ts))/1000000000.0;
+			    Pt p = new Pt(x, y, seq);
+//			    random.sample(p);
+			    seq++;
+			    message.what = SAMPLE;
+			    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+			}
 			break;
 		    case PLOT:
 			message = Message.obtain();
