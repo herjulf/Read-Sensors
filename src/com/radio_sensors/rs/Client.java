@@ -107,25 +107,6 @@ public class Client extends Activity {
 
     }
     
-
-    public void onClick(View view) {
-
-	try {
-	    EditText et = (EditText) findViewById(R.id.EditText01);
-	    String str = et.getText().toString();
-	    PrintWriter out = 
-		new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())),
-					      true);
-	    out.println(str);
-	} catch (UnknownHostException e) {
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
-    }
-
     protected void onDestroy()
     {
     	super.onDestroy();
