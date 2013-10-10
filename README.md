@@ -1,7 +1,27 @@
+Read-Sensors - Wireless Sensor data in your Andriod
+===================================================
+
+Authors
+--------					
+Robert Olsson <robert@Radio-Sensors.COM>
+Olof Hagsand <olof@hagsand.se>
+
+Abstract
+--------
+This a project for reading remote and realtime sensor data. Typically this 
+android app is used with the sensd package which acts as a gateway to WSN
+network. send functions as gateway daemon and relay senors data report to 
+it's listeners. sensd is used TCP and uses a temprary port of 1234.
 
 
-This a project for reading remote and realtime sensor data typically this 
-android app is used with the sensd package. 
+
+
+All programs are written C, Java-script and bash. And designed for for small
+footprint and minimal dependencies. sensd runs on Raspberry Pi and openwrt.
+
+Copyright
+---------
+Open-Sourrce via GPL
 
 To develop and build app ATP package is need. Also update PATH so script
 and utilities will work.
