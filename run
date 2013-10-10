@@ -29,7 +29,7 @@ function init_project()
 
 function update_project()
 { 
-    android update project --subprojects -p /home/robert/workspace/RS --target 1
+    android update project --subprojects -p $HOME/workspace/RS --target 1
 }
 
 function sign()
