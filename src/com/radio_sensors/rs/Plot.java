@@ -108,7 +108,7 @@ final class PlotVector {
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    private static final int FONTSIZE = 30; // font size
+    private static final int FONTSIZE = 20; // font size
     private static final int LEFTMARGIN = 1*(FONTSIZE+2); // left 
     private static final int BOTTOMMARGIN = 1*(FONTSIZE+2); // lower
     private static final int RIGHTMARGIN = 2*(FONTSIZE+2); // right
@@ -141,9 +141,9 @@ public final class Plot {
     Plot(int id0, Display display){ 
 	if (true){ // deprecated in api level 13
 	    w = display.getWidth();
-	    w = 2*w;
+//	    w = 2*w;
 	    h = display.getHeight();
-	    h = h+200;
+//	    h = h+200;
 	}
 	else{
 	    Point dpt = new Point(0,0);
