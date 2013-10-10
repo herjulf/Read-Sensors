@@ -13,33 +13,37 @@ android app is used with the sensd package which acts as a gateway to WSN
 network. send functions as gateway daemon and relay senors data report to 
 it's listeners. sensd is used TCP and uses a temprary port of 1234.
 
-
-
-
-All programs are written C, Java-script and bash. And designed for for small
-footprint and minimal dependencies. sensd runs on Raspberry Pi and openwrt.
-
 Copyright
 ---------
 Open-Sourrce via GPL
 
-To develop and build app ATP package is need. Also update PATH so script
-and utilities will work.
+Developing
+----------
+To develop and build app ATP package is need. The authors are using 
+adt-bundle-linux-x86-20130917/
+
+Also update PATH so script and other utilities will work.
+
+Typically in .profile but follow the adt installation instructions:
+
+PATH=$HOME/adt-bundle-linux-x86-20130917/sdk/tools:$PATH
+PATH=$HOME/adt-bundle-linux-x86-20130917/sdk/platform-tools:$PATH
 
 Then generate local.properties file so that ant finds the android-sdk:
   android update project -p .
 
-The author is using adt-bundle-linux-x86-20130917/
-
 run script has basic commands to to facilitate development, command line based.
-Check it out!
+
+Check it out!!
 
 Typical use:
-
 After connecting your mobile on USB with USB debugging enabled. 
 
 ./run
 
+References
+----------
+https://github.com/herjulf/sensd
 
 Enjoy!
 
