@@ -66,12 +66,12 @@ public class Client extends Activity {
 	// Initialize plotter
 	plot = new Plot(R.id.img, display);
 	plot.xaxis("Samples", 1.0);  // Customize
-	plot.y1axis("Power [kW]", 5.0);
+	plot.y1axis("Temp [C]", 35.0);
 //	plot.y2axis("Loss[%]", 1.0);
 	plot.y2axis("", 1.0);
 	// Add one graph (plotvector) for power
 	Vector <Pt> vec = new Vector<Pt>(); 
-	power = new PlotVector(vec, "power", 1, Plot.LINES, plot.nextColor());
+	power = new PlotVector(vec, "temp", 1, Plot.LINES, plot.nextColor());
 	plot.add(power);
 	random = new PlotVector(vec, "random", 1, Plot.LINES, plot.nextColor());
 	plot.add(random);
@@ -111,6 +111,7 @@ public class Client extends Activity {
 		    ed.putString("server-port", serverPort);
 		    ed.commit();
 
+		    plot_select();
 		    Connect();
 		}
 	    });
@@ -143,24 +144,6 @@ public class Client extends Activity {
 	long nsonly = (nsfrac*1000000000L)>>32;
 	long sec = (ts&0xffffffff00000000L)>>32;
 	return sec*1000000000L + nsonly;
-    }
-
-    public void onClick(View view) {
-
-	try {
-	    EditText et = (EditText) findViewById(R.id.EditText01);
-	    String str = et.getText().toString();
-	    PrintWriter out = 
-		new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())),
-					      true);
-	    out.println(str);
-	} catch (UnknownHostException e) {
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
     }
 
     protected void onDestroy()
@@ -328,6 +311,26 @@ public class Client extends Activity {
 		    handlerException.post(rExceptionThread);
 		}
     	}
+    }
+    private void plot_select()
+    {
+	ImageView image = (ImageView) findViewById(R.id.img);
+	plot.autodraw(image);
+
+	if(tag.equals("T"))
+	    {
+		plot.y1axis("Temp [C]", 35.0);
+	    }
+
+	if(tag.equals("RH"))
+	    {
+		plot.y1axis("RH [%]", 110.0);
+	    }
+
+	if(tag.equals("SEQ"))
+	    {
+		plot.y1axis("SEQ no]", 260);
+	    }
     }
 
     private void Connect()
