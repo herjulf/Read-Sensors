@@ -10,8 +10,8 @@ Abstract
 --------
 This a project for reading remote and realtime sensor data. Typically this 
 android app is used with the sensd package which acts as a gateway to WSN
-network. send functions as gateway daemon and relay senors data report to 
-it's listeners. sensd is used TCP and uses a temprary port of 1234.
+network. sensd functions as gateway daemon and relay sensors data report to 
+it's listeners. sensd uses TCP a temprary port of 1234.
 
 Copyright
 ---------
