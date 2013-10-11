@@ -80,12 +80,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	plot = Client.plot;
 	power = Client.power;
 	ImageView image = (ImageView) findViewById(R.id.img);
+
+	Display display = getWindowManager().getDefaultDisplay(); 
+	plot.newDisplay(display);
 	plot.autodraw(image);
-	// Add one graph (plotvector) for power
-//	Vector <Pt> vec = new Vector<Pt>(); 
-//	random = new PlotVector(vec, "temp", 1, Plot.LINES, plot.nextColor());
-//	plot.add(random);
-	
+
 	// Initialize messages (plot for plotting, samle for test samples)
 	Message message = Message.obtain();
 	message.what = PLOT;
@@ -99,9 +98,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	public void onConfigurationChanged(Configuration newConfig) {
 	  super.onConfigurationChanged(newConfig);
 	  setContentView(R.layout.plot);
-//	  Display display = getWindowManager().getDefaultDisplay(); 
-//	  plot = new Plot(R.id.img, display);
-	  // Copy from old / resize plot
+
+	  Display display = getWindowManager().getDefaultDisplay(); 
+	  plot.newDisplay(display);
 	}
 
     public boolean onTouch(View v, MotionEvent event) {
@@ -115,10 +114,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    switch (msg.what) {
 		    case SAMPLE:
 			message = Message.obtain();
-			if (true){
+			if (false){ // debug
 			    int y = rnd.nextInt(10);
 			    Pt p = new Pt(seq, y, seq);
-//			    random.sample(p);
+			    random.sample(p);
 			    seq++;
 			    message.what = SAMPLE;
 			    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
