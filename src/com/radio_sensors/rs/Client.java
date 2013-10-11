@@ -36,6 +36,17 @@ import android.os.Message;
 
 
 public class Client extends Activity {
+    private class StateSaver 
+    {
+	private Socket socket = null;
+	private boolean connected = false;
+	private Thread thread = null;
+	private String serverAddr = "";
+	private String serverPort = "";
+	private String sid = "";
+	private String tag = "";
+    }
+
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -92,6 +103,30 @@ public class Client extends Activity {
     public void onCreate(Bundle savedInstanceState)
 	{
 	    super.onCreate(savedInstanceState);
+
+
+	    // To keep states over rotates etc.
+	    StateSaver saved = (StateSaver) getLastNonConfigurationInstance();
+	    if (saved != null)    { 
+		// Restore saved running state
+		Log.d("RStrace Stateserver RESTORE", "!null");        
+		socket = saved.socket;
+		connected = saved.connected;
+		serverAddr = saved.serverAddr;
+		serverPort = saved.serverPort;
+		sid = saved.sid;
+		tag = saved.tag;
+
+		if(thread != null)
+		{
+		    thread.stop();
+		    thread = null;
+		}
+		thread = new Thread(new RunThread());
+		thread.start();
+		return;
+	    } 
+
 	    setContentView(R.layout.main);
 	    Log.d("RStrace", "Client");        
 
@@ -127,6 +162,23 @@ public class Client extends Activity {
 		    }
 		});
 
+	    }
+	    
+	    @Override
+		public Object onRetainNonConfigurationInstance() {
+		StateSaver saved = new StateSaver();
+		// Place holder for storing variables needed
+		// to keep states over rotates etc.
+
+		Log.d("RStrace SAVE", "1");        
+		saved.socket = socket;
+		saved.connected = connected;
+		saved.serverAddr = serverAddr;
+		saved.serverPort = serverPort;
+		saved.sid = sid;
+		saved.tag = tag;
+
+		return saved;
 	}
 
 
