@@ -110,9 +110,9 @@ public final class Plot {
     private static final int CROSSHAIR = 5; // how large point crosshair
     private static final int FONTSIZE = 20; // font size
     private static final int LEFTMARGIN = 1*(FONTSIZE+2); // left 
-    private static final int BOTTOMMARGIN = 1*(FONTSIZE+2); // lower
-    private static final int RIGHTMARGIN = 2*(FONTSIZE+2); // right
-    private static final int TOPMARGIN = 0; // right and upper
+    private static final int BOTTOMMARGIN = 2*(FONTSIZE+2); // lower
+    private static final int RIGHTMARGIN = 1*(FONTSIZE+2); // right
+    private static final int TOPMARGIN = 4; // right and upper
 
     private static int XWINDOW = 10; // how many seconds to show default
 
@@ -139,7 +139,6 @@ public final class Plot {
     private int id;                 // resource id
 
     Plot(int id0, Display display){ 
-	Log.d("RStrace", "Plot");	
 	canvas = new Canvas();
 	id = id0;
 	plots = new Vector <PlotVector>();
@@ -158,12 +157,10 @@ public final class Plot {
 	ph = h - BOTTOMMARGIN - TOPMARGIN;
 	bitmap = Bitmap.createBitmap(w, h, Config.ARGB_8888); 
 	canvas.setBitmap(bitmap);
-	Log.d("RStrace", "newDisplay: w="+w+", h="+h);	
     }
 
     private int colornr = 0;
     public int nextColor(){
-	Log.d("RStrace", "nextColor: colornr="+colornr);	
 	int c;
 	switch (colornr++){
 	case 0: c = Color.RED; break;

@@ -205,17 +205,17 @@ public class Client extends Activity {
 
 	}
 
-
+    // Initialize the Plot area
     private void init_plot(){
 	// Initialize plotter
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
-	plot.xaxis("Samples", 1.0);  // Customize
-	plot.y1axis("Temp [C]", 35.0);
+	plot.xaxis("Time[s]", 1.0);  
+	plot.y1axis("Temp [C]", 1.0);
 	plot.y2axis("", 1.0);
 	// Add one graph (plotvector) for power
 	Vector <Pt> vec = new Vector<Pt>(); 
-	power = new PlotVector(vec, "temp", 1, Plot.LINES, plot.nextColor());
+	power = new PlotVector(vec, "Temp", 1, Plot.LINES, plot.nextColor());
 	plot.add(power);
     }
 
@@ -249,6 +249,7 @@ public class Client extends Activity {
 		}
 		return  s1;
 	    }
+
 
     	public void run() 
 	    {
@@ -316,21 +317,22 @@ public class Client extends Activity {
 					    Log.d("RStrace", "sid="+sid);
 					    Log.d("RStrace", "tag="+tag);
 					    String f = filter(strData, sid, tag);
+					    String t = filter(strData, null, "UT"); // time
 
 					    Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
 
-					    if( f != "") 
+					    if( f != "" && t != "") 
 						{
+						    Long x = new Long(t);
 						    Double res = Double.parseDouble(f);
 						    Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
-						    Pt p = new Pt(seq, res, seq);
+						    Pt p = new Pt(x, res, seq);
 						    power.sample(p);
 						    seq++;
 //						ImageView image = (ImageView) findViewById(R.id.img);
 //						plot.autodraw(image);
 						}
-
 					}
 				    });
 			    }
@@ -364,17 +366,17 @@ public class Client extends Activity {
 
 	    if(tag.equals("T"))
 		{
-		    plot.y1axis("Temp [C]", 35.0);
+		    plot.y1axis("Temp [C]", 1.0);
 		}
 
 	    if(tag.equals("RH"))
 		{
-		    plot.y1axis("RH [%]", 110.0);
+		    plot.y1axis("RH [%]", 1.0);
 		}
 
 	    if(tag.equals("SEQ"))
 		{
-		    plot.y1axis("SEQ no]", 260);
+		    plot.y1axis("SEQ no]", 1.0);
 		}
 	}
 
