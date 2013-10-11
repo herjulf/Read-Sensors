@@ -95,7 +95,7 @@ final class PlotVector {
     	color = c0;
     }
     public void sample(Pt pt){
-	Log.d("RStrace 1", String.format("sample: x=%f y=%f seq=%d", pt.x, pt.y, pt.seq));
+	Log.d("RStrace", String.format("sample: x=%f y=%f seq=%d", pt.x, pt.y, pt.seq));
 	if (pt.y < ymin)
 	    ymin = pt.y;
 	if (pt.y > ymax)
@@ -139,35 +139,31 @@ public final class Plot {
     private int id;                 // resource id
 
     Plot(int id0, Display display){ 
-	if (true){ // deprecated in api level 13
-	    w = display.getWidth();
-//	    w = 2*w;
-	    h = display.getHeight();
-//	    h = h+200;
-	}
-	else{
-	    Point dpt = new Point(0,0);
-	    display.getSize(dpt);
-	    w = dpt.x;
-	    h = dpt.y;
-	}
-//D/RStrace (11273): Plot: w=480, h=854
-
-	Log.d("RStrace", "Plot: w="+w+", h="+h);
+	Log.d("RStrace", "Plot");	
+	canvas = new Canvas();
 	id = id0;
+	plots = new Vector <PlotVector>();
+    }
+
+    public void newDisplay(Display display){
+	// bitmap: x,y,w,h
 	x = 0;
 	y = 0;
+	w = display.getWidth();
+	h = display.getHeight();
+	// plotarea: px,py,pw,ph
 	px = x + LEFTMARGIN;
 	py = y + TOPMARGIN;
 	pw = w - LEFTMARGIN - RIGHTMARGIN;
 	ph = h - BOTTOMMARGIN - TOPMARGIN;
 	bitmap = Bitmap.createBitmap(w, h, Config.ARGB_8888); 
-	canvas = new Canvas(bitmap);
-	plots = new Vector <PlotVector>();
+	canvas.setBitmap(bitmap);
+	Log.d("RStrace", "newDisplay: w="+w+", h="+h);	
     }
 
     private int colornr = 0;
     public int nextColor(){
+	Log.d("RStrace", "nextColor: colornr="+colornr);	
 	int c;
 	switch (colornr++){
 	case 0: c = Color.RED; break;
@@ -184,7 +180,6 @@ public final class Plot {
     }
     public void 
     init(ImageView image) {
-
 
     } // init
 	
@@ -239,18 +234,15 @@ public final class Plot {
 	PlotVector pv;
 	boolean y1empty = true;
 	double y1min = Double.POSITIVE_INFINITY;
+	double y2min = Double.POSITIVE_INFINITY;
 	double y1max = Double.NEGATIVE_INFINITY;
+	double y2max = Double.NEGATIVE_INFINITY;
 	boolean y2empty = true;
-	double y2min = 0;
-	double y2max = 50;
-	double xmin1 = 0; // Tentative x-interval min
-	double xmax1 = 50;
-	y1min = 0;
-	y1max = 50;
+	double xmin1 = Double.POSITIVE_INFINITY; // Tentative x-interval min
+	double xmax1 = Double.NEGATIVE_INFINITY;
 
 	// Clear bitmap
 	image.setImageBitmap(bitmap); 
-	colornr = 0;
 
 	// Loop 1a: check active plots, create plot-instances, 
 	// compute y1 interval, etc

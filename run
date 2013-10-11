@@ -19,6 +19,7 @@ function log()
 {
 #    Log.d ("t1", "t2"); in App
     adb logcat 
+#    adb logcat RStrace:D *:S; for only RStrace debug
 }
 
 function init_project()
