@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Read-Sensors; see the file COPYING.
 
-
 package com.radio_sensors.rs;
 
 import java.util.Set;
@@ -57,7 +56,7 @@ final class Pt{
 	}
     
 	public Point // scale function: return screen coordinates
-    pt2screen(int px, int py, int pw, int ph, // screen rectangle
+    pt2screen(int px, int py, int pw, int ph, // screen rectangle. py is upper left
 	      double xlow, double xhigh, 
 	      double ylow, double yhigh)
     {
@@ -126,8 +125,11 @@ public final class Plot {
     private int px,py,pw,ph; // plotarea x,y,width height
     private Bitmap bitmap;
     private double xmin, xmax;
-    private double xwin = XWINDOW;   // x window size
+    private double xwin_min = XWINDOW;   // x window size
+    private double xwin = XWINDOW;       // x window size
 	
+    public boolean liveUpdate = true; // Scroll x-axis as new values arrive
+
     private int nrPlots = 0;	
     private String xlabel;  // text to print on x-axis
     private String y1label; // text to print on left y-axis
@@ -199,6 +201,34 @@ public final class Plot {
 	xlabel = label;
 	xscale = scale;
     }
+
+    /* Set X window-size. Ie how much data to present in X-direction.
+       This is overriden if you rescale the x-window.
+     */
+    public void 
+    xwin_set(double xw_min, double xw_max) {
+	xwin_min = xw_min;
+	xwin = xw_max;
+    }
+
+    /* Add to xmax value, ie 'right' x-interval limit */
+    public void 
+    xmax_add(double xm) {
+	xmax += xm;
+    }
+
+    /* Multiply xscale value, ie how many x-values per unit */
+    public void 
+    xscale_mult(double sm) {
+	xscale *= sm;
+    }
+
+    /* Multiply yscale values (both y1 and y2), ie how many y-values per unit */
+    public void 
+    yscale_mult(double sm) {
+	y1scale *= sm;
+	y2scale *= sm;
+    }
 	
     public void 
     y1axis(String label, double scale) {
@@ -241,53 +271,80 @@ public final class Plot {
 	// Clear bitmap
 	image.setImageBitmap(bitmap); 
 
-	// Loop 1a: check active plots, create plot-instances, 
-	// compute y1 interval, etc
-	for (int i=0; i<plots.size(); i++){
-	    pv = plots.elementAt(i);
-	    if (pv.vec.size() > 0)
-		y1empty = false;
-	    y1max = Math.max(y1max, pv.ymax);
-	    y1min = Math.min(y1min, pv.ymin);
-	}
-	// XXX: ALso y2 plots
-	if (y1empty){
-	    y1min = 0;
-	    y1max = 0.1;
-	}
-	if (y1empty && y2empty){
-	    xmin1 = 0;
-	    xmax1 = 10;
-//	    xmin1 = System.currentTimeMillis()/1000;
-//	    xmax1 = xmin1 + xwin*xscale;
-	}
-	else {
-	    xmin1 = Double.POSITIVE_INFINITY;
-	    xmax1 = Double.NEGATIVE_INFINITY;
-	}
-	// Loop 2: compute tentative x-interval [xmin1, xmax1]
+	// Loop 1a: compute tentative x-interval [xmin1, xmax1] for y1 plots
 	for (int i=0; i<plots.size(); i++){
 	    pv = plots.elementAt(i);
 	    if (pv.vec.size() > 0){
+		y1empty = false; // XXX: inverse logic
 		xmin1 = Math.min(xmin1, pv.vec.firstElement().x);
 		xmax1 = Math.max(xmax1, pv.vec.lastElement().x);
 	    }
 	}
+	// Loop 1b: Same for y2 plots
+	// XXX
 
-	if (true) // liveUpdate
+	if (y1empty && y2empty){
+	    xmin1 = 0;
+	    xmax1 = 10;
+	}
+	/* Now compute xwindow: how much to show of x-axis: [xmin, xmax]:
+	   If scrolled to old x-values, do not auto-scroll with new values by updating max
+	*/
+	if (liveUpdate)
 	    xmax = xmax1;
 	else
-	    if (xmax >= xmax1){
-		//liveUpdate = true;
+	    if (xmax1 < xmax){
+		liveUpdate = true;
 		xmax = xmax1;
 	    }
-	if (xmax < xmin1 + xwin*xscale)
-	    xmax = xmin1 + xwin*xscale; 
-	xmin = xmax - xwin*xscale;
+	/*
+                  xmin1                         xmax
+	  ----------|------------------------------|------>
+                     <-----------xmax-xwin1--------> 
+                                  <--xwin_min*xsc--> 
+          Ensure the x window is > xwin_min*xsc and < xmax-xwin
+	 */
+	double xw = xwin*xscale; // current window
+	if (xw > xmax - xmin1)   // if window larger than all samples, reduce it
+	    xw = xmax - xmin1;
+	if (xw < xwin_min*xscale){ // if window smaller than minimal, make it larger
+	    xw = xwin_min*xscale;  // Also, set xmin to left-side 
+	    xmin = xmin1;
+	    xmax = xmin + xw;
+	}
+	else
+	    xmin = xmax - xw;
 
+
+	// Loop 2a:  compute y1 intervals, etc
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.elementAt(i); // Only in [xmin,xmax]
+	    for (int j = 0 ; j< pv.vec.size(); j++){
+		double x = pv.vec.elementAt(j).x;
+		double y = pv.vec.elementAt(j).y;
+		if (x < xmin)
+		    continue;
+		if (x > xmax)
+		    continue;
+		y1max = Math.max(y1max, y);
+		y1min = Math.min(y1min, y);
+	    }	    
+	}
+	if (y1empty){
+	    y1min = 0;
+	    y1max = 1;
+	}
+
+	// Loop 2b: Same for y2 plots
+	// XXX: Also y2 plots
+
+	if (y2empty){
+	    y2min = 0;
+	    y2max = 1;
+	}
 
 	Autoscale ax = new Autoscale(xmin, xmax);
-	Autoscale ay = new Autoscale(y1min, y1max);
+	Autoscale ay1 = new Autoscale(y1min, y1max);
 	Autoscale ay2 = new Autoscale(y2min, y2max);
 	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
 	double aggF = 0.0; 
@@ -302,7 +359,7 @@ public final class Plot {
 	}
 	int agg = Math.max(1, (int)Math.floor(aggF*4));
 	
-	draw(ax, ay, ay2, agg); // Finally draw it.	
+	draw(ax, ay1, ay2, agg); // Finally draw it.	
     }
 
 
@@ -342,15 +399,15 @@ public final class Plot {
     } // draw_plot_label
 	
     private boolean 
-    draw_grid(Autoscale ax, Autoscale ay, Autoscale ay2)
+    draw_grid(Autoscale ax, Autoscale ay1, Autoscale ay2)
 	{
 	    final Paint paint = new Paint();
 	    paint.setAntiAlias(true);
-//	    paint.setTextSize(30);
+	    paint.setTextSize(FONTSIZE);
 	    paint.setStyle(Paint.Style.FILL); 
 	    paint.setColor(Color.BLACK);  
 	    int ax1 = ax.ticks-1;
-	    int ay1 = ay.ticks-1;
+	    int ay11 = ay1.ticks-1;
 	    int ay21 = ay2.ticks-1;
 
 	    canvas.clipRect(x, y, x+w, y+h, Region.Op.REPLACE); // clip it.
@@ -411,15 +468,16 @@ public final class Plot {
 		    canvas.drawText(s, x1, py+ph+FONTSIZE+2, paint);
 		}
 	    // text along y-axis
-	    if (ay1>0)
-		for(int i=0; i < ay.ticks; i++) { 
-		    int y1 = py + (i * ph/ay1); //lower
+
+	    if (ay11>0)
+		for(int i=0; i < ay1.ticks; i++) { 
+		    int y1 = py + (i * ph/ay11); //lower
 		    if (i == 0) //upper
 			y1 += FONTSIZE;
 		    else
-			if (i != ay1) // normal case
+			if (i != ay11) // normal case
 			    y1 += FONTSIZE/2;
-		    String s = String.format("%.1f", (ay.high-i*ay.spacing)*y1scale);
+		    String s = String.format("%.2f", (ay1.high-i*ay1.spacing)*y1scale);
 		    canvas.drawText(s, FONTSIZE+2, y1, paint);
 		}
 	    // text along y2-axis
@@ -431,7 +489,7 @@ public final class Plot {
 		    else
 			if (i != ay21) // normal case
 			    y2 += FONTSIZE/2;
-		    String s = String.format("%.1f", (ay2.high-i*ay2.spacing)*y2scale);
+		    String s = String.format("%.2f", (ay2.high-i*ay2.spacing)*y2scale);
 		    canvas.drawText(s, px+pw+2, y2, paint);
 		}
 	    // Draw small lines at end
@@ -448,26 +506,26 @@ public final class Plot {
 				py + ph,
 				paint);
 	    }
-	    for(int i=1; i < ay1; i++) {
+	    for(int i=1; i < ay11; i++) {
 		canvas.drawLine(px, 
-				py + (i * ph/ay1), 
+				py + (i * ph/ay11), 
 				px+TICKLEN, 
-				py + (i * ph/ay1), 
+				py + (i * ph/ay11), 
 				paint);
 		canvas.drawLine(px+pw-TICKLEN, 
-				py + (i * ph/ay1), 
+				py + (i * ph/ay11), 
 				px+pw, 
-				py + (i * ph/ay1), 
+				py + (i * ph/ay11), 
 				paint);
 	    }
 	    // Draw the grid with white dashed lines
 	    paint.setColor(Color.WHITE);
 	    paint.setPathEffect( new DashPathEffect(new float[] { 2, 8 }, 0));
-	    for(int i=1; i < ay1; i++)  
+	    for(int i=1; i < ay11; i++)  
 		canvas.drawLine(px, 
-				py + (i * ph /ay1), 
+				py + (i * ph /ay11), 
 				px + pw, 
-				py + (i * ph /ay1), 
+				py + (i * ph /ay11), 
 				paint);
 	    for(int i=1; i < ax.ticks-1; i++)  
 		canvas.drawLine(px + (i * pw /ax1), 
@@ -548,23 +606,26 @@ public final class Plot {
     } // draw_plot
 } //	
 
+/*
+ * Autoscale
+ */
 final class Autoscale {
 	private static double PENALTY = 0.02;
 	public double low, high, spacing;
 	public int ticks;
 
 	Autoscale(double min, double max){
-		double ulow[] = new double[9];
-		double uhigh[] = new double[9];
-		double uticks[] = new double[9];
+		double ulow[] = new double[12];
+		double uhigh[] = new double[12];
+		double uticks[] = new double[12];
 
 		scales(min, max, ulow, uhigh, uticks);
 
 		double udelta = max - min;
-		double ufit[] = new double[9];
-		double fit[] = new double[9];
+		double ufit[] = new double[12];
+		double fit[] = new double[12];
 		int k = 0;
-		for (int i=0; i<=8; i++) {
+		for (int i=0; i<=11; i++) {
 			ufit[i] = ((uhigh[i]-ulow[i])-udelta)/(uhigh[i]-ulow[i]);
 			fit[i] = 2*ufit[i] + PENALTY * Math.pow( ((uticks[i]-6.0)>1.0)?(uticks[i]-6.0):1.0 ,2.0);
 			if (i > 0) {
@@ -580,22 +641,26 @@ final class Autoscale {
 	}
 	private void 
 	scales(double xmin, double xmax, double low[], double high[], double ticks[]){
-		double bestDelta[] = {0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0};
+	    double bestDelta[] = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0};
 		int i;
+		double xdelta = xmax-xmin;
+		double delta[] = new double[12];
 
-		if (xmin == xmax) {
-			for (i=0; i<=8; i++) {
-				low[i] = xmin;
-				high[i] = xmax+1;
-				ticks[i] = 1;
+		if (xdelta == 0) {
+		    for (i=0; i<=11; i++) {
+			xdelta=1;
+			delta[i] = Math.pow(10,Math.round(Math.log10(xdelta)-1)) * bestDelta[i];
+			high[i] = delta[i] * Math.ceil((xmin+0.5)/delta[i]);
+			low[i] = delta[i] * Math.floor((xmin-0.5)/delta[i]);
+			ticks[i] = Math.round((high[i]-low[i])/delta[i]) + 1;
+//			low[i] = xmin-0.5;
+//			high[i] = xmax+0.5;
+//			ticks[i] = 3;
 			}
 			return;
 		}
 
-		double xdelta = xmax-xmin;
-		double delta[] = new double[9];
-
-		for (i=0; i<=8; i++) {
+		for (i=0; i<=11; i++) {
 			delta[i] = Math.pow(10,Math.round(Math.log10(xdelta)-1)) * bestDelta[i];
 			high[i] = delta[i] * Math.ceil(xmax/delta[i]);
 			low[i] = delta[i] * Math.floor(xmin/delta[i]);
