@@ -163,9 +163,9 @@ public class Client extends Activity {
 			connect();
 		    }
 		});
-	    }
+	}
 	    
-	    @Override
+            @Override
 		public Object onRetainNonConfigurationInstance() {
 		StateSaver saved = new StateSaver();
 		// Place holder for storing variables needed
@@ -259,7 +259,7 @@ public class Client extends Activity {
 			Log.d("RStrace", String.format("Socket Server=%s Port=%s", serverAddr, serverPort));
 			Socket sock = new Socket(serverAddr, Integer.parseInt(serverPort));
 			socket = sock;
-	
+
 			InputStream streamInput = socket.getInputStream();
 			connected = true;
 
@@ -267,6 +267,11 @@ public class Client extends Activity {
 			while (connected)
 			    {
 				int j = 0;
+
+				Message message = Message.obtain();
+				message.what = 1;
+				mHandler.sendMessageDelayed(message, 1);
+
 				try
 				    {
 					int i = buf.length;
@@ -391,5 +396,17 @@ public class Client extends Activity {
 	thread = new Thread(new RunThread());
 	thread.start();
     }
-}
 
+    private final Handler mHandler = new Handler() {
+		public void handleMessage(Message msg ) 
+	    {
+		Message message;
+		Button buttonConnect = (Button) findViewById(R.id.server_connect);
+
+		if(connected)
+		    buttonConnect.setText("Running");
+		else
+		    buttonConnect.setText("Connect");
+	    }
+	};
+}
