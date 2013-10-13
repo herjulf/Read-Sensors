@@ -40,6 +40,7 @@ public class Client extends Activity {
     {
 	private Socket socket = null;
 	private boolean connected = false;
+	private boolean started = false;
 	private Thread thread = null;
 	private String serverAddr = "";
 	private String serverPort = "";
@@ -50,6 +51,7 @@ public class Client extends Activity {
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
+    private boolean started = false;
     private String serverAddr = "";
     private String serverPort = "";
     private String sid = "";
@@ -98,38 +100,32 @@ public class Client extends Activity {
 		}
 	}
 
-
     @Override
     public void onCreate(Bundle savedInstanceState)
 	{
 	    super.onCreate(savedInstanceState);
 
-
 	    // To keep states over rotates etc.
 	    StateSaver saved = (StateSaver) getLastNonConfigurationInstance();
-	    if (saved != null)    { 
+	    if (saved != null && saved.started) {
 		// Restore saved running state
 		Log.d("RStrace Stateserver RESTORE", "!null");        
+
+		setContentView(R.layout.main);
+
+	    // Rotate when not connected
+
 		socket = saved.socket;
 		connected = saved.connected;
+		started = saved.started;
 		serverAddr = saved.serverAddr;
 		serverPort = saved.serverPort;
 		sid = saved.sid;
 		tag = saved.tag;
-
-		if(thread != null)
-		{
-		    thread.stop();
-		    thread = null;
-		}
-		thread = new Thread(new RunThread());
-		thread.start();
-		return;
+		connect();
 	    } 
 
 	    setContentView(R.layout.main);
-	    Log.d("RStrace", "Client");        
-
 	    init_plot();
 
 	    this.handler = new Handler();
@@ -141,14 +137,19 @@ public class Client extends Activity {
 		    private EditText port = (EditText) findViewById(R.id.server_port);
 		    private EditText lsid = (EditText) findViewById(R.id.sid);
 		    private EditText ltag = (EditText) findViewById(R.id.tag);
-		
+
 		    @Override
 		    public void onClick(View view) {
 
-			serverAddr = server_ip.getText().toString();
-			serverPort = port.getText().toString();
+			// We can can change throughout the connection
 			sid = lsid.getText().toString();
 			tag = ltag.getText().toString();
+
+			if(connected)
+			    return;
+
+			serverAddr = server_ip.getText().toString();
+			serverPort = port.getText().toString();
 
 			// FIXME
 			SharedPreferences sp  = getSharedPreferences("Read Sensors", context.MODE_PRIVATE);
@@ -157,11 +158,11 @@ public class Client extends Activity {
 			ed.putString("server-port", serverPort);
 			ed.commit();
 
+			started = true;
 			plot_select();
-			Connect();
+			connect();
 		    }
 		});
-
 	    }
 	    
 	    @Override
@@ -173,6 +174,7 @@ public class Client extends Activity {
 		Log.d("RStrace SAVE", "1");        
 		saved.socket = socket;
 		saved.connected = connected;
+		saved.started = started;
 		saved.serverAddr = serverAddr;
 		saved.serverPort = serverPort;
 		saved.sid = sid;
@@ -180,7 +182,6 @@ public class Client extends Activity {
 
 		return saved;
 	}
-
 
     protected void onDestroy()
 	{
@@ -381,45 +382,15 @@ public class Client extends Activity {
 		}
 	}
 
-    private void Connect()
-	{
-	    LayoutInflater li = LayoutInflater.from(context);
-	    View promptsView = li.inflate(R.layout.connect, null);
-
-	    Log.d("RStrace", "Connect 1");
-
-	    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-	    alertDialogBuilder.setView(promptsView);
-	    alertDialogBuilder.setCancelable(true);
-	    alertDialogBuilder.setPositiveButton("Connect", new DialogInterface.OnClickListener() 
-		{
-		    public void onClick(DialogInterface dialog,int id) 
-			{
-			    if(!serverAddr.equals("") && !serverPort.equals(""))
-				{
-				    if(thread != null)
-					{
-					    thread.stop();
-					    thread = null;
-					}
-				    thread = new Thread(new RunThread());
-				    thread.start();
-				}
-			}
-		});
-        
-	    alertDialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() 
-		{
-		    public void onClick(DialogInterface dialog,int id) 
-			{
-			    Log.d("RStrace", "Connect onClick Cancel");
-		   
-			    dialog.cancel();
-			}
-		});
-
-	    AlertDialog alertDialog = alertDialogBuilder.create();
-	    alertDialog.show();
-	}
+    private void connect()
+    {
+	if(thread != null)
+	    {
+		thread.stop();
+		thread = null;
+	    }
+	thread = new Thread(new RunThread());
+	thread.start();
+    }
 }
 
