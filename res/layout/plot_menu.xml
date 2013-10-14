@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item android:id="@+id/about" android:icon="@drawable/ic_menu_gallery"
+		android:title="About" />
+	<item android:id="@+id/connect" android:icon="@drawable/ic_menu_gallery"
+		android:title="Connect" />
+	<item android:id="@+id/text" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Text" />
+	<item android:id="@+id/sensors" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Sensors" />
+	<item android:id="@+id/tags" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Tags" />
+	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Preferences" />
+
+</menu>
