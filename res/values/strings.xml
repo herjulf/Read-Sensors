@@ -4,6 +4,6 @@
     <string name="app_name">Read Sensors</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    <string name="about">Read Sensors. From Radio-Sensors.COM </string>
+    <string name="about">Authors:\n  Robert Olsson \n  Olof Hagsand </string>
 
 </resources>

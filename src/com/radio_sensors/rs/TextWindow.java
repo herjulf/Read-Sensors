@@ -77,7 +77,7 @@ public class TextWindow extends Activity {
 	// Handle item selection
 	switch (item.getItemId()) {
 	case R.id.about:
-	    Toast.makeText(this, "Read-Sensors", 100).show();
+	    AboutBox.Show(this);
 	    return true;
 	case R.id.connect:
 	    return true;
