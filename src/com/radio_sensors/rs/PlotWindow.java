@@ -38,11 +38,16 @@ import android.text.format.Time;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.MotionEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MenuInflater;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
 import android.widget.ImageView;
+import android.widget.Toast;
 import android.content.res.Configuration;
+import android.content.Intent;
 import android.view.Display;
 import android.util.Log;
 
@@ -76,11 +81,14 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private static int ZOOM = 3;
     private int touch_mode = NONE;
 
+    private int before = 0;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
+	Log.d("RStrace", "PlotWindow="+before);
+	before = 42;
 	setContentView(R.layout.plot);
 	View v = findViewById(R.id.img);
 	v.setOnTouchListener(this);
@@ -91,10 +99,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	power = Client.power;
 	ImageView image = (ImageView) findViewById(R.id.img);
 
-/*	Vector <Pt> vec = new Vector<Pt>(); 
-	random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
-	plot.add(random);
-*/
+	if (false){
+	    Vector <Pt> vec = new Vector<Pt>(); 
+	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
+	    plot.add(random);
+	}
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
 	plot.autodraw(image);
@@ -104,11 +113,59 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	Message message = Message.obtain();
 	message.what = PLOT;
 	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
-/*
-	message = Message.obtain();
-	message.what = SAMPLE; 
-	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
-*/
+
+	if (false){
+	    message = Message.obtain();
+	    message.what = SAMPLE; 
+	    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+	}
+    }
+
+    protected void onDestroy(){
+	    super.onDestroy();
+    }
+
+    // This is code for lower right button menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+	MenuInflater inflater = getMenuInflater();
+	inflater.inflate(R.layout.plot_menu, menu);
+	return true;
+    }	
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	// Handle item selection
+	switch (item.getItemId()) {
+	case R.id.about:
+	    Toast.makeText(this, "Read-Sensors", 100).show();
+	    return true;
+	case R.id.connect:
+	    return true;
+	case R.id.text:
+	    toActivity("TextWindow");
+	    return true;
+	case R.id.sensors:
+	    return true;
+	case R.id.tags:
+	    return true;
+	case R.id.prefs:
+	    toActivity("Prefs");
+	    return true;
+	default:
+	    return super.onOptionsItemSelected(item);
+	}
+    }
+
+    private void toActivity(String name){
+	Intent i = new Intent();
+	i.setClassName("com.radio_sensors.rs", "com.radio_sensors.rs."+name);
+	try {
+	    startActivity(i); 
+	}
+	catch (Exception e1){
+	    e1.printStackTrace();
+	}
     }
 
     @Override
@@ -132,7 +189,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    touch_t = System.currentTimeMillis();
 	    touch_mode = DRAG;
 	    plot.liveUpdate = false;
-	    //Log.d("onTouch", "touch_mode=DRAG");
+	    Log.d("RStrace", "touch_mode=DRAG");
 	    break;
 	case MotionEvent.ACTION_POINTER_DOWN:
 	    double zoomDist= spacing(event);
@@ -140,13 +197,13 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		zoomDist_x = Math.abs(event.getX(0) - event.getX(1));
 		zoomDist_y = Math.abs(event.getY(0) - event.getY(1));
 		touch_mode = ZOOM;
-		//Log.d("onTouch", "touch_mode=ZOOM" );
+		Log.d("RStrace", "touch_mode=ZOOM" );
 	    }
 	    break;
 	case MotionEvent.ACTION_UP:
 	case MotionEvent.ACTION_POINTER_UP:
 	    touch_mode = NONE;
-	    //Log.d("onTouch", "touch_mode=NONE");
+	    Log.d("RStrace", "touch_mode=NONE");
 	    break;
 	case MotionEvent.ACTION_MOVE:
 	    if (touch_mode == DRAG) {

@@ -77,28 +77,27 @@ public class Client extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
 	    switch (item.getItemId()) {
-	    case R.id.graph:
-	    	toGraph(this);
+	    case R.id.plot:
+	    	toActivity("PlotWindow");
 	        return true;
 	    case R.id.text:
-
+	    	toActivity("TextWindow");
 	    	return true;
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
-	 
 	}
 
-	private void toGraph(Object obj){
-		Intent i = new Intent();
-		i.setClassName("com.radio_sensors.rs", "com.radio_sensors.rs.PlotWindow");
-		try {
-		    startActivity(i); 
-		}
-		catch (Exception e1){
-		    e1.printStackTrace();
-		}
+    private void toActivity(String name){
+	Intent i = new Intent();
+	i.setClassName("com.radio_sensors.rs", "com.radio_sensors.rs."+name);
+	try {
+	    startActivity(i); 
 	}
+	catch (Exception e1){
+	    e1.printStackTrace();
+	}
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState)

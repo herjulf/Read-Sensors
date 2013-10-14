@@ -69,7 +69,7 @@ public class Prefs extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
-	inflater.inflate(R.layout.pref_menu, menu);
+	inflater.inflate(R.layout.prefs_menu, menu);
 	return true;
     }	
 
