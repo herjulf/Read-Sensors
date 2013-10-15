@@ -144,9 +144,10 @@ public class Client extends Activity {
 			sid = lsid.getText().toString();
 			tag = ltag.getText().toString();
 
-			if(connected)
+			if(connected) {
+			    Toast.makeText(context, "Already Connected", Toast.LENGTH_LONG).show();
 			    return;
-
+			}
 			serverAddr = server_ip.getText().toString();
 			serverPort = port.getText().toString();
 
