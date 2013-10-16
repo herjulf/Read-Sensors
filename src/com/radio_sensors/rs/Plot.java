@@ -125,7 +125,6 @@ public final class Plot {
     private int px,py,pw,ph; // plotarea x,y,width height
     private Bitmap bitmap;
     private double xmin, xmax;
-    private double xwin_min = XWINDOW;   // x window size
     private double xwin = XWINDOW;       // x window size
 	
     public boolean liveUpdate = true; // Scroll x-axis as new values arrive
@@ -206,8 +205,7 @@ public final class Plot {
        This is overriden if you rescale the x-window.
      */
     public void 
-    xwin_set(double xw_min, double xw_max) {
-	xwin_min = xw_min;
+    xwin_set(double xw_max) {
 	xwin = xw_max;
     }
 
@@ -290,6 +288,7 @@ public final class Plot {
 	/* Now compute xwindow: how much to show of x-axis: [xmin, xmax]:
 	   If scrolled to old x-values, do not auto-scroll with new values by updating max
 	*/
+
 	if (liveUpdate)
 	    xmax = xmax1;
 	else
@@ -301,21 +300,27 @@ public final class Plot {
                   xmin1                         xmax
 	  ----------|------------------------------|------>
                      <-----------xmax-xwin1--------> 
-                                  <--xwin_min*xsc--> 
-          Ensure the x window is > xwin_min*xsc and < xmax-xwin
 	 */
-	double xw = xwin*xscale; // current window
-	if (xw > xmax - xmin1)   // if window larger than all samples, reduce it
-	    xw = xmax - xmin1;
-	if (xw < xwin_min*xscale){ // if window smaller than minimal, make it larger
-	    xw = xwin_min*xscale;  // Also, set xmin to left-side 
-	    xmin = xmin1;
-	    xmax = xmin + xw;
+	double xws = xwin*xscale;
+	if (liveUpdate){
+	    if (xws > xmax - xmin1){ // window larger than #samples
+		xmin = xmin1;         // Start at left of screen
+		xmax = xmin + xws;
+	    }
+	    else
+		xmin = xmax - xws;   // window smaller: crop x at window limit
 	}
-	else
-	    xmin = xmax - xw;
+	else{
+	    if (xmax < xmin1) // not live and scrolled beyond x-values
+		xmax = xmin1 + xws/3; // ensure some x-values are visible.
+	    xmin = xmax - xws;
+	}
+//	Log.d("RStrace", "PLOT xscale="+xscale);
+//	Log.d("RStrace", "PLOT xwin="+xwin);
+//	Log.d("RStrace", "PLOT xws="+xws);
+//	Log.d("RStrace", "PLOT xmax1-xmin1="+(xmax1-xmin1));
 
-
+	y1empty = true; // XXX: inverse logic
 	// Loop 2a:  compute y1 intervals, etc
 	for (int i=0; i<plots.size(); i++){
 	    pv = plots.elementAt(i); // Only in [xmin,xmax]
@@ -326,6 +331,7 @@ public final class Plot {
 		    continue;
 		if (x > xmax)
 		    continue;
+		y1empty = false; 
 		y1max = Math.max(y1max, y);
 		y1min = Math.min(y1min, y);
 	    }	    
@@ -364,16 +370,16 @@ public final class Plot {
 
 
     public void 
-    draw(Autoscale ax, Autoscale ay, Autoscale ay2, int agg) {
+    draw(Autoscale ax, Autoscale ay1, Autoscale ay2, int agg) {
 	Vector <Pt> vec;
 	// assert |xvec| == |yvec|
-	if (!draw_grid(ax, ay, ay2))
+	if (!draw_grid(ax, ay1, ay2))
 	    return;
 	for(int j=0; j < plots.size() ; j++)  {
 	    PlotVector pi = plots.elementAt(j);
 	    vec = pi.vec;
 	    draw_plot_label(j, pi.title, pi.color);
-	    draw_plot(vec, ax, pi.y==1?ay:ay2, pi.color, pi.style, agg);
+	    draw_plot(vec, ax, pi.y==1?ay1:ay2, pi.color, pi.style, agg);
 	}
     } // draw
 
@@ -468,7 +474,6 @@ public final class Plot {
 		    canvas.drawText(s, x1, py+ph+FONTSIZE+2, paint);
 		}
 	    // text along y-axis
-
 	    if (ay11>0)
 		for(int i=0; i < ay1.ticks; i++) { 
 		    int y1 = py + (i * ph/ay11); //lower

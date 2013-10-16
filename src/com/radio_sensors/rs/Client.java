@@ -210,7 +210,7 @@ public class Client extends Activity {
 	// Initialize plotter
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
-	plot.xwin_set(30.0, 3*60.0);  // at least 30 s at most 3 minutes of data
+	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
 	plot.xaxis("Time[s]", 1.0);  
 	plot.y1axis("Temp [C]", 1.0);
 	plot.y2axis("", 1.0);

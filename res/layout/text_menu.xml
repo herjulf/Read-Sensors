@@ -4,8 +4,6 @@
 		android:title="About" />
 	<item android:id="@+id/connect" android:icon="@drawable/ic_menu_gallery"
 		android:title="Connect" />
-	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Plot" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Preferences" />
 

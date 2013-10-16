@@ -58,7 +58,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public static long PURGETIMEOUT = 20; // interval [s] until pkt info purged
 
     private static int PLOTINTERVAL = 1000; // interval between plot calls in ms
-    private static int SAMPLEINTERVAL = 2000; // interval between sample receives
+    private static int SAMPLEINTERVAL = 1000; // interval between sample receives
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Message	
 
@@ -80,24 +80,21 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private static int DRAG = 1;
     private static int ZOOM = 3;
     private int touch_mode = NONE;
-
-    private int before = 0;
+    private ImageView image;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
-	Log.d("RStrace", "PlotWindow="+before);
-	before = 42;
 	setContentView(R.layout.plot);
-	View v = findViewById(R.id.img);
-	v.setOnTouchListener(this);
+	image = (ImageView) findViewById(R.id.img);
+	image.setOnTouchListener(this);
 
 	rnd = new Random(42); // Init random generator
 
+
 	plot = Client.plot;
 	power = Client.power;
-	ImageView image = (ImageView) findViewById(R.id.img);
 
 	if (false){
 	    Vector <Pt> vec = new Vector<Pt>(); 
@@ -175,6 +172,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
+
+	image = (ImageView)findViewById(R.id.img);
+	image.setOnTouchListener(this);
     }
 
     private double spacing(MotionEvent event) {
@@ -182,6 +182,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	double y = event.getY(0) - event.getY(1);
 	return Math.sqrt(x * x + y * y);
     }	
+    @Override
     public boolean onTouch(View v, MotionEvent event) {
 	switch (event.getAction() & MotionEvent.ACTION_MASK) {
 	case MotionEvent.ACTION_DOWN:
@@ -189,7 +190,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    touch_t = System.currentTimeMillis();
 	    touch_mode = DRAG;
 	    plot.liveUpdate = false;
-	    Log.d("RStrace", "touch_mode=DRAG");
+//	    Log.d("RStrace", "touch_mode=DRAG");
 	    break;
 	case MotionEvent.ACTION_POINTER_DOWN:
 	    double zoomDist= spacing(event);
@@ -197,22 +198,25 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		zoomDist_x = Math.abs(event.getX(0) - event.getX(1));
 		zoomDist_y = Math.abs(event.getY(0) - event.getY(1));
 		touch_mode = ZOOM;
-		Log.d("RStrace", "touch_mode=ZOOM" );
+//		Log.d("RStrace", "touch_mode=ZOOM" );
 	    }
 	    break;
 	case MotionEvent.ACTION_UP:
 	case MotionEvent.ACTION_POINTER_UP:
 	    touch_mode = NONE;
-	    Log.d("RStrace", "touch_mode=NONE");
+//	    Log.d("RStrace", "touch_mode=NONE");
+	    plot.autodraw(image);
 	    break;
 	case MotionEvent.ACTION_MOVE:
 	    if (touch_mode == DRAG) {
 		double delta = (event.getX() - touch_p.x)/(System.currentTimeMillis()-touch_t);
 		touch_p.set(event.getX(), event.getY(), 0);
 		touch_t = System.currentTimeMillis();
+//		Log.d("RStrace", "ACTION_MOVE DRAG delta="+delta);
 		plot.xmax_add(-7*delta);
 	    }
-	    else
+	    else{
+//	    Log.d("RStrace", "ACTION_MOVE OTHER");
 		if (touch_mode == ZOOM){
 		    double dist_x = Math.abs(event.getX(0) - event.getX(1));
 		    double dist_y = Math.abs(event.getX(0) - event.getX(1));
@@ -227,6 +231,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 			zoomDist_y = dist_y;
 		    }
 		}
+	    }
 	    break;
 	}	
 	return true; // indicate event was handled
@@ -241,8 +246,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		case SAMPLE:
 		    message = Message.obtain();
 		    if (true){ // debug
-//			int y = rnd.nextInt(10);
-			double y = 22.13;
+			int y = rnd.nextInt(10);
 			Pt p = new Pt(1381599669+seq, y, seq);
 			random.sample(p);
 			seq++;
@@ -252,7 +256,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    break;
 		case PLOT:
 		    message = Message.obtain();
-		    ImageView image = (ImageView) findViewById(R.id.img);
 		    plot.autodraw(image);
 		    message.what = PLOT;
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);

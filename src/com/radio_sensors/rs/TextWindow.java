@@ -81,9 +81,9 @@ public class TextWindow extends Activity {
 	    return true;
 	case R.id.connect:
 	    return true;
-	case R.id.plot:
-	    toActivity("PlotWindow");
-	    return true;
+//	case R.id.plot:
+//	    toActivity("PlotWindow");
+//	    return true;
 	case R.id.prefs:
 	    toActivity("Prefs");
 	    return true;
