@@ -145,7 +145,8 @@ public class Client extends Activity {
 			tag = ltag.getText().toString();
 
 			if(connected) {
-			    Toast.makeText(context, "Already Connected", Toast.LENGTH_LONG).show();
+			    Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
+			    disconnect();
 			    return;
 			}
 			serverAddr = server_ip.getText().toString();
@@ -290,10 +291,12 @@ public class Client extends Activity {
 					    "Error while receiving from server:\r\n" + strException;
 					Runnable rExceptionThread = new Runnable()
 					    {
+						// Avoid error message on user disconnect
 						public void run()
-						    {
+						{
+						    if (connected)
 							Toast.makeText(context, strMessage, 3000).show();
-						    }
+						}
 					    };
 
 					handlerException.post(rExceptionThread);
@@ -398,6 +401,43 @@ public class Client extends Activity {
 	thread.start();
     }
 
+    private void disconnect()
+    {
+
+    if(connected)
+		{
+		    connected = false;
+		    try
+			{
+			    if(this.thread != null)
+				{
+				    Thread threadHelper = this.thread; 
+				    this.thread = null;
+				    threadHelper.interrupt();
+				}
+			}
+		    catch (Exception e1)
+			{
+			}
+		}
+
+	connected = false;
+
+	try 
+	    {
+		socket.close();
+	    }
+	catch (IOException e1) 
+	    {
+		e1.printStackTrace();
+	    }
+	socket = null;
+
+	Message message = Message.obtain();
+	message.what = 1;
+	mHandler.sendMessageDelayed(message, 1);
+    }
+
     private final Handler mHandler = new Handler() {
 		public void handleMessage(Message msg ) 
 	    {
@@ -405,7 +445,7 @@ public class Client extends Activity {
 		Button buttonConnect = (Button) findViewById(R.id.server_connect);
 
 		if(connected)
-		    buttonConnect.setText("Running");
+		    buttonConnect.setText("Disconnect");
 		else
 		    buttonConnect.setText("Connect");
 	    }
