@@ -46,8 +46,10 @@ import android.os.Bundle;
 import android.os.Message;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.EditText;
 import android.content.res.Configuration;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.Display;
 import android.util.Log;
 
@@ -59,6 +61,8 @@ public class Prefs extends Activity {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.pref);
 	setTitle("Read-Sensors: Prefs");
+	setup();
+
     }
 
     protected void onDestroy(){
@@ -81,7 +85,7 @@ public class Prefs extends Activity {
 	    AboutBox.Show(this);
 	    return true;
 	case R.id.save:
-	    savePref(null);
+	    save(null);
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
@@ -92,11 +96,50 @@ public class Prefs extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
 	super.onConfigurationChanged(newConfig);
-	setContentView(R.layout.text);
+	setContentView(R.layout.pref);
     }
 
-    public void savePref(View view)	 {
+    private void reset(){
+	setTextVal(R.id.server_ip, "<null>");
+	setIntVal(R.id.server_port, 0);
     }
+    // Read values from file and into layout
+    private void setup(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	setTextVal(R.id.server_ip, sPref.getString("server_ip", "Radio-Sensors.com"));
+	setIntVal(R.id.server_port, sPref.getInt("server_port", 1234));
+	setTextVal(R.id.sid, sPref.getString("sid", "2813e3dc0300007f"));
+	setTextVal(R.id.tag, sPref.getString("tag", "T"));
+    }
+    // Read values from layout and into file
+    public void save(View view) {
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	SharedPreferences.Editor ed = sPref.edit();
+	ed.putString("server_ip", (String)getTextVal(R.id.server_ip));
+	ed.putInt("server_port", getIntVal(R.id.server_port));
+	ed.putString("sid", (String)getTextVal(R.id.sid));
+	ed.putString("tag", (String)getTextVal(R.id.tag));
+	ed.commit();
+    }
+
+    // get and set methods for GUI
+    private String getTextVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return et.getText().toString();
+    }
+    private void setTextVal(int id, String s){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(s);
+    }
+    private int getIntVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return Integer.parseInt(et.getText().toString());
+    }
+    private void setIntVal(int id, int i){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(i+"");
+    }
+
 
 }
 

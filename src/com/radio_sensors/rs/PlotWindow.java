@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Olof Hagsand
+// Copyright (C) 2013 Olof Hagsand and Robert Olsson
 //
 // This file is part of Read-Sensors.
 //
@@ -92,7 +92,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
 	rnd = new Random(42); // Init random generator
 
-
 	plot = Client.plot;
 	power = Client.power;
 
@@ -101,9 +100,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
 	    plot.add(random);
 	}
-	Display display = getWindowManager().getDefaultDisplay(); 
-	plot.newDisplay(display);
-	plot.autodraw(image);
+
 
 	// Initialize messages (plot for plotting, samle for test samples)
 
@@ -116,6 +113,18 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    message.what = SAMPLE; 
 	    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 	}
+	/* XXX: move to onStart? */
+	Display display = getWindowManager().getDefaultDisplay(); 
+	plot.newDisplay(display);
+	plot.autodraw(image);
+    }
+
+    protected void onStart(){
+	super.onStart();
+    }
+
+    protected void onStop(){
+	super.onStop();
     }
 
     protected void onDestroy(){
@@ -266,5 +275,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		}
 	    }
 	};
+
+
 
 }
