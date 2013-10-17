@@ -48,6 +48,7 @@ public class Client extends Activity {
 	private String tag = "";
     }
 
+    public static boolean debug = false;
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -77,12 +78,18 @@ public class Client extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
 	    switch (item.getItemId()) {
-	    case R.id.plot:
-	    	toActivity("PlotWindow");
+	    case R.id.about:
+		AboutBox.Show(this);
+		return true;
+	    case R.id.prefs:
+		toActivity("Prefs");
+		return true;
+	    case R.id.debug:
+		debug=true;
 	        return true;
-	    case R.id.text:
-	    	toActivity("TextWindow");
-	    	return true;
+	    case R.id.plot:
+		toActivity("PlotWindow");
+		return true;
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }

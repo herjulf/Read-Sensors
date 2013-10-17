@@ -95,7 +95,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	plot = Client.plot;
 	power = Client.power;
 
-	if (false){
+	if (Client.debug){
 	    Vector <Pt> vec = new Vector<Pt>(); 
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
 	    plot.add(random);
@@ -108,7 +108,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	message.what = PLOT;
 	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 
-	if (false){
+	if (Client.debug){
 	    message = Message.obtain();
 	    message.what = SAMPLE; 
 	    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
@@ -143,24 +143,19 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
 	switch (item.getItemId()) {
-	case R.id.about:
-	    AboutBox.Show(this);
-	    return true;
-	case R.id.connect:
-	    return true;
-	case R.id.text:
+	case R.id.report:
 	    toActivity("TextWindow");
 	    return true;
-	case R.id.sensors:
-	    return true;
-	case R.id.tags:
-	    return true;
-	case R.id.prefs:
-	    toActivity("Prefs");
+	case R.id.select:
+	    select();
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
+    }
+
+    private void select(){
+	Toast.makeText(this, "Select (TBD)", Toast.LENGTH_SHORT).show();
     }
 
     private void toActivity(String name){

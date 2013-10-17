@@ -81,17 +81,19 @@ public class Prefs extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
 	switch (item.getItemId()) {
-	case R.id.about:
-	    AboutBox.Show(this);
+	case R.id.load:
+	    setup();
 	    return true;
 	case R.id.save:
-	    save(null);
+	    save();
+	    return true;
+	case R.id.reset:
+	    reset();
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
     }
-
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
@@ -112,7 +114,7 @@ public class Prefs extends Activity {
 	setTextVal(R.id.tag, sPref.getString("tag", "T"));
     }
     // Read values from layout and into file
-    public void save(View view) {
+    public void save() {
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	SharedPreferences.Editor ed = sPref.edit();
 	ed.putString("server_ip", (String)getTextVal(R.id.server_ip));

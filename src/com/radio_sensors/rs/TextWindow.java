@@ -76,16 +76,8 @@ public class TextWindow extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
 	switch (item.getItemId()) {
-	case R.id.about:
-	    AboutBox.Show(this);
-	    return true;
-	case R.id.connect:
-	    return true;
-//	case R.id.plot:
-//	    toActivity("PlotWindow");
-//	    return true;
-	case R.id.prefs:
-	    toActivity("Prefs");
+	case R.id.plot:
+	    toActivity("PlotWindow");
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);

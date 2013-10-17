@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-	<item android:id="@+id/about" android:icon="@drawable/ic_menu_gallery"
-		android:title="About" />
+	<item android:id="@+id/load" android:icon="@drawable/ic_menu_save"
+		android:title="Load" />
 	<item android:id="@+id/save" android:icon="@drawable/ic_menu_save"
 		android:title="Save" />
+	<item android:id="@+id/reset" android:icon="@drawable/ic_menu_save"
+		android:title="Reset" />
 </menu>
