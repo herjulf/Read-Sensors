@@ -46,11 +46,17 @@
       android:layout_span="2" />
  </TableRow>
 
+<!-- Row 3: Empty row -->
+<View
+  android:layout_width="1dp"
+  android:layout_height="30dp">
+</View>
 
-   <!-- Row 3: RadioGroup for RadioButtons placed at column zero
-        with column span of three, thus creating one radio button
-        per cell of the table row. Last cell number 4 has the
+
+   <!-- Row 4: RadioGroup for RadioButtons placed at column zero
+        with column span of three, 
         textfield -->
+
         <TableRow>     
         <RadioGroup
                 android:id="@+id/RadioGroupTips"
@@ -83,8 +89,14 @@
 
         </TableRow>
         
- <!-- Row 4    Port  -->
 
+<!-- Row 5: Empty row -->
+<View
+  android:layout_width="1dp"
+  android:layout_height="30dp">
+</View>
+
+ <!-- Row 6    Port  -->
     <Button
         android:id="@+id/server_connect"
         android:layout_width="wrap_content"

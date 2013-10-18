@@ -8,6 +8,6 @@
 
     <string name="radio_plot_txt">Plot</string>
     <string name="radio_report_txt">Report</string>
-    <string name="radio_plot_demo_txt">Plot-Demo</string>
+    <string name="radio_plot_demo_txt">Demo-Plot</string>
 
 </resources>
