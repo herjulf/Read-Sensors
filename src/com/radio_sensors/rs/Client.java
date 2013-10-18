@@ -132,13 +132,16 @@ public class Client extends Activity {
 
 	    setContentView(R.layout.main);
 
+	    final EditText server_ip = (EditText) findViewById(R.id.server_ip);
+	    final EditText port = (EditText) findViewById(R.id.server_port);
+
+	    // Sync Pref and main menu
+	    sync_prefs();
+
 	    this.handler = new Handler();
 
 	    Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	    buttonConnect.setOnClickListener(new View.OnClickListener() {
-
-		    private EditText server_ip = (EditText) findViewById(R.id.server_ip);
-		    private EditText port = (EditText) findViewById(R.id.server_port);
 
 		    @Override
 		    public void onClick(View view) {
@@ -150,15 +153,8 @@ public class Client extends Activity {
 			    disconnect();
 			    return;
 			}
-			serverAddr = server_ip.getText().toString();
-			serverPort = port.getText().toString();
-
-			// FIXME
-			SharedPreferences sp  = getSharedPreferences("Read Sensors", context.MODE_PRIVATE);
-			SharedPreferences.Editor ed = sp.edit();
-			ed.putString("server-ip", serverAddr);
-			ed.putString("server-port", serverPort);
-			ed.commit();
+			serverAddr = get_server_ip();
+			serverPort = String.valueOf(get_server_port());
 
 			started = true;
 //			plot_select();
@@ -466,6 +462,10 @@ public class Client extends Activity {
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	return sPref.getString("tag", "T");
     }
-
-
+    public void sync_prefs(){
+	final EditText server_ip = (EditText) findViewById(R.id.server_ip);
+	final EditText port = (EditText) findViewById(R.id.server_port);
+	server_ip.setText(get_server_ip());
+	port.setText(String.valueOf(get_server_port()));
+    }
 }
