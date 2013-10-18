@@ -9,6 +9,7 @@
 	android:id="@+id/text"
           android:layout_width="fill_parent"
           android:layout_height="fill_parent"
+	  android:maxLines="20"
           android:layout_weight="1"
 	  android:scrollHorizontally="false"
           android:text="This is read-sensors text pane. This is where text reports from sensd should appear.\n\n"

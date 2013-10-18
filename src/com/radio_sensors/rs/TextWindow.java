@@ -54,6 +54,8 @@ import android.util.Log;
 
 public class TextWindow extends Activity {
 
+    private String report = "";
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -111,7 +113,8 @@ public class TextWindow extends Activity {
 		case Client.SENSD: // New report from sensd
 		    String s = (String)msg.obj;
 		    TextView tv = (TextView) findViewById(R.id.text);
-		    tv.setText(s);
+		    report = report+"\n"+s;
+		    tv.setText(report);
 
 		    break;
 		default:	

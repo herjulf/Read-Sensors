@@ -130,7 +130,6 @@ public class Client extends Activity {
 
     protected void onDestroy()	{
 	super.onDestroy();
-
 	if(connected)	    {
 	    connected = false;
 	    try		    {
@@ -182,6 +181,9 @@ public class Client extends Activity {
 	    return true;
 	case R.id.plot:
 	    toActivity("PlotWindow");
+	    return true;
+	case R.id.report:
+	    toActivity("TextWindow");
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
