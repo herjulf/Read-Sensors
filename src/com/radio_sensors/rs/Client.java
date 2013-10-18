@@ -16,6 +16,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -34,23 +35,9 @@ import java.util.Vector;
 import android.util.Log;
 import android.os.Message;
 
-
 public class Client extends Activity {
-    private class StateSaver 
-    {
-	private Socket socket = null;
-	private boolean connected = false;
-	private boolean started = false;
-	private Thread thread = null;
-	private String serverAddr = "";
-	private String serverPort = "";
-	private String sid = "";
-	private String tag = "";
-    }
-    final public static int SENSD = 3;      // Message	to other activity
-
+    final public static int SENSD = 3;           // Message	to other activity
     public static boolean debug = false;
-    public static Client client = null;
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -59,40 +46,147 @@ public class Client extends Activity {
     private String serverPort = "";
     private String sid = "";
     private String tag = "";
-    Handler handler = null;
-    Thread thread = null;
+    private boolean active = false; // Show toasts only when active
+    private Handler handler = null;
+    private Thread thread = null;
     public static Handler ploth = null; // PlotWindow handler
     public static Handler reporth = null;
+    public static Client client = null;
 
-       // This is code for lower right button menu
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.layout.main_menu, menu);
-	    return true;
-	}	
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	client = this;
+	setContentView(R.layout.main);
+	this.handler = new Handler();
+	// Set-up default values from prefs
+	EditText et = (EditText) findViewById(R.id.server_ip);
+	et.setText(get_server_ip());
+	et = (EditText) findViewById(R.id.server_port);
+	et.setText(""+get_server_port());
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    // Handle item selection
-	    switch (item.getItemId()) {
-	    case R.id.about:
-		AboutBox.Show(this);
-		return true;
-	    case R.id.prefs:
-		toActivity("PrefWindow");
-		return true;
-	    case R.id.debug:
-		Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
-		debug=true;
-	        return true;
-	    case R.id.plot:
-		toActivity("PlotWindow");
-		return true;
-	    default:
-	        return super.onOptionsItemSelected(item);
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+
+	buttonConnect.setOnClickListener(new View.OnClickListener() {
+
+		private EditText server_ip = (EditText) findViewById(R.id.server_ip);
+		private EditText port = (EditText) findViewById(R.id.server_port);
+		
+		@Override
+		public void onClick(View view) {
+		    
+		    // We can can change throughout the connection
+		    
+		    if(connected) {
+			Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
+			disconnect();
+			return;
+		    }
+		    serverAddr = server_ip.getText().toString();
+		    serverPort = port.getText().toString();
+
+		    started = true;
+		    connect();
+		}
+	    });
+    }
+
+    public void onClick(View view) {
+		    
+	// We can can change throughout the connection
+	EditText server_ip = (EditText) findViewById(R.id.server_ip);
+	EditText port = (EditText) findViewById(R.id.server_port);
+	if(connected) {
+	    Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
+	    disconnect();
+	    return;
+	}
+	serverAddr = server_ip.getText().toString();
+	serverPort = port.getText().toString();
+	
+	started = true;
+	connect();
+    }
+
+	    
+
+    protected void onStart(){
+	super.onStart();
+	active = true;
+    }
+
+    protected void onResume(){
+	super.onResume();
+    }
+
+    protected void onPause(){
+	super.onPause();
+    }
+
+    protected void onStop(){  // This is called when starting another activity
+	active = false;
+	super.onStop();
+    }
+
+    protected void onDestroy()	{
+	super.onDestroy();
+
+	if(connected)	    {
+	    connected = false;
+	    try		    {
+		if(this.thread != null)
+		    {
+			Thread threadHelper = this.thread; 
+			this.thread = null;
+			threadHelper.interrupt();
+		    }
+	    }
+	    catch (Exception e1)		    {
 	    }
 	}
+
+    }
+
+    // This is called on resize
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+	super.onConfigurationChanged(newConfig);
+	setContentView(R.layout.main);
+	EditText et = (EditText) findViewById(R.id.server_ip);
+	et.setText(get_server_ip());
+	et = (EditText) findViewById(R.id.server_port);
+	et.setText(""+get_server_port());
+    }
+
+    // This is code for lower right button menu
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+	MenuInflater inflater = getMenuInflater();
+	inflater.inflate(R.layout.main_menu, menu);
+	return true;
+    }	
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+	// Handle item selection
+	switch (item.getItemId()) {
+	case R.id.about:
+	    AboutBox.Show(this);
+	    return true;
+	case R.id.prefs:
+	    toActivity("PrefWindow");
+	    return true;
+	case R.id.debug:
+	    Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
+	    debug=true;
+	    return true;
+	case R.id.plot:
+	    toActivity("PlotWindow");
+	    return true;
+	default:
+	    return super.onOptionsItemSelected(item);
+	}
+    }
 
     private void toActivity(String name){
 	Intent i = new Intent();
@@ -105,108 +199,6 @@ public class Client extends Activity {
 	}
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState)
-	{
-	    super.onCreate(savedInstanceState);
-	    client = this;
-	    // To keep states over rotates etc.
-	    StateSaver saved = (StateSaver) getLastNonConfigurationInstance();
-	    if (saved != null && saved.started) {
-		// Restore saved running state
-		Log.d("RStrace Stateserver RESTORE", "!null");        
-
-		setContentView(R.layout.main);
-
-	    // Rotate when not connected
-
-		socket = saved.socket;
-		connected = saved.connected;
-		started = saved.started;
-		serverAddr = saved.serverAddr;
-		serverPort = saved.serverPort;
-		sid = saved.sid;
-		tag = saved.tag;
-		connect();
-	    } 
-
-	    setContentView(R.layout.main);
-
-	    this.handler = new Handler();
-
-	    Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	    buttonConnect.setOnClickListener(new View.OnClickListener() {
-
-		    private EditText server_ip = (EditText) findViewById(R.id.server_ip);
-		    private EditText port = (EditText) findViewById(R.id.server_port);
-
-		    @Override
-		    public void onClick(View view) {
-
-			// We can can change throughout the connection
-
-			if(connected) {
-			    Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
-			    disconnect();
-			    return;
-			}
-			serverAddr = server_ip.getText().toString();
-			serverPort = port.getText().toString();
-
-			// FIXME
-			SharedPreferences sp  = getSharedPreferences("Read Sensors", context.MODE_PRIVATE);
-			SharedPreferences.Editor ed = sp.edit();
-			ed.putString("server-ip", serverAddr);
-			ed.putString("server-port", serverPort);
-			ed.commit();
-
-			started = true;
-//			plot_select();
-			connect();
-		    }
-		});
-	}
-	    
-            @Override
-		public Object onRetainNonConfigurationInstance() {
-		StateSaver saved = new StateSaver();
-		// Place holder for storing variables needed
-		// to keep states over rotates etc.
-
-		Log.d("RStrace SAVE", "1");        
-		saved.socket = socket;
-		saved.connected = connected;
-		saved.started = started;
-		saved.serverAddr = serverAddr;
-		saved.serverPort = serverPort;
-		saved.sid = sid;
-		saved.tag = tag;
-
-		return saved;
-	}
-
-    protected void onDestroy()
-	{
-	    super.onDestroy();
-
-	    if(connected)
-		{
-		    connected = false;
-		    try
-			{
-			    if(this.thread != null)
-				{
-				    Thread threadHelper = this.thread; 
-				    this.thread = null;
-				    threadHelper.interrupt();
-				}
-			}
-		    catch (Exception e1)
-			{
-			}
-		}
-
-	}
 
     // Send a message to other activity
     protected void message(Handler h, int what, Object msg){
@@ -287,10 +279,10 @@ public class Client extends Activity {
 					    {
 						// Avoid error message on user disconnect
 						public void run()
-						{
-						    if (connected)
-							Toast.makeText(context, strMessage, 3000).show();
-						}
+						    {
+							if (connected)
+							    Toast.makeText(context, strMessage, 3000).show();
+						    }
 					    };
 
 					handlerException.post(rExceptionThread);
@@ -319,7 +311,7 @@ public class Client extends Activity {
 				    message(ploth, SENSD, strData);
 				if (reporth != null)
 				    message(reporth, SENSD, strData);
-				if(true) runOnUiThread(new Runnable() {
+				if(active) runOnUiThread(new Runnable() {
 					public void run() {
 					    String f = filter(strData, sid, tag);
 					    String t = filter(strData, null, "UT"); // time
@@ -332,12 +324,7 @@ public class Client extends Activity {
 						    Double res = Double.parseDouble(f);
 						    Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
-/*
-  XXX: Use indirect method
-						    Pt p = new Pt(x, res, seq);
-						    power.sample(p);
-						    seq++;
-*/
+
 						}
 					}
 				    });
@@ -367,42 +354,22 @@ public class Client extends Activity {
 		    }
 	    }
     }
-/*
-  XXX: move to plot
-    private void plot_select()
-	{
 
-	    if(tag.equals("T"))
-		{
-		    plot.y1axis("Temp [C]", 1.0);
-		}
-
-	    if(tag.equals("RH"))
-		{
-		    plot.y1axis("RH [%]", 1.0);
-		}
-
-	    if(tag.equals("SEQ"))
-		{
-		    plot.y1axis("SEQ no]", 1.0);
-		}
-	}
-*/
     private void connect()
-    {
-	if(thread != null)
-	    {
-		thread.stop();
-		thread = null;
-	    }
-	thread = new Thread(new RunThread());
-	thread.start();
-    }
+	{
+	    if(thread != null)
+		{
+		    thread.stop();
+		    thread = null;
+		}
+	    thread = new Thread(new RunThread());
+	    thread.start();
+	}
 
     private void disconnect()
-    {
+	{
 
-    if(connected)
+	    if(connected)
 		{
 		    connected = false;
 		    try
@@ -419,53 +386,51 @@ public class Client extends Activity {
 			}
 		}
 
-	connected = false;
+	    connected = false;
 
-	try 
-	    {
-		socket.close();
-	    }
-	catch (IOException e1) 
-	    {
-		e1.printStackTrace();
-	    }
-	socket = null;
+	    try 
+		{
+		    socket.close();
+		}
+	    catch (IOException e1) 
+		{
+		    e1.printStackTrace();
+		}
+	    socket = null;
 
-	Message message = Message.obtain();
-	message.what = 1;
-	mHandler.sendMessageDelayed(message, 1);
-    }
+	    Message message = Message.obtain();
+	    message.what = 1;
+	    mHandler.sendMessageDelayed(message, 1);
+	}
 
     private final Handler mHandler = new Handler() {
-		public void handleMessage(Message msg ) 
-	    {
-		Message message;
-		Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	    public void handleMessage(Message msg ) 
+		{
+		    Message message;
+		    Button buttonConnect = (Button) findViewById(R.id.server_connect);
 
-		if(connected)
-		    buttonConnect.setText("Disconnect");
-		else
-		    buttonConnect.setText("Connect");
-	    }
+		    if(connected)
+			buttonConnect.setText("Disconnect");
+		    else
+			buttonConnect.setText("Connect");
+		}
 	};
 
-    // access methods for prefs (dont access them other way from external)
+    // access methods for prefs (would have them in PrefWindow, but cant make it work)
     public String get_server_ip(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("server_ip", "Radio-Sensors.com");
+	return sPref.getString("server_ip", PrefWindow.SERVER_IP);
     }
     public int get_server_port(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("server_port", 1234);
+	return sPref.getInt("server_port", PrefWindow.SERVER_PORT);
     }
     public String get_sid(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("sid", "fcc23d000000511d");
+	return sPref.getString("sid", PrefWindow.SID);
     }
     public String get_tag(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("tag", "T");
+	return sPref.getString("tag", PrefWindow.TAG);
     }
-
-
 }

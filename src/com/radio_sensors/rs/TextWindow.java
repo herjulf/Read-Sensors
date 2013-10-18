@@ -41,6 +41,7 @@ import android.view.MotionEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
+import android.widget.TextView;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
@@ -58,6 +59,7 @@ public class TextWindow extends Activity {
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.text);
+	Client.reporth = mHandler;
     }
 
     protected void onDestroy(){
@@ -100,5 +102,24 @@ public class TextWindow extends Activity {
 	super.onConfigurationChanged(newConfig);
 	setContentView(R.layout.text);
     }
+
+    private final Handler mHandler = new Handler() {
+	    public void handleMessage(Message msg) {
+		Message message;
+		Pt p;
+		switch (msg.what) {
+		case Client.SENSD: // New report from sensd
+		    String s = (String)msg.obj;
+		    TextView tv = (TextView) findViewById(R.id.text);
+		    tv.setText(s);
+
+		    break;
+		default:	
+		    Log.e("Report handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
+		    break;
+		}
+	    }
+	};
+
 
 }

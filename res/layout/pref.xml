@@ -23,7 +23,7 @@
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:layout_column="2"
-      android:text="Radio-Sensors.COM" />
+      android:text="" />
       android:layout_span="2" />
  </TableRow>
 
@@ -41,7 +41,7 @@
       android:id="@+id/server_port"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content" 
-      android:text="1234" 
+      android:text="" 
       android:numeric="decimal"
       android:layout_column="2"
       android:layout_span="2" />

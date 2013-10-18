@@ -54,6 +54,14 @@ import android.view.Display;
 import android.util.Log;
 
 public class PrefWindow extends Activity {
+    // Default preference values. 
+    // Only place where default values should appear.
+    // XXX: Also set in res/layout/main.xml.
+    final public static String SERVER_IP = "Radio-Sensors.com"; 
+    final public static int SERVER_PORT = 1235;
+    final public static String SID  = "fcc23d000000511d";
+    final public static String TAG  = "T";
+
 
     /** Called when the activity is first created. */
     @Override
@@ -62,7 +70,6 @@ public class PrefWindow extends Activity {
 	setContentView(R.layout.pref);
 	setTitle("Read-Sensors: Prefs");
 	setup();
-
     }
 
     protected void onDestroy(){
@@ -105,14 +112,15 @@ public class PrefWindow extends Activity {
 	setTextVal(R.id.server_ip, "<null>");
 	setIntVal(R.id.server_port, 0);
     }
+
     // Read values from file and into layout
     private void setup(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	setTextVal(R.id.server_ip, sPref.getString("server_ip", "Radio-Sensors.com"));
-	setIntVal(R.id.server_port, sPref.getInt("server_port", 1234));
-	setTextVal(R.id.sid, sPref.getString("sid", "2813e3dc0300007f"));
-	setTextVal(R.id.tag, sPref.getString("tag", "T"));
+	setTextVal(R.id.server_ip, Client.client.get_server_ip());
+	setIntVal(R.id.server_port, Client.client.get_server_port());
+	setTextVal(R.id.sid, Client.client.get_sid());
+	setTextVal(R.id.tag, Client.client.get_tag());
     }
+
     // Read values from layout and into file
     private void save() {
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
@@ -141,7 +149,6 @@ public class PrefWindow extends Activity {
 	final EditText et = (EditText) findViewById(id);
 	et.setText(i+"");
     }
-
 
 }
 

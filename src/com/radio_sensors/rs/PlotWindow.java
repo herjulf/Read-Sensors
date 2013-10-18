@@ -350,12 +350,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 		    break;
 		default:	
-		    Log.e("Test handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
+		    Log.e("Plot handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
 		    break;
 		}
 	    }
 	};
-
-
 
 }
