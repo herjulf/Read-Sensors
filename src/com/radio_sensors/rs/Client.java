@@ -141,15 +141,11 @@ public class Client extends Activity {
 
 		    private EditText server_ip = (EditText) findViewById(R.id.server_ip);
 		    private EditText port = (EditText) findViewById(R.id.server_port);
-		    private EditText lsid = (EditText) findViewById(R.id.sid);
-		    private EditText ltag = (EditText) findViewById(R.id.tag);
 
 		    @Override
 		    public void onClick(View view) {
 
 			// We can can change throughout the connection
-			sid = lsid.getText().toString();
-			tag = ltag.getText().toString();
 
 			if(connected) {
 			    Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
