@@ -8,6 +8,8 @@
     android:stretchColumns="1" 
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
+ <!-- Row 1    Server -->
+
  <TableRow>
 
   <TextView
@@ -25,7 +27,7 @@
 
  </TableRow>
 
-
+ <!-- Row 2    Port  -->
  <TableRow>
 
   <TextView
@@ -43,6 +45,45 @@
       android:layout_column="2"
       android:layout_span="2" />
  </TableRow>
+
+
+   <!-- Row 3: RadioGroup for RadioButtons placed at column zero
+        with column span of three, thus creating one radio button
+        per cell of the table row. Last cell number 4 has the
+        textfield -->
+        <TableRow>     
+        <RadioGroup
+                android:id="@+id/RadioGroupTips"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_column="0"
+                android:layout_span="3"
+                android:checkedButton="@+id/radioFifteen">
+
+                <RadioButton android:id="@+id/radio_report"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/radio_report_txt"
+                        android:textSize="20sp" />
+
+                <RadioButton android:id="@+id/radio_plot"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/radio_plot_txt"
+                        android:textSize="20sp" />
+
+                <RadioButton android:id="@+id/radio_plot_demo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/radio_plot_demo_txt"
+                        android:textSize="20sp" />
+
+        </RadioGroup>
+
+        </TableRow>
+        
+ <!-- Row 4    Port  -->
 
     <Button
         android:id="@+id/server_connect"

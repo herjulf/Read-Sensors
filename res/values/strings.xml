@@ -6,4 +6,8 @@
     <string name="hello_world">Hello world!</string>
     <string name="about">Authors:\n  Robert Olsson \n  Olof Hagsand </string>
 
+    <string name="radio_plot_txt">Plot</string>
+    <string name="radio_report_txt">Report</string>
+    <string name="radio_plot_demo_txt">Plot-Demo</string>
+
 </resources>
