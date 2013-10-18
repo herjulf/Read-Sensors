@@ -47,6 +47,7 @@ public class Client extends Activity {
 	private String sid = "";
 	private String tag = "";
     }
+    final public static int SENSD = 3;      // Message	to other activity
 
     public static boolean debug = false;
     private Socket socket = null;
@@ -59,12 +60,8 @@ public class Client extends Activity {
     private String tag = "";
     Handler handler = null;
     Thread thread = null;
-    public static Plot plot;         // Encompassing plot frame
-    public static PlotVector power;  // Single function in plot
-
-    private int  seq = 0;
-
-    static long nsoffset = 0; // guaranteed monotonic
+    public static Handler ploth = null; // PlotWindow handler
+    public static Handler reporth = null;
 
        // This is code for lower right button menu
 	@Override
@@ -85,6 +82,7 @@ public class Client extends Activity {
 		toActivity("Prefs");
 		return true;
 	    case R.id.debug:
+		Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
 		debug=true;
 	        return true;
 	    case R.id.plot:
@@ -132,7 +130,6 @@ public class Client extends Activity {
 	    } 
 
 	    setContentView(R.layout.main);
-	    init_plot();
 
 	    this.handler = new Handler();
 
@@ -167,7 +164,7 @@ public class Client extends Activity {
 			ed.commit();
 
 			started = true;
-			plot_select();
+//			plot_select();
 			connect();
 		    }
 		});
@@ -214,19 +211,12 @@ public class Client extends Activity {
 
 	}
 
-    // Initialize the Plot area
-    private void init_plot(){
-	// Initialize plotter
-	Display display = getWindowManager().getDefaultDisplay(); 
-	plot = new Plot(R.id.img, display);
-	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
-	plot.xaxis("Time[s]", 1.0);  
-	plot.y1axis("Temp [C]", 1.0);
-	plot.y2axis("", 1.0);
-	// Add one graph (plotvector) for power
-	Vector <Pt> vec = new Vector<Pt>(); 
-	power = new PlotVector(vec, "Temp", 1, Plot.LINES, plot.nextColor());
-	plot.add(power);
+    // Send a message to other activity
+    protected void message(Handler h, int what, Object msg){
+	Message message = Message.obtain();
+	message.what = what;
+	message.obj = msg;
+	h.sendMessage(message); // To other activity
     }
 
 
@@ -328,11 +318,12 @@ public class Client extends Activity {
 				    continue;
 
 				final String strData = new String(buf, 0, j).replace("\r", "");
-				Log.d("RStrace", "strData="+strData);
+				if (ploth != null)
+				    message(ploth, SENSD, strData);
+				if (reporth != null)
+				    message(reporth, SENSD, strData);
 				if(true) runOnUiThread(new Runnable() {
 					public void run() {
-					    Log.d("RStrace", "sid="+sid);
-					    Log.d("RStrace", "tag="+tag);
 					    String f = filter(strData, sid, tag);
 					    String t = filter(strData, null, "UT"); // time
 
@@ -344,11 +335,12 @@ public class Client extends Activity {
 						    Double res = Double.parseDouble(f);
 						    Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
+/*
+  XXX: Use indirect method
 						    Pt p = new Pt(x, res, seq);
 						    power.sample(p);
 						    seq++;
-//						ImageView image = (ImageView) findViewById(R.id.img);
-//						plot.autodraw(image);
+*/
 						}
 					}
 				    });
@@ -378,6 +370,8 @@ public class Client extends Activity {
 		    }
 	    }
     }
+/*
+  XXX: move to plot
     private void plot_select()
 	{
 
@@ -396,7 +390,7 @@ public class Client extends Activity {
 		    plot.y1axis("SEQ no]", 1.0);
 		}
 	}
-
+*/
     private void connect()
     {
 	if(thread != null)

@@ -60,7 +60,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private static int PLOTINTERVAL = 1000; // interval between plot calls in ms
     private static int SAMPLEINTERVAL = 1000; // interval between sample receives
     final public static int PLOT = 5;      // Message
-    final public static int SAMPLE = 8;      // Message	
+    final public static int SAMPLE = 8;      // Debug Sample
+
+    private String sid = "fcc23d000000511d"; // XXX: should select
+    private String tag = "T"; // XXX: should select
 
     private Plot plot;
     private PlotVector power;
@@ -69,6 +72,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private Random rnd;
 
     private int seq = 0;
+    private boolean runPlot = false;
     private boolean resetPending = false;
 
     private Pt touch_p = new Pt();    // Last mouse pointer touch point
@@ -87,20 +91,14 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.plot);
+	Log.d("RStrace", "onCreate");
+	Client.ploth = mHandler;
 	image = (ImageView) findViewById(R.id.img);
 	image.setOnTouchListener(this);
 
 	rnd = new Random(42); // Init random generator
 
-	plot = Client.plot;
-	power = Client.power;
-
-	if (Client.debug){
-	    Vector <Pt> vec = new Vector<Pt>(); 
-	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
-	    plot.add(random);
-	}
-
+	init_plot();
 
 	// Initialize messages (plot for plotting, samle for test samples)
 
@@ -108,11 +106,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	message.what = PLOT;
 	mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 
-	if (Client.debug){
-	    message = Message.obtain();
-	    message.what = SAMPLE; 
-	    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
-	}
+	message = Message.obtain();
+	message.what = SAMPLE; 
+	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+
 	/* XXX: move to onStart? */
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
@@ -120,15 +117,57 @@ public class PlotWindow extends Activity implements OnTouchListener{
     }
 
     protected void onStart(){
+	runPlot = true;
 	super.onStart();
+	Log.d("RStrace", "onStart");
     }
 
-    protected void onStop(){
+    protected void onResume(){
+	super.onResume();
+	Log.d("RStrace", "onResume");
+    }
+
+    protected void onPause(){
+	super.onPause();
+	Log.d("RStrace", "onPause");
+    }
+
+    protected void onStop(){  // This is called when starting another activity
+	runPlot = false;
 	super.onStop();
+	Log.d("RStrace", "onStop");
     }
 
-    protected void onDestroy(){
-	    super.onDestroy();
+    protected void onDestroy(){ // This is called on 'Back' button
+	super.onDestroy();
+	// empty timer messages to mkPlot
+	if (mHandler.hasMessages(PLOT))
+	    mHandler.removeMessages(PLOT);
+	if (mHandler.hasMessages(SAMPLE))
+	    mHandler.removeMessages(SAMPLE);
+	Client.ploth = null;
+
+	Log.d("RStrace", "onDestroy");
+    }
+
+    // Initialize the Plot area
+    private void init_plot(){
+	// Initialize plotter
+	Display display = getWindowManager().getDefaultDisplay(); 
+	plot = new Plot(R.id.img, display);
+	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
+	plot.xaxis("Time[s]", 1.0);  
+	plot.y1axis("Temp [C]", 1.0);
+	plot.y2axis("", 1.0);
+	// Add one graph (plotvector) for power
+	Vector <Pt> vec = new Vector<Pt>(); 
+	power = new PlotVector(vec, "Temp", 1, Plot.LINES, plot.nextColor());
+	plot.add(power);
+	if (Client.debug){
+	    vec = new Vector<Pt>(); 
+	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
+	    plot.add(random);
+	}
     }
 
     // This is code for lower right button menu
@@ -240,18 +279,62 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	}	
 	return true; // indicate event was handled
     }
+    private String filter(String s, String id, String tag) {
+	String s1 = "";
+	boolean got = true;
+	    
+	tag = tag + "=";
+	    
+	if( id != null) {
+	    got = false;
+	    for (String t: s.split(" ")) {
+		if(t.indexOf(id) > 0) {
+		    got = true;
+		    Log.d("RStrace 2", String.format("id=%s tag=%s", id, tag));
+		    break;
+		}
+	    } 
+	}
 
+	if(got) {
+	    Log.d("RStrace 3", String.format("id%s tag=%s", id, tag));
+	    for (String t: s.split(" ")) {
+		if(t.indexOf(tag) == 0)
+		    s1 = t.substring(tag.length());
+	    } 
+	}
+	return  s1;
+    }
 
 
     private final Handler mHandler = new Handler() {
 	    public void handleMessage(Message msg) {
 		Message message;
+		Pt p;
 		switch (msg.what) {
-		case SAMPLE:
+		case Client.SENSD: // New report from sensd
+		    String s = (String)msg.obj;
+		    Log.d("RStrace", "sensd msg: "+s);
+		    String f = filter(s, sid, tag);
+		    String t = filter(s, null, "UT"); // time
+		    Log.d("RStrace", "sid="+sid);
+		    Log.d("RStrace", "tag="+tag);
+
+		    Log.d("RStrace", "f= "+f);
+		    Log.d("RStrace", "t= "+t);
+		    if(t == "" || f == "")  // XXX: something wrong with f match
+			break;
+		    Long x = new Long(t);
+		    Double res = Double.parseDouble(f);
+		    p = new Pt(x, res, seq);
+		    power.sample(p);
+		    seq++;
+		    break;
+		case SAMPLE: // Periodic debug sample
 		    message = Message.obtain();
-		    if (true){ // debug
+		    if (Client.debug){ // debug
 			int y = rnd.nextInt(10);
-			Pt p = new Pt(1381599669+seq, y, seq);
+			p = new Pt(1381599669+seq, y, seq);
 			random.sample(p);
 			seq++;
 		    }
@@ -259,6 +342,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 		    break;
 		case PLOT:
+		    if (!runPlot)
+			break;
 		    message = Message.obtain();
 		    plot.autodraw(image);
 		    message.what = PLOT;
