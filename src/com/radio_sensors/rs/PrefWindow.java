@@ -53,7 +53,7 @@ import android.content.SharedPreferences;
 import android.view.Display;
 import android.util.Log;
 
-public class Prefs extends Activity {
+public class PrefWindow extends Activity {
 
     /** Called when the activity is first created. */
     @Override
@@ -114,7 +114,7 @@ public class Prefs extends Activity {
 	setTextVal(R.id.tag, sPref.getString("tag", "T"));
     }
     // Read values from layout and into file
-    public void save() {
+    private void save() {
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	SharedPreferences.Editor ed = sPref.edit();
 	ed.putString("server_ip", (String)getTextVal(R.id.server_ip));

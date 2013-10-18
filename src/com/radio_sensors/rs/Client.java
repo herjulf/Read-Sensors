@@ -50,6 +50,7 @@ public class Client extends Activity {
     final public static int SENSD = 3;      // Message	to other activity
 
     public static boolean debug = false;
+    public static Client client = null;
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -79,7 +80,7 @@ public class Client extends Activity {
 		AboutBox.Show(this);
 		return true;
 	    case R.id.prefs:
-		toActivity("Prefs");
+		toActivity("PrefWindow");
 		return true;
 	    case R.id.debug:
 		Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
@@ -108,7 +109,7 @@ public class Client extends Activity {
     public void onCreate(Bundle savedInstanceState)
 	{
 	    super.onCreate(savedInstanceState);
-
+	    client = this;
 	    // To keep states over rotates etc.
 	    StateSaver saved = (StateSaver) getLastNonConfigurationInstance();
 	    if (saved != null && saved.started) {
@@ -447,4 +448,24 @@ public class Client extends Activity {
 		    buttonConnect.setText("Connect");
 	    }
 	};
+
+    // access methods for prefs (dont access them other way from external)
+    public String get_server_ip(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("server_ip", "Radio-Sensors.com");
+    }
+    public int get_server_port(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("server_port", 1234);
+    }
+    public String get_sid(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("sid", "fcc23d000000511d");
+    }
+    public String get_tag(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("tag", "T");
+    }
+
+
 }

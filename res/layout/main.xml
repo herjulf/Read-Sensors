@@ -40,7 +40,7 @@
       android:id="@+id/server_port"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content" 
-      android:text="1234" 
+      android:text="1235" 
       android:numeric="decimal"
       android:layout_column="2"
       android:layout_span="2" />

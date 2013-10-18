@@ -53,17 +53,14 @@ import android.util.Log;
 
 public class PlotWindow extends Activity implements OnTouchListener{
     private static int XWINDOW = 10; // how many seconds to show default
-    public static int THREADKILLTIMEOUT = 3; // interval until kill rcv thread s
-    public static long LOSSTIMEOUT = 2; // interval [s] until pkt considered lost
-    public static long PURGETIMEOUT = 20; // interval [s] until pkt info purged
 
     private static int PLOTINTERVAL = 1000; // interval between plot calls in ms
     private static int SAMPLEINTERVAL = 1000; // interval between sample receives
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Debug Sample
 
-    private String sid = "fcc23d000000511d"; // XXX: should select
-    private String tag = "T"; // XXX: should select
+    private String sid;
+    private String tag;
 
     private Plot plot;
     private PlotVector power;
@@ -95,6 +92,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	Client.ploth = mHandler;
 	image = (ImageView) findViewById(R.id.img);
 	image.setOnTouchListener(this);
+
+	sid = Client.client.get_sid(); // XXX should select
+	tag = Client.client.get_tag(); // XXX should select
 
 	rnd = new Random(42); // Init random generator
 
