@@ -112,6 +112,11 @@ public class Client extends Activity {
 
 		    started = true;
 		    connect();
+
+		    if( mode == MODE_PLOT)
+			toActivity("PlotWindow");
+		    if( mode == MODE_REPORT)
+			toActivity("TextWindow");
 		}
 	    });
     }
@@ -343,16 +348,18 @@ public class Client extends Activity {
 					    String f = filter(strData, sid, tag);
 					    String t = filter(strData, null, "UT"); // time
 
-					    Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
+					    if( mode == MODE_REPORT) {
+						Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
+						
+						if( f != "" && t != "") 
+						    {
+							Long x = new Long(t);
+							Double res = Double.parseDouble(f);
+							Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
-					    if( f != "" && t != "") 
-						{
-						    Long x = new Long(t);
-						    Double res = Double.parseDouble(f);
-						    Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
-
-
-						}
+							
+						    }
+					    }
 					}
 				    });
 			    }
