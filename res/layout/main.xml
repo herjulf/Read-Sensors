@@ -65,7 +65,7 @@
                 android:layout_height="wrap_content"
                 android:layout_column="0"
                 android:layout_span="3"
-                android:checkedButton="@+id/radioFifteen">
+                android:checkedButton="@+id/radio_report">
 
                 <RadioButton android:id="@+id/radio_report"
                         android:layout_width="wrap_content"
@@ -79,10 +79,10 @@
                         android:text="@string/radio_plot_txt"
                         android:textSize="20sp" />
 
-                <RadioButton android:id="@+id/radio_plot_demo"
+                <RadioButton android:id="@+id/radio_demo_plot"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/radio_plot_demo_txt"
+                        android:text="@string/radio_demo_plot_txt"
                         android:textSize="20sp" />
 
         </RadioGroup>
