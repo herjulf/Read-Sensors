@@ -20,10 +20,12 @@ package com.radio_sensors.rs;
 
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Vector;
+import java.util.ArrayList;
 import java.util.Random;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -35,16 +37,21 @@ import android.graphics.Point;
 import android.graphics.Region;
 import android.graphics.Typeface;
 import android.text.format.Time;
+
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.View.OnClickListener;
 import android.view.MotionEvent;
 import android.view.Menu;
+import android.view.SubMenu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
 import android.content.res.Configuration;
 import android.content.Intent;
@@ -59,14 +66,15 @@ public class PlotWindow extends Activity implements OnTouchListener{
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Debug Sample
 
-    private String sid;
-    private String tag;
+    private String sid = null;
+    private String tag = null;
 
     private Plot plot;
-    private PlotVector power;
     private PlotVector random; // Test
 
     private Random rnd;
+
+    private ArrayList <SensdId> idv = new ArrayList<SensdId>(); 
 
     private int seq = 0;
     private boolean runPlot = false;
@@ -88,13 +96,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.plot);
-	Log.d("RStrace", "onCreate");
 	Client.ploth = mHandler;
+	sid = Client.client.get_sid();
+	tag = Client.client.get_tag();
 	image = (ImageView) findViewById(R.id.img);
 	image.setOnTouchListener(this);
-
-	sid = Client.client.get_sid(); // XXX should select
-	tag = Client.client.get_tag(); // XXX should select
 
 	rnd = new Random(42); // Init random generator
 
@@ -113,7 +119,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	/* XXX: move to onStart? */
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
+	setActive();
 	plot.autodraw(image);
+
     }
 
     protected void onStart(){
@@ -157,17 +165,39 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	plot = new Plot(R.id.img, display);
 	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
 	plot.xaxis("Time[s]", 1.0);  
+	// XXX
 	plot.y1axis("Temp [C]", 1.0);
 	plot.y2axis("", 1.0);
-	// Add one graph (plotvector) for power
-	Vector <Pt> vec = new Vector<Pt>(); 
-	power = new PlotVector(vec, "Temp", 1, Plot.LINES, plot.nextColor());
-	plot.add(power);
 	if (Client.debug){
-	    vec = new Vector<Pt>(); 
+	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
 	    plot.add(random);
 	}
+    }
+
+    // Go through all plots and set active plotvercors according
+    // to global sid/tag setting
+    private void setActive(){
+	SensdId obj;
+	SensdTag t;
+
+	for(int i=0; i < idv.size() ; i++){
+ 	    obj = idv.get(i);
+	    if (sid == null || obj.id.equals(sid))
+		for(int j=0; j < obj.tagv.size(); j++){ 
+		    t = obj.tagv.get(j);
+		    if (tag == null || t.tag.equals(tag))
+			t.pv.setWhere(1);
+		    else
+			t.pv.setWhere(0);
+	    }
+	    else
+		for(int j=0; j < obj.tagv.size() ; j++){ 
+		    t = obj.tagv.get(j);
+		    t.pv.setWhere(0);
+		}
+	}	
+
     }
 
     // This is code for lower right button menu
@@ -175,26 +205,64 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
 	inflater.inflate(R.layout.plot_menu, menu);
+	MenuItem item;
+	SubMenu sm;
+	item = menu.getItem(1); // sid
+	sm = item.getSubMenu();
+	sm.setHeaderTitle("SensorId");
+	SensdId obj;
+	sm.add("All");
+	for(int i=0; i < idv.size() ; i++){ 
+	    obj = idv.get(i);
+	    sm.add(NONE, 74, NONE, obj.id); // XXX 33 means sensorid
+	}
+	item = menu.getItem(2); // tag
+	sm = item.getSubMenu();
+	sm.setHeaderTitle("TagName");
+	sm.add(NONE, 42, NONE, "All"); // XXX 42 means tag
+	sm.add(NONE, 42, NONE, "T");
+	sm.add(NONE, 42, NONE, "PS");
+	sm.add(NONE, 42, NONE, "P");
+	sm.add(NONE, 42, NONE, "V_MCU");
+	sm.add(NONE, 42, NONE, "RH");
+	sm.add(NONE, 42, NONE, "V_IN");
+	sm.add(NONE, 42, NONE, "V_A1");
+	sm.add(NONE, 42, NONE, "V_A2");
+	sm.add(NONE, 42, NONE, "V_A3");
 	return true;
     }	
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
+	String str;
 	switch (item.getItemId()) {
+	case 33: /* sensorid */
+	    str = (String)item.getTitle();
+	    if (str.equals("All"))
+		sid = null;
+	    else
+		sid = str; // active sid
+	    return true;
+	case 42: /* tag */
+	    str = (String)item.getTitle();
+	    if (str.equals("All"))
+		tag = null;
+	    else
+		tag = str;
+	    return true;
 	case R.id.report:
 	    toActivity("TextWindow");
 	    return true;
-	case R.id.select:
-	    select();
+	case R.id.sid:
+	case R.id.tag:
+	    return true;
+	case R.id.replot:
+	    plot.reset();
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
-    }
-
-    private void select(){
-	Toast.makeText(this, "Select (TBD)", Toast.LENGTH_SHORT).show();
     }
 
     private void toActivity(String name){
@@ -225,6 +293,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	double y = event.getY(0) - event.getY(1);
 	return Math.sqrt(x * x + y * y);
     }	
+
     @Override
     public boolean onTouch(View v, MotionEvent event) {
 	switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -248,6 +317,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	case MotionEvent.ACTION_POINTER_UP:
 	    touch_mode = NONE;
 //	    Log.d("RStrace", "touch_mode=NONE");
+	    setActive();
 	    plot.autodraw(image);
 	    break;
 	case MotionEvent.ACTION_MOVE:
@@ -279,33 +349,160 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	}	
 	return true; // indicate event was handled
     }
-    private String filter(String s, String id, String tag) {
-	String s1 = "";
-	boolean got = true;
-	    
-	tag = tag + "=";
-	    
-	if( id != null) {
-	    got = false;
-	    for (String t: s.split(" ")) {
-		if(t.indexOf(id) > 0) {
-		    got = true;
-		    Log.d("RStrace 2", String.format("id=%s tag=%s", id, tag));
-		    break;
-		}
-	    } 
-	}
 
-	if(got) {
-	    Log.d("RStrace 3", String.format("id%s tag=%s", id, tag));
-	    for (String t: s.split(" ")) {
-		if(t.indexOf(tag) == 0)
-		    s1 = t.substring(tag.length());
-	    } 
-	}
-	return  s1;
+    // private ArrayList <SensdId> idv;
+    private SensdId findid(String id){
+	SensdId obj;
+
+	for(int i=0; i < idv.size() ; i++){ 
+	    obj = idv.get(i);
+	    if (obj.id.equals(id)){
+		return obj;
+	    }
+	}	
+	return null;
     }
 
+    private void add_sample(String id, String tag, Long x, Double y, String label){
+//    private ArrayList <SensdId> idvector;
+	SensdId sid;
+	SensdTag stag;
+
+	// 1. See if id exists in idvector, if no create it
+	if ((sid = findid(id)) == null){
+	    sid = new SensdId(id);
+	    idv.add(sid);
+	}
+	// 2. See if tag exists in tagvector, if no, create it
+	if ((stag = sid.findtag(tag)) == null){
+	    stag = new SensdTag(tag);
+	    sid.tagv.add(stag);
+	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
+	    stag.pv = new PlotVector(vec, label, 0, Plot.LINES, plot.nextColor());
+	    plot.add(stag.pv); //?
+	}
+	// 3. Add to plotvector
+	Pt p = new Pt(x, y, stag.seq++);
+	stag.pv.sample(p);
+    }
+
+
+    /*
+     * Process sensd message.
+     * Identify ID and tags.
+     * Add entries to PlotVectors
+     * For tag documentation see README.md of https://github.com/herjulf/sensd
+     * Example sensd string: 
+     * 2013-10-12 19:41:14 UT=1381599674 &: E64=fcc23d000000511d PS=0 T=22.13  V_MCU=3.08 UP=28DD1 V_IN=4.47  V_A3=0 
+     */
+    private int sensd_msg(String s){
+	String[] sv;
+	String[] sv2;
+	String   tag, val;
+	Long     time=null; /* Time == x-coordinate */
+	String   id = null;
+	Double   y;
+
+	sv = s.split("[ \n]");
+	Log.d("RStrace", "report="+s);
+	/* Loop 1 : first identify time and id. Maybe they come in reverse order? */
+	for (int i=0; i<sv.length; i++){	
+	    if (sv[i].length() == 0)
+		continue;
+	    sv2 = sv[i].split("=");
+	    if (sv2.length != 2)
+		continue;
+	    tag = sv2[0];
+	    val = sv2[1];
+
+	    if (tag.equals("UT")){ // Unix time (Id)
+		time = new Long(val);
+	    }
+	    else if (tag.equals("TZ")){ // Time Zone (String)
+	    }
+	    else if (tag .equals("ID")){ // Unique 64 bit ID (S)
+		id = val;
+	    }
+	    else if (tag .equals("E64")){ // EUI-64 Unique 64 bit ID (S)
+		id = val;
+	    }
+	}
+	if (id == null || time == null){
+	    Log.e("RStrace", "Sensd report does not contain id or time");
+	    return -1;
+	}
+	/* Loop 2 : All value tags */
+	for (int i=0; i<sv.length; i++){	
+	    if (sv[i].length() == 0)
+		continue;
+	    sv2 = sv[i].split("=");
+	    if (sv2.length != 2)
+		continue;
+	    tag = sv2[0];
+	    val = sv2[1];
+	    if (tag.equals("T")){ // temp in Celcius (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "Temp[C]");
+	    }
+	    else if (tag.equals("PS")){ // Power Save Indicator (B)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "PS");
+	    }
+	    else if (tag.equals("P")){ // Pressure (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "P");
+	    }
+	    else if (tag.equals("V_MCU")){ // Microcontorller Voltage (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "V_MCU");
+	    }
+	    else if (tag.equals("UP")){ // Uptime (Ih)
+//		y = Double.parseDouble(val);
+//		add_sample(id, tag, time, y, "UP");
+	    }
+	    else if (tag.equals("RH")){ // Relative Humidity in % (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "RH");
+	    }
+	    else if (tag.equals("V_IN")){ // Voltage Input (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "V_IN");
+	    }
+	    else if (tag.equals("V_A1")){ // Voltage Analog 1 (A1) (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "V_A1");
+	    }
+	    else if (tag.equals("V_A2")){ // Voltage Analog 1 (A2) (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "V_A2");
+	    }
+	    else if (tag.equals("V_A3")){ // Voltage Analog 1 (A3) (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "V_A3");
+	    }
+	    else if (tag.equals("RSSI")){ // Reeiver Signal Strengh Indicator (Id)
+//		y = Double.parseDouble(val);
+//		add_sample(id, tag, time, y, "RSSI");
+	    }
+	    else if (tag.equals("LQI")){ // Link Quality Indicator (Id)
+//		y = Double.parseDouble(val);
+//		add_sample(id, tag, time, y, "LQI");
+	    }
+	    else if (tag.equals("SEQ")){ // Sequental Number (packet) (Id)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "SEQ");
+	    }
+	    else if (tag.equals("DRP")){ // Drop Probability (Contiki) (F)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "DRP");
+	    }
+	    else if (tag.equals("ADDR")){  // (S)
+		y = Double.parseDouble(val);
+		add_sample(id, tag, time, y, "ADDR");
+	    }
+	}
+	return 0;
+    }
 
     private final Handler mHandler = new Handler() {
 	    public void handleMessage(Message msg) {
@@ -313,22 +510,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		Pt p;
 		switch (msg.what) {
 		case Client.SENSD: // New report from sensd
-		    String s = (String)msg.obj;
-		    Log.d("RStrace", "sensd msg: "+s);
-		    String f = filter(s, sid, tag);
-		    String t = filter(s, null, "UT"); // time
-		    Log.d("RStrace", "sid="+sid);
-		    Log.d("RStrace", "tag="+tag);
-
-		    Log.d("RStrace", "f= "+f);
-		    Log.d("RStrace", "t= "+t);
-		    if(t == "" || f == "")  // XXX: something wrong with f match
-			break;
-		    Long x = new Long(t);
-		    Double res = Double.parseDouble(f);
-		    p = new Pt(x, res, seq);
-		    power.sample(p);
-		    seq++;
+		    sensd_msg((String)msg.obj);
 		    break;
 		case SAMPLE: // Periodic debug sample
 		    message = Message.obtain();
@@ -345,6 +527,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    if (!runPlot)
 			break;
 		    message = Message.obtain();
+		    setActive();
 		    plot.autodraw(image);
 		    message.what = PLOT;
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);
@@ -355,5 +538,34 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		}
 	    }
 	};
+
+}
+
+final class SensdTag{
+    public String tag;
+    private String label;
+    public PlotVector pv;
+    public int seq = 0;
+    SensdTag(String tag0){
+	tag = tag0;
+    }
+
+}
+
+final class SensdId{
+    public String id;
+    public ArrayList <SensdTag> tagv = new ArrayList<SensdTag>();
+    SensdId(String id0){
+	id = id0;
+    }
+    public SensdTag findtag(String tag){
+	SensdTag obj;
+	for(int i=0; i < tagv.size() ; i++){ 
+	    obj = tagv.get(i);
+	    if (obj.tag.equals(tag))
+		return obj;
+	}	
+	return null;
+    }
 
 }
