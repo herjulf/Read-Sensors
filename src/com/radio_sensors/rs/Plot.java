@@ -19,7 +19,7 @@ package com.radio_sensors.rs;
 
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -39,7 +39,7 @@ import android.util.Log;
 final class Pt{
 	public double x;
 	public double y;
-	public long seq;
+//	public long seq;
 	
 	Pt(){
 		set(0.0, 0.0, 0);
@@ -52,7 +52,7 @@ final class Pt{
 	public void set(double x0, double y0, long seq){
 		x = x0;
 		y = y0;		
-		this.seq = seq;
+//		this.seq = seq;
 	}
     
 	public Point // scale function: return screen coordinates
@@ -79,22 +79,26 @@ final class Pt{
 // Contains info about each individual plot.
 final class PlotVector {
     public String title; // title for plot
-    public int y;        // y1 or y2-axis
-    public Vector <Pt> vec;
+    public int where;        // y1(=1) or y2 (=2)-axis or not-active (0)
+    public ArrayList <Pt> vec;
     public Set <Integer> style = new TreeSet<Integer>(); // XXX: Why must I use TreeSet?
     public int color;
     public double ymin = Double.POSITIVE_INFINITY;
     public double ymax = Double.NEGATIVE_INFINITY;
 
-    PlotVector(Vector <Pt> v0, String t0, int y0, int s0, int c0){
+    PlotVector(ArrayList <Pt> v0, String t0, int w0, int s0, int c0){
     	vec = v0;
     	title = t0;
-    	y = y0;
+    	where = w0;
     	style.add(s0);
     	color = c0;
     }
+    /* where = 0 dont show; 1=show on y1-axis; 2=show on y2-axis */
+    public void setWhere(int w0){
+	where = w0;
+    }
     public void sample(Pt pt){
-	Log.d("RStrace", String.format("sample: x=%f y=%f seq=%d", pt.x, pt.y, pt.seq));
+	Log.d("RStrace", String.format("sample: x=%f y=%f", pt.x, pt.y));
 	if (pt.y < ymin)
 	    ymin = pt.y;
 	if (pt.y > ymax)
@@ -120,7 +124,7 @@ public final class Plot {
     public static final int BARS = 3; // style
 
     private Canvas canvas;
-    private Vector <PlotVector> plots; // Vector of plots 
+    private ArrayList <PlotVector> plots; // ArrayList of plots 
     private int x,y,w,h; // bitmap x,y,width height
     private int px,py,pw,ph; // plotarea x,y,width height
     private Bitmap bitmap;
@@ -133,16 +137,16 @@ public final class Plot {
     private String xlabel;  // text to print on x-axis
     private String y1label; // text to print on left y-axis
     private String y2label; // text to print on right y-axis
-    private double xscale;  // factor to multiply x-values for x-axis text
-    private double y1scale; // factor to multiply y-values for left y-axis text
-    private double y2scale; // factor to multiply y-values for right y-axis text
+    private double xscale = 1.0;  // factor to multiply x-values for x-axis text
+    private double y1scale = 1.0; // factor to multiply y-values for left y-axis text
+    private double y2scale = 1.0; // factor to multiply y-values for right y-axis text
 
     private int id;                 // resource id
 
     Plot(int id0, Display display){ 
 	canvas = new Canvas();
 	id = id0;
-	plots = new Vector <PlotVector>();
+	plots = new ArrayList <PlotVector>();
     }
 
     public void newDisplay(Display display){
@@ -173,6 +177,13 @@ public final class Plot {
 	}
 	return c;
     }
+    // Reset plot area, scaling and axes to default
+    public void reset(){
+	liveUpdate = true;
+	xwin = XWINDOW;
+	xscale = 1.0;
+    }
+
     public double get_pw(){ // plot area
 	return pw;
     }
@@ -241,10 +252,10 @@ public final class Plot {
     }
 
     private static int 
-    points_in_interval(Vector <Pt>vec, double low, double high){
+    points_in_interval(ArrayList <Pt>vec, double low, double high){
 	int nr = 0;
 	for(int i=0; i < vec.size() ; i++){ 
-	    double x = vec.elementAt(i).x;
+	    double x = vec.get(i).x;
 	    if (x < low)
 		continue;
 	    if (x > high)
@@ -257,12 +268,13 @@ public final class Plot {
     // Now draw plot and auto-scale axis depending on plot contents
     public void autodraw(ImageView image){
 	PlotVector pv;
-	boolean y1empty = true;
+	boolean y1vals = false; // There are values in y1 plots
+	boolean y2vals = false;  // There are values in y2 plots
 	double y1min = Double.POSITIVE_INFINITY;
 	double y2min = Double.POSITIVE_INFINITY;
 	double y1max = Double.NEGATIVE_INFINITY;
 	double y2max = Double.NEGATIVE_INFINITY;
-	boolean y2empty = true;
+
 	double xmin1 = Double.POSITIVE_INFINITY; // Tentative x-interval min
 	double xmax1 = Double.NEGATIVE_INFINITY;
 
@@ -271,17 +283,29 @@ public final class Plot {
 
 	// Loop 1a: compute tentative x-interval [xmin1, xmax1] for y1 plots
 	for (int i=0; i<plots.size(); i++){
-	    pv = plots.elementAt(i);
+	    pv = plots.get(i);
+	    if (pv.where != 1) /* Keep only y1 plots */
+		continue;
 	    if (pv.vec.size() > 0){
-		y1empty = false; // XXX: inverse logic
-		xmin1 = Math.min(xmin1, pv.vec.firstElement().x);
-		xmax1 = Math.max(xmax1, pv.vec.lastElement().x);
+		y1vals = true; // XXX: inverse logic
+		xmin1 = Math.min(xmin1, pv.vec.get(0).x);
+		int size = pv.vec.size();
+		xmax1 = Math.max(xmax1, pv.vec.get(size-1).x);
 	    }
 	}
 	// Loop 1b: Same for y2 plots
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.get(i);
+	    if (pv.where != 2) /* Keep only y2 plots */
+		continue;
+	    if (pv.vec.size() > 0){
+		y2vals = true; // XXX: inverse logic
+	    }
+	    
+	}
 	// XXX
 
-	if (y1empty && y2empty){
+	if (y1vals==false && y2vals==false){
 	    xmin1 = 0;
 	    xmax1 = 10;
 	}
@@ -320,23 +344,25 @@ public final class Plot {
 //	Log.d("RStrace", "PLOT xws="+xws);
 //	Log.d("RStrace", "PLOT xmax1-xmin1="+(xmax1-xmin1));
 
-	y1empty = true; // XXX: inverse logic
+	y1vals = false; // XXX: inverse logic
 	// Loop 2a:  compute y1 intervals, etc
 	for (int i=0; i<plots.size(); i++){
-	    pv = plots.elementAt(i); // Only in [xmin,xmax]
+	    pv = plots.get(i); // Only in [xmin,xmax]
+	    if (pv.where != 1) /* Keep only y2 plots */
+		continue;
 	    for (int j = 0 ; j< pv.vec.size(); j++){
-		double x = pv.vec.elementAt(j).x;
-		double y = pv.vec.elementAt(j).y;
+		double x = pv.vec.get(j).x;
+		double y = pv.vec.get(j).y;
 		if (x < xmin)
 		    continue;
 		if (x > xmax)
 		    continue;
-		y1empty = false; 
+		y1vals = true; 
 		y1max = Math.max(y1max, y);
 		y1min = Math.min(y1min, y);
 	    }	    
 	}
-	if (y1empty){
+	if (y1vals==false){
 	    y1min = 0;
 	    y1max = 1;
 	}
@@ -344,7 +370,7 @@ public final class Plot {
 	// Loop 2b: Same for y2 plots
 	// XXX: Also y2 plots
 
-	if (y2empty){
+	if (y2vals==false){
 	    y2min = 0;
 	    y2max = 1;
 	}
@@ -357,7 +383,7 @@ public final class Plot {
 
 	// Loop 3: compute level of aggregation in x-axis
 	for (int i=0; i<plots.size(); i++){
-	    pv = plots.elementAt(i);
+	    pv = plots.get(i);
 	    if (pv.vec.size() > 0){
 		int nr = points_in_interval(pv.vec, xmin, xmax);
 		aggF = Math.max(aggF, nr/pix);
@@ -371,15 +397,17 @@ public final class Plot {
 
     public void 
     draw(Autoscale ax, Autoscale ay1, Autoscale ay2, int agg) {
-	Vector <Pt> vec;
+	ArrayList <Pt> vec;
 	// assert |xvec| == |yvec|
 	if (!draw_grid(ax, ay1, ay2))
 	    return;
 	for(int j=0; j < plots.size() ; j++)  {
-	    PlotVector pi = plots.elementAt(j);
-	    vec = pi.vec;
-	    draw_plot_label(j, pi.title, pi.color);
-	    draw_plot(vec, ax, pi.y==1?ay1:ay2, pi.color, pi.style, agg);
+	    PlotVector pv = plots.get(j);
+	    if (pv.where == 0) /* don't draw */
+		continue;
+	    vec = pv.vec;
+	    draw_plot_label(j, pv.title, pv.color);
+	    draw_plot(vec, ax, pv.where==1?ay1:ay2, pv.color, pv.style, agg);
 	}
     } // draw
 
@@ -541,8 +569,11 @@ public final class Plot {
 	    return true;
 	}  // draw_grid
 
+    /*
+     * draw_plot
+     */
     private void 
-    draw_plot(Vector <Pt> vec, 
+    draw_plot(ArrayList <Pt> vec, 
 	      Autoscale ax, 
 	      Autoscale ay,
 	      int color,
@@ -562,10 +593,10 @@ public final class Plot {
 	    canvas.clipRect(px, py, px+pw, py+ph, Region.Op.REPLACE); // clip it.
 	    for (int i = 0 ; i< vec.size(); i+=agg)	{
 		if (agg>1){
-		    pt_avg.x = vec.elementAt(i).x;
+		    pt_avg.x = vec.get(i).x;
 		    pt_avg.y = 0.0;
 		    for (int j=i; j<i+agg; j++){
-			double y3 = vec.elementAt(j).y;
+			double y3 = vec.get(j).y;
 			if (Double.isNaN(y3)){
 			    pt_avg.y = y3;
 			}
@@ -577,7 +608,7 @@ public final class Plot {
 		    ptv = pt_avg;
 		}
 		else
-		    ptv = vec.elementAt(i);
+		    ptv = vec.get(i);
 		if (Double.isNaN(ptv.y)){
 		    skip = true; // Make a break in a line.
 		    continue;
