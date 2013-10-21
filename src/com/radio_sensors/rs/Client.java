@@ -176,10 +176,19 @@ public class Client extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
 	super.onConfigurationChanged(newConfig);
 	setContentView(R.layout.main);
+	// Set edit text fields from prefs
 	EditText et = (EditText) findViewById(R.id.server_ip);
 	et.setText(get_server_ip());
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
+
+	// Set connected/disconnected button text
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	if(connected)
+	    buttonConnect.setText("Disconnect");
+	else
+	    buttonConnect.setText("Connect");
+
     }
 
     // This is code for lower right button menu

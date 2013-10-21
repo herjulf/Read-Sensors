@@ -5,15 +5,20 @@
 	android:layout_height="fill_parent"
 	android:gravity="right" >
 
+  <ScrollView 
+      android:id="@+id/scroll" 
+      android:scrollbars="vertical"
+      android:fillViewport="true"
+      android:layout_height="wrap_content" 
+      android:layout_width="fill_parent"> 
     <TextView
 	android:id="@+id/text"
-          android:layout_width="fill_parent"
-          android:layout_height="fill_parent"
-	  android:maxLines="20"
-          android:layout_weight="1"
-	  android:scrollHorizontally="false"
-          android:text="This is read-sensors text pane. This is where text reports from sensd should appear.\n\n"
-          />
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:layout_weight="1"
+	android:singleLine = "false"
+	/>
+  </ScrollView>
   <LinearLayout 
 		android:orientation="horizontal"
 		android:layout_width="wrap_content"

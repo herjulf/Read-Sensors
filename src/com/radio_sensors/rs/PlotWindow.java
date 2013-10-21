@@ -91,6 +91,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private int touch_mode = NONE;
     private ImageView image;
 
+    final private static int ID_SENSORID   = 4242; // Used for dynamic select sub-menu
+    final private static int ID_TAG        = 4217;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -164,10 +167,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
 	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
-	plot.xaxis("Time[s]", 1.0);  
-	// XXX
-	plot.y1axis("Temp [C]", 1.0);
-	plot.y2axis("", 1.0);
+	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
 	if (Client.debug){
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
@@ -175,19 +175,25 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	}
     }
 
-    // Go through all plots and set active plotvercors according
+    // Go through all plots and set active plotvectors according
     // to global sid/tag setting
     private void setActive(){
 	SensdId obj;
 	SensdTag t;
 
+	if (tag == null)
+	    plot.y1label("Misc");
 	for(int i=0; i < idv.size() ; i++){
  	    obj = idv.get(i);
 	    if (sid == null || obj.id.equals(sid))
 		for(int j=0; j < obj.tagv.size(); j++){ 
 		    t = obj.tagv.get(j);
-		    if (tag == null || t.tag.equals(tag))
+		    if (tag == null || t.tag.equals(tag)){
+			if (tag != null && t.label != null){
+			    plot.y1label(t.label);
+			}
 			t.pv.setWhere(1);
+		    }
 		    else
 			t.pv.setWhere(0);
 	    }
@@ -214,21 +220,21 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	sm.add("All");
 	for(int i=0; i < idv.size() ; i++){ 
 	    obj = idv.get(i);
-	    sm.add(NONE, 74, NONE, obj.id); // XXX 33 means sensorid
+	    sm.add(NONE, ID_SENSORID, NONE, obj.id);
 	}
 	item = menu.getItem(2); // tag
 	sm = item.getSubMenu();
 	sm.setHeaderTitle("TagName");
-	sm.add(NONE, 42, NONE, "All"); // XXX 42 means tag
-	sm.add(NONE, 42, NONE, "T");
-	sm.add(NONE, 42, NONE, "PS");
-	sm.add(NONE, 42, NONE, "P");
-	sm.add(NONE, 42, NONE, "V_MCU");
-	sm.add(NONE, 42, NONE, "RH");
-	sm.add(NONE, 42, NONE, "V_IN");
-	sm.add(NONE, 42, NONE, "V_A1");
-	sm.add(NONE, 42, NONE, "V_A2");
-	sm.add(NONE, 42, NONE, "V_A3");
+	sm.add(NONE, ID_TAG, NONE, "All"); 
+	sm.add(NONE, ID_TAG, NONE, "T");
+	sm.add(NONE, ID_TAG, NONE, "PS");
+	sm.add(NONE, ID_TAG, NONE, "P");
+	sm.add(NONE, ID_TAG, NONE, "V_MCU");
+	sm.add(NONE, ID_TAG, NONE, "RH");
+	sm.add(NONE, ID_TAG, NONE, "V_IN");
+	sm.add(NONE, ID_TAG, NONE, "V_A1");
+	sm.add(NONE, ID_TAG, NONE, "V_A2");
+	sm.add(NONE, ID_TAG, NONE, "V_A3");
 	return true;
     }	
 
@@ -237,14 +243,14 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	// Handle item selection
 	String str;
 	switch (item.getItemId()) {
-	case 33: /* sensorid */
+	case ID_SENSORID: /* sensorid */
 	    str = (String)item.getTitle();
 	    if (str.equals("All"))
 		sid = null;
 	    else
 		sid = str; // active sid
 	    return true;
-	case 42: /* tag */
+	case ID_TAG: /* tag */
 	    str = (String)item.getTitle();
 	    if (str.equals("All"))
 		tag = null;
@@ -350,7 +356,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	return true; // indicate event was handled
     }
 
-    // private ArrayList <SensdId> idv;
     private SensdId findid(String id){
 	SensdId obj;
 
@@ -375,7 +380,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	}
 	// 2. See if tag exists in tagvector, if no, create it
 	if ((stag = sid.findtag(tag)) == null){
-	    stag = new SensdTag(tag);
+	    stag = new SensdTag(tag, label);
 	    sid.tagv.add(stag);
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    stag.pv = new PlotVector(vec, label, 0, Plot.LINES, plot.nextColor());
@@ -543,11 +548,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
 final class SensdTag{
     public String tag;
-    private String label;
+    public String label;
     public PlotVector pv;
     public int seq = 0;
-    SensdTag(String tag0){
+    SensdTag(String tag0, String lbl0){
 	tag = tag0;
+	label = lbl0;
     }
 
 }
