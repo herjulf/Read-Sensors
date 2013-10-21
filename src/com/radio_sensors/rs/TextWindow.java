@@ -20,8 +20,8 @@ package com.radio_sensors.rs;
 
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Vector;
 import java.util.Random;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -41,10 +41,11 @@ import android.view.MotionEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
-import android.widget.TextView;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
+import android.widget.TextView;
+import android.widget.ScrollView;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.content.res.Configuration;
@@ -52,9 +53,11 @@ import android.content.Intent;
 import android.view.Display;
 import android.util.Log;
 
+
 public class TextWindow extends Activity {
 
-    private String report = "";
+    private ArrayList<String> report = new ArrayList<String>();
+    private int    max_lines = 20;
 
     /** Called when the activity is first created. */
     @Override
@@ -103,6 +106,19 @@ public class TextWindow extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
 	super.onConfigurationChanged(newConfig);
 	setContentView(R.layout.text);
+	update();
+    }
+
+    private void update(){
+	TextView tv = (TextView) findViewById(R.id.text);
+	ScrollView sv = (ScrollView) findViewById(R.id.scroll);
+
+	String text = "";
+	for (String str:report){
+	    text += str + System.getProperty("line.separator");
+	}
+	tv.setText(text);
+	sv.smoothScrollTo(0, tv.getBottom());
     }
 
     private final Handler mHandler = new Handler() {
@@ -112,9 +128,12 @@ public class TextWindow extends Activity {
 		switch (msg.what) {
 		case Client.SENSD: // New report from sensd
 		    String s = (String)msg.obj;
-		    TextView tv = (TextView) findViewById(R.id.text);
-		    report = report+"\n"+s;
-		    tv.setText(report);
+
+		    if (s.length()>0)
+			report.add(s) ;
+		    if (report.size() >= max_lines)
+			report.remove(0); //remove first line if max
+		    update();
 
 		    break;
 		default:	

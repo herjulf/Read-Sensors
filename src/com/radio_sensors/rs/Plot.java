@@ -135,8 +135,8 @@ public final class Plot {
 
     private int nrPlots = 0;	
     private String xlabel;  // text to print on x-axis
-    private String y1label; // text to print on left y-axis
-    private String y2label; // text to print on right y-axis
+    private String y1label = ""; // text to print on left-hand y-axis
+    private String y2label = ""; // text to print on right-hand y-axis
     private double xscale = 1.0;  // factor to multiply x-values for x-axis text
     private double y1scale = 1.0; // factor to multiply y-values for left y-axis text
     private double y2scale = 1.0; // factor to multiply y-values for right y-axis text
@@ -240,15 +240,13 @@ public final class Plot {
     }
 	
     public void 
-    y1axis(String label, double scale) {
+    y1label(String label) {
 	y1label = label;
-	y1scale = scale;
     }
 	
     public void 
-    y2axis(String label, double scale) {
+    y2label(String label) {
 	y2label = label;
-	y2scale = scale;
     }
 
     private static int 
