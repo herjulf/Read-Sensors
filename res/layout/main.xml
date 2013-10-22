@@ -65,4 +65,26 @@
 
 	</LinearLayout>
 
+
+  <ScrollView 
+      android:id="@+id/scroll" 
+      android:scrollbars="vertical"
+      android:fillViewport="true"
+      android:layout_height="wrap_content" 
+      android:layout_width="fill_parent"> 
+    <TextView
+	android:id="@+id/text"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:layout_weight="1"
+	android:singleLine = "false"
+	/>
+  </ScrollView>
+  <LinearLayout 
+		android:orientation="horizontal"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:padding="5dip">
+</LinearLayout>
+
 </TableLayout>

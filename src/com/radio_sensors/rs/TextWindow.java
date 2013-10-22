@@ -44,6 +44,7 @@ import android.view.MenuInflater;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ScrollView;
 import android.widget.ImageView;
@@ -52,7 +53,7 @@ import android.content.res.Configuration;
 import android.content.Intent;
 import android.view.Display;
 import android.util.Log;
-
+import android.content.SharedPreferences;
 
 public class TextWindow extends Activity {
 
@@ -63,7 +64,12 @@ public class TextWindow extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
-	setContentView(R.layout.text);
+	setContentView(R.layout.main);
+	EditText et = (EditText) findViewById(R.id.server_ip);
+        et.setText(get_server_ip());
+        et = (EditText) findViewById(R.id.server_port);
+        et.setText(""+get_server_port());
+
 	Client.reporth = mHandler;
     }
 
@@ -105,7 +111,12 @@ public class TextWindow extends Activity {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
 	super.onConfigurationChanged(newConfig);
-	setContentView(R.layout.text);
+	setContentView(R.layout.main);
+	EditText et = (EditText) findViewById(R.id.server_ip);
+        et.setText(get_server_ip());
+        et = (EditText) findViewById(R.id.server_port);
+        et.setText(""+get_server_port());
+
 	update();
     }
 
@@ -143,5 +154,21 @@ public class TextWindow extends Activity {
 	    }
 	};
 
-
+  // access methods for prefs (would have them in PrefWindow, but cant make it work)
+    public String get_server_ip(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("server_ip", PrefWindow.SERVER_IP);
+    }
+    public int get_server_port(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("server_port", PrefWindow.SERVER_PORT);
+    }
+    public String get_sid(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("sid", PrefWindow.SID);
+    }
+    public String get_tag(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("tag", PrefWindow.TAG);
+    }
 }
