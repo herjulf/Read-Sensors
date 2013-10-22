@@ -22,8 +22,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
 import android.widget.ImageView;
-import android.widget.RadioGroup;
-import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.view.Display;
 import android.view.View;
 import android.view.LayoutInflater;
@@ -51,7 +49,6 @@ public class Client extends Activity {
     private boolean active = false; // Show toasts only when active
     private Handler handler = null;
     private Thread thread = null;
-    private RadioGroup RGrp;
     public static Handler ploth = null; // PlotWindow handler
     public static Handler reporth = null;
     public static Client client = null;
@@ -75,22 +72,6 @@ public class Client extends Activity {
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
 	
-	RGrp = (RadioGroup) findViewById(R.id.RadioGroupTips);
-	RGrp.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-		@Override
-		    public void onCheckedChanged(RadioGroup group, int checkedId) {
-
-		    if (checkedId == R.id.radio_report)
-			mode = MODE_REPORT; 
-		    if (checkedId == R.id.radio_plot)
-			mode = MODE_PLOT; 
-		    if (checkedId == R.id.radio_demo_plot)
-			mode = MODE_DEMO_PLOT; 
-
-		    Log.d("RStrace RGrp", String.format("Mode=%d", mode));
-		}
-	    });
-
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setOnClickListener(new View.OnClickListener() {
 
@@ -112,11 +93,6 @@ public class Client extends Activity {
 
 		    started = true;
 		    connect();
-
-		    if( mode == MODE_PLOT)
-			toActivity("PlotWindow");
-		    if( mode == MODE_REPORT)
-			toActivity("TextWindow");
 		}
 	    });
     }

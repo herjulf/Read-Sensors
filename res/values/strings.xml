@@ -3,11 +3,6 @@
 
     <string name="app_name">Read Sensors</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
     <string name="about">Authors:\n  Robert Olsson \n  Olof Hagsand </string>
-
-    <string name="radio_plot_txt">Plot</string>
-    <string name="radio_report_txt">Report</string>
-    <string name="radio_demo_plot_txt">Demo-Plot</string>
 
 </resources>
