@@ -22,8 +22,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
 import android.widget.ImageView;
-import android.widget.RadioGroup;
-import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.view.Display;
 import android.view.View;
 import android.view.LayoutInflater;
@@ -39,7 +37,6 @@ import android.os.Message;
 
 public class Client extends Activity {
     final public static int SENSD = 3;           // Message	to other activity
-    public static boolean debug = false;
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -51,17 +48,17 @@ public class Client extends Activity {
     private boolean active = false; // Show toasts only when active
     private Handler handler = null;
     private Thread thread = null;
-    private RadioGroup RGrp;
     public static Handler ploth = null; // PlotWindow handler
     public static Handler reporth = null;
     public static Client client = null;
 
-    // The mode we're running in
-    final static int MODE_REPORT      = 1;
-    final static int MODE_PLOT        = 2;
-    final static int MODE_DEMO_PLOT   = 3;
+    // Debug 
+    final static int DEBUG_NONE        = 0;
+    final static int DEBUG_REPORT      = 1;
+    final static int DEBUG_PLOT        = 2;
+    final static int DEBUG_FILTER      = 3;
 
-    public static int mode       = MODE_REPORT;
+    public static int debug       = DEBUG_NONE;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,22 +72,6 @@ public class Client extends Activity {
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
 	
-	RGrp = (RadioGroup) findViewById(R.id.RadioGroupTips);
-	RGrp.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-		@Override
-		    public void onCheckedChanged(RadioGroup group, int checkedId) {
-
-		    if (checkedId == R.id.radio_report)
-			mode = MODE_REPORT; 
-		    if (checkedId == R.id.radio_plot)
-			mode = MODE_PLOT; 
-		    if (checkedId == R.id.radio_demo_plot)
-			mode = MODE_DEMO_PLOT; 
-
-		    Log.d("RStrace RGrp", String.format("Mode=%d", mode));
-		}
-	    });
-
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setOnClickListener(new View.OnClickListener() {
 
@@ -211,7 +192,7 @@ public class Client extends Activity {
 	    return true;
 	case R.id.debug:
 	    Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
-	    debug=true;
+	    debug = DEBUG_PLOT;
 	    return true;
 	case R.id.plot:
 	    toActivity("PlotWindow");
@@ -352,16 +333,18 @@ public class Client extends Activity {
 					    String f = filter(strData, sid, tag);
 					    String t = filter(strData, null, "UT"); // time
 
-					    Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
+					    if( debug == DEBUG_REPORT) {
+						Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
+						
+						if( f != "" && t != "") 
+						    {
+							Long x = new Long(t);
+							Double res = Double.parseDouble(f);
+							Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
 
-					    if( f != "" && t != "") 
-						{
-						    Long x = new Long(t);
-						    Double res = Double.parseDouble(f);
-						    Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
-
-
-						}
+							
+						    }
+					    }
 					}
 				    });
 			    }

@@ -168,7 +168,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	plot = new Plot(R.id.img, display);
 	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
 	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
-	if (Client.debug){
+	if (Client.debug == Client.DEBUG_PLOT){
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
 	    plot.add(random);
@@ -651,7 +651,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    break;
 		case SAMPLE: // Periodic debug sample
 		    message = Message.obtain();
-		    if (Client.debug){ // debug
+		    if (Client.debug == Client.DEBUG_PLOT){ // debug
 			int y = rnd.nextInt(10);
 			p = new Pt(1381599669+seq, y, seq);
 			random.sample(p);
