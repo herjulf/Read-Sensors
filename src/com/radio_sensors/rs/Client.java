@@ -37,7 +37,6 @@ import android.os.Message;
 
 public class Client extends Activity {
     final public static int SENSD = 3;           // Message	to other activity
-    public static boolean debug = false;
     private Socket socket = null;
     private Context context = this;
     private boolean connected = false;
@@ -53,12 +52,13 @@ public class Client extends Activity {
     public static Handler reporth = null;
     public static Client client = null;
 
-    // The mode we're running in
-    final static int MODE_REPORT      = 1;
-    final static int MODE_PLOT        = 2;
-    final static int MODE_DEMO_PLOT   = 3;
+    // Debug 
+    final static int DEBUG_NONE        = 0;
+    final static int DEBUG_REPORT      = 1;
+    final static int DEBUG_PLOT        = 2;
+    final static int DEBUG_FILTER      = 3;
 
-    public static int mode       = MODE_REPORT;
+    public static int debug       = DEBUG_NONE;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -192,7 +192,7 @@ public class Client extends Activity {
 	    return true;
 	case R.id.debug:
 	    Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
-	    debug=true;
+	    debug = DEBUG_PLOT;
 	    return true;
 	case R.id.plot:
 	    toActivity("PlotWindow");
@@ -333,7 +333,7 @@ public class Client extends Activity {
 					    String f = filter(strData, sid, tag);
 					    String t = filter(strData, null, "UT"); // time
 
-					    if( mode == MODE_REPORT) {
+					    if( debug == DEBUG_REPORT) {
 						Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
 						
 						if( f != "" && t != "") 
