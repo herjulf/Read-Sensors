@@ -39,20 +39,18 @@ import android.util.Log;
 final class Pt{
 	public double x;
 	public double y;
-//	public long seq;
 	
 	Pt(){
-		set(0.0, 0.0, 0);
+		set(0.0, 0.0);
 	}
 	
-	Pt(double x, double y, long seq){
-		set(x, y, seq);
+	Pt(double x, double y){
+		set(x, y);
 	}
 	
-	public void set(double x0, double y0, long seq){
+	public void set(double x0, double y0){
 		x = x0;
 		y = y0;		
-//		this.seq = seq;
 	}
     
 	public Point // scale function: return screen coordinates
@@ -581,7 +579,7 @@ public final class Plot {
 	Point pt;
 	boolean skip = false;
 	Point pt_prev = new Point(0, 0);   
-	Pt pt_avg = new Pt(0, 0, 0);   
+	Pt pt_avg = new Pt(0, 0);   
 	final Paint paint = new Paint();
 
 	paint.setAntiAlias(true);

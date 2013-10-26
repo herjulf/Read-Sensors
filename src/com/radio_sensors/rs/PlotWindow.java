@@ -52,7 +52,6 @@ import android.os.Message;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
-import android.widget.Toast;
 import android.content.res.Configuration;
 import android.content.Intent;
 import android.view.Display;
@@ -68,6 +67,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
     private String sid = null;
     private String tag = null;
+
+    private long nsoffset = 0; // guaranteed monotonic
 
     private Plot plot;
     private PlotVector random; // Test
@@ -99,7 +100,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.plot);
-	Client.ploth = mHandler;
+	ConnectSocket.ploth = mHandler;
 	sid = Client.client.get_sid();
 	tag = Client.client.get_tag();
 	image = (ImageView) findViewById(R.id.img);
@@ -130,23 +131,23 @@ public class PlotWindow extends Activity implements OnTouchListener{
     protected void onStart(){
 	runPlot = true;
 	super.onStart();
-	Log.d("RStrace", "onStart");
+	Log.d("RStrace", "PlotWindow onStart");
     }
 
     protected void onResume(){
 	super.onResume();
-	Log.d("RStrace", "onResume");
+	Log.d("RStrace", "PlotWindow onResume");
     }
 
     protected void onPause(){
 	super.onPause();
-	Log.d("RStrace", "onPause");
+	Log.d("RStrace", "PlotWindow onPause");
     }
 
     protected void onStop(){  // This is called when starting another activity
 	runPlot = false;
 	super.onStop();
-	Log.d("RStrace", "onStop");
+	Log.d("RStrace", "PlotWindow onStop");
     }
 
     protected void onDestroy(){ // This is called on 'Back' button
@@ -156,9 +157,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    mHandler.removeMessages(PLOT);
 	if (mHandler.hasMessages(SAMPLE))
 	    mHandler.removeMessages(SAMPLE);
-	Client.ploth = null;
+	ConnectSocket.ploth = null;
 
-	Log.d("RStrace", "onDestroy");
+	Log.d("RStrace", "PlotWindow onDestroy");
     }
 
     // Initialize the Plot area
@@ -173,6 +174,27 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
 	    plot.add(random);
 	}
+    }
+
+    // second & nanosecond to twamp timestamp 
+    protected static long ns2Timestamp(long s, long ns){ 
+	// Days between 1900-1970: 25569. #seconds in a day: 86400
+	long sec = s; //+ 2208988800L;
+	long q = ns << 32;
+	long subsec = q/1000000000L;
+	return (sec<<32) + subsec;
+    }
+
+    // Get timestamp in owamp/twamp format. Epoch 1970.
+    private long Timestamp(){
+	if (nsoffset == 0){
+	    long ms0 = System.currentTimeMillis();
+	    long ns0 = System.nanoTime();
+	    nsoffset = ms0*1000000 - ns0;
+	}
+	long ns = System.nanoTime() + nsoffset;
+	long ts = ns2Timestamp(ns/1000000000L, ns%1000000000L);
+	return ts;
     }
 
     // Go through all plots and set active plotvectors according
@@ -256,6 +278,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	sm.add(NONE, ID_TAG, NONE, "SEQ");
 	sm.add(NONE, ID_TAG, NONE, "RSSI");
 	sm.add(NONE, ID_TAG, NONE, "DRP");
+	sm.add(NONE, ID_TAG, NONE, "Debug");
 	return true;
     }	
 
@@ -278,9 +301,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		tag = null;
 	    else
 		tag = str;
-	    return true;
-	case R.id.report:
-	    toActivity("TextWindow");
 	    return true;
 	case R.id.sid:
 	case R.id.tag:
@@ -326,7 +346,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public boolean onTouch(View v, MotionEvent event) {
 	switch (event.getAction() & MotionEvent.ACTION_MASK) {
 	case MotionEvent.ACTION_DOWN:
-	    touch_p.set(event.getX(), event.getY(), 0);
+	    touch_p.set(event.getX(), event.getY());
 	    touch_t = System.currentTimeMillis();
 	    touch_mode = DRAG;
 	    plot.liveUpdate = false;
@@ -351,7 +371,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	case MotionEvent.ACTION_MOVE:
 	    if (touch_mode == DRAG) {
 		double delta = (event.getX() - touch_p.x)/(System.currentTimeMillis()-touch_t);
-		touch_p.set(event.getX(), event.getY(), 0);
+		touch_p.set(event.getX(), event.getY());
 		touch_t = System.currentTimeMillis();
 //		Log.d("RStrace", "ACTION_MOVE DRAG delta="+delta);
 		plot.xmax_add(-7*delta);
@@ -391,7 +411,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
     }
 
     private void add_sample(String id, String tag, Long x, Double y, String label){
-//    private ArrayList <SensdId> idvector;
 	SensdId sid;
 	SensdTag stag;
 
@@ -409,7 +428,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    plot.add(stag.pv); //?
 	}
 	// 3. Add to plotvector
-	Pt p = new Pt(x, y, stag.seq++);
+	Pt p = new Pt(x, y);
 	stag.pv.sample(p);
     }
 
@@ -466,7 +485,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		continue;
 	    tag = sv2[0];
 	    val = sv2[1];
-	    if (tag.equals("T")){ // temp in Celcius (F)
+	    if (tag.equals("T")){ // temp in Celsius (F)
 		y = Double.parseDouble(val);
 		add_sample(id, tag, time, y, "Temp[C]");
 	    }
@@ -653,7 +672,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    message = Message.obtain();
 		    if (Client.debug == Client.DEBUG_PLOT){ // debug
 			int y = rnd.nextInt(10);
-			p = new Pt(1381599669+seq, y, seq);
+			long ts = Timestamp();
+			p = new Pt(ts, y);
 			random.sample(p);
 			seq++;
 		    }
@@ -682,7 +702,7 @@ final class SensdTag{
     public String tag;
     public String label;
     public PlotVector pv;
-    public int seq = 0;
+
     SensdTag(String tag0, String lbl0){
 	tag = tag0;
 	label = lbl0;

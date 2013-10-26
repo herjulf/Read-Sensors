@@ -4,11 +4,7 @@
 		android:title="About" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Preferences" />
-	<item android:id="@+id/debug" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Debug" />
 	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Plot(tmp)" />
-	<item android:id="@+id/report" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Report(tmp)" />
+		android:title="Plot" />
 
 </menu>

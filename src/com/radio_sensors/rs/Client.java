@@ -1,5 +1,21 @@
-// GPL CopyRight 2013 by Robert Olsson robert@Radio-Sensors.COM 
-// Some code reused from TinyTelnet.java
+// Copyright (C) 2013 Olof Hagsand and Robert Olsson
+//
+// This file is part of Read-Sensors.
+//
+// Read-Sensors is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// Read-Sensors is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Read-Sensors; see the file COPYING.
+
+
 package com.radio_sensors.rs;
 
 import android.app.Activity;
@@ -21,6 +37,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.TextView;
+import android.widget.ScrollView;
 import android.widget.ImageView;
 import android.view.Display;
 import android.view.View;
@@ -31,26 +48,27 @@ import android.view.MenuInflater;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
 
 public class Client extends Activity {
-    final public static int SENSD = 3;           // Message	to other activity
-    private Socket socket = null;
-    private Context context = this;
-    private boolean connected = false;
-    private boolean started = false;
-    private String serverAddr = "";
-    private String serverPort = "";
-    private String sid = "";
-    private String tag = "";
-    private boolean active = false; // Show toasts only when active
+    // Messages
+    final public static int ERROR  = -1;         // Something went wrong
+    final public static int STATUS = 2;          // Status change
+    final public static int SENSD  = 3;          // Report arrived from sensd server
+    final public static int TIMER  = 4;       // Interval timer every 1s (debug)
+
+    private static int TIMERINTERVAL = 1000; // interval between sample receives
+
+    private String server_ip = "";
+    private int server_port = 0;
     private Handler handler = null;
-    private Thread thread = null;
-    public static Handler ploth = null; // PlotWindow handler
-    public static Handler reporth = null;
+    private Thread connectthread = null;
     public static Client client = null;
+
+    ConnectSocket connect_cs;
 
     // Debug 
     final static int DEBUG_NONE        = 0;
@@ -59,6 +77,10 @@ public class Client extends Activity {
     final static int DEBUG_FILTER      = 3;
 
     public static int debug       = DEBUG_NONE;
+
+    // Textwindow
+    private ArrayList<String> report = new ArrayList<String>();
+    private int max_lines = 20;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -71,54 +93,29 @@ public class Client extends Activity {
 	et.setText(get_server_ip());
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
-	
-	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	buttonConnect.setOnClickListener(new View.OnClickListener() {
-
-		private EditText server_ip = (EditText) findViewById(R.id.server_ip);
-		private EditText port = (EditText) findViewById(R.id.server_port);
-		
-		@Override
-		public void onClick(View view) {
-		    
-		    // We can can change throughout the connection
-		    
-		    if(connected) {
-			Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
-			disconnect();
-			return;
-		    }
-		    serverAddr = server_ip.getText().toString();
-		    serverPort = port.getText().toString();
-
-		    started = true;
-		    connect();
-		}
-	    });
+	Message message = Message.obtain();
+	message.what = Client.TIMER;
+	mHandler.sendMessageDelayed(message, TIMERINTERVAL);
     }
 
     public void onClick(View view) {
-		    
 	// We can can change throughout the connection
-	EditText server_ip = (EditText) findViewById(R.id.server_ip);
-	EditText port = (EditText) findViewById(R.id.server_port);
-	if(connected) {
-	    Toast.makeText(context, "Disconnecting...", Toast.LENGTH_LONG).show();
+	EditText et_srv = (EditText) findViewById(R.id.server_ip);
+	EditText et_port = (EditText) findViewById(R.id.server_port);
+
+	if(connectthread != null) {
+	    Toast.makeText(this, "Disconnecting...", Toast.LENGTH_LONG).show();
 	    disconnect();
 	    return;
 	}
-	serverAddr = server_ip.getText().toString();
-	serverPort = port.getText().toString();
+	server_ip = et_srv.getText().toString();
+	server_port = Integer.parseInt(et_port.getText().toString());
 	
-	started = true;
-	connect();
+	connect(server_ip, server_port);
     }
-
-	    
 
     protected void onStart(){
 	super.onStart();
-	active = true;
     }
 
     protected void onResume(){
@@ -130,23 +127,18 @@ public class Client extends Activity {
     }
 
     protected void onStop(){  // This is called when starting another activity
-	active = false;
 	super.onStop();
     }
 
     protected void onDestroy()	{
 	super.onDestroy();
-	if(connected)	    {
-	    connected = false;
+	if(connectthread != null) {
 	    try		    {
-		if(this.thread != null)
-		    {
-			Thread threadHelper = this.thread; 
-			this.thread = null;
-			threadHelper.interrupt();
-		    }
+		connectthread.interrupt();
+//		connectthread = null;
 	    }
-	    catch (Exception e1)		    {
+	    catch (Exception e0) {
+		e0.printStackTrace();
 	    }
 	}
 
@@ -163,9 +155,11 @@ public class Client extends Activity {
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
 
+	textupdate(); // Update text-sensd reports in window
+
 	// Set connected/disconnected button text
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	if(connected)
+	if(connectthread != null)
 	    buttonConnect.setText("Disconnect");
 	else
 	    buttonConnect.setText("Connect");
@@ -190,15 +184,8 @@ public class Client extends Activity {
 	case R.id.prefs:
 	    toActivity("PrefWindow");
 	    return true;
-	case R.id.debug:
-	    Toast.makeText(this, "Debugging enabled", Toast.LENGTH_SHORT).show();
-	    debug = DEBUG_PLOT;
-	    return true;
 	case R.id.plot:
 	    toActivity("PlotWindow");
-	    return true;
-	case R.id.report:
-	    toActivity("TextWindow");
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
@@ -216,224 +203,47 @@ public class Client extends Activity {
 	}
     }
 
+    private void connect(String srv_ip, int srv_port) {
+	if(connectthread != null){
+	    connectthread.interrupt();
+//	    connectthread = null;
+	}
+	connect_cs = new ConnectSocket(srv_ip, srv_port, mHandler); // Here add parameters
+	connectthread = new Thread(connect_cs, "Connect Socket");
+	connectthread.start();
+    }
 
-    // Send a message to other activity
-    protected void message(Handler h, int what, Object msg){
+    private void disconnect() {
+	if(connectthread != null) {
+	    try{
+		connectthread.interrupt();
+		connect_cs.kill();
+//		connectthread = null;
+	    }
+	    catch (Exception e1)  {
+		e1.printStackTrace();
+	    }
+	}
+
+	// Tell activity status has changed
 	Message message = Message.obtain();
-	message.what = what;
-	message.obj = msg;
-	h.sendMessage(message); // To other activity
+	message.what = STATUS;
+	mHandler.sendMessage(message);
     }
 
 
-    public class RunThread implements Runnable 
-    {
-    	public String filter(String s, String id, String tag) 
-	    {
-		String s1 = "";
-		boolean got = true;
-	    
-		tag = tag + "=";
+    // Draw reports in text window. Scroll to bottom of texts.
+    private void textupdate(){
+        TextView tv = (TextView) findViewById(R.id.text);
+        ScrollView sv = (ScrollView) findViewById(R.id.scroll);
 
-		if( id != null) {
-		    got = false;
-		    for (String t: s.split(" ")) {
-			if(t.indexOf(id) > 0) {
-			    got = true;
-			    Log.d("RStrace 2", String.format("id=%s tag=%s", id, tag));
-			    break;
-			}
-		    } 
-		}
-
-		if(got) {
-		    Log.d("RStrace 3", String.format("id%s tag=%s", id, tag));
-		    for (String t: s.split(" ")) {
-			if(t.indexOf(tag) == 0)
-			    s1 = t.substring(tag.length());
-		    } 
-		}
-		return  s1;
-	    }
-
-
-    	public void run() 
-	    {
-		try 
-		    {
-			Log.d("RStrace", String.format("Socket Server=%s Port=%s", serverAddr, serverPort));
-			Socket sock = new Socket(serverAddr, Integer.parseInt(serverPort));
-			socket = sock;
-
-			InputStream streamInput = socket.getInputStream();
-			connected = true;
-
-			byte[] buf = new byte[2048];
-			while (connected)
-			    {
-				int j = 0;
-
-				Message message = Message.obtain();
-				message.what = 1;
-				mHandler.sendMessageDelayed(message, 1);
-
-				try
-				    {
-					int i = buf.length;
-					j = streamInput.read(buf, 0, i);
-					if (j == -1)
-					    {
-						throw new Exception("Error while reading socket.");
-					    }
-				    }
-				catch (Exception e0)
-				    {
-					Handler handlerException = Client.this.handler;
-					String strException = e0.getMessage();
-					final String strMessage = 
-					    "Error while receiving from server:\r\n" + strException;
-					Runnable rExceptionThread = new Runnable()
-					    {
-						// Avoid error message on user disconnect
-						public void run()
-						    {
-							if (connected)
-							    Toast.makeText(context, strMessage, 3000).show();
-						    }
-					    };
-
-					handlerException.post(rExceptionThread);
-		    			
-					if(strException.indexOf("reset") != -1 || strException.indexOf("rejected") != -1)
-					    {
-						connected = false;
-						try 
-						    {
-							socket.close();
-						    }
-						catch (IOException e1) 
-						    {
-							e1.printStackTrace();
-						    }
-						socket = null;
-						break;
-					    }
-				    }
-
-				if (j == 0)
-				    continue;
-
-				final String strData = new String(buf, 0, j).replace("\r", "");
-				if (ploth != null)
-				    message(ploth, SENSD, strData);
-				if (reporth != null)
-				    message(reporth, SENSD, strData);
-				if(active) runOnUiThread(new Runnable() {
-					public void run() {
-					    String f = filter(strData, sid, tag);
-					    String t = filter(strData, null, "UT"); // time
-
-					    if( debug == DEBUG_REPORT) {
-						Toast.makeText(context, "Filter Miss: " + strData, Toast.LENGTH_LONG).show();
-						
-						if( f != "" && t != "") 
-						    {
-							Long x = new Long(t);
-							Double res = Double.parseDouble(f);
-							Toast.makeText(context, "Filter Match: " + tag + "=" + String.format("%5.1f", res ), Toast.LENGTH_LONG).show();
-
-							
-						    }
-					    }
-					}
-				    });
-			    }
-			socket.close();
-		    }
-		catch (Exception e0) 
-		    {
-			connected = false;
-			Handler handlerException = Client.this.handler;
-			String strException = e0.getMessage();
-
-			if(strException == null)
-			    strException = "Connection closed";
-			else
-			    strException = "Cannot connect to server:\r\n" + strException;
-    			
-			final String strMessage = strException;
-			Runnable rExceptionThread = new Runnable()
-			    {
-				public void run()
-				    {
-					Toast.makeText(context, strMessage, 2000).show();
-				    }
-			    };
-			handlerException.post(rExceptionThread);
-		    }
-	    }
+        String text = "";
+        for (String str:report){
+	    text += str + System.getProperty("line.separator");
+        }
+        tv.setText(text);
+        sv.smoothScrollTo(0, tv.getBottom());
     }
-
-    private void connect()
-	{
-	    if(thread != null)
-		{
-		    thread.stop();
-		    thread = null;
-		}
-	    thread = new Thread(new RunThread());
-	    thread.start();
-	}
-
-    private void disconnect()
-	{
-
-	    if(connected)
-		{
-		    connected = false;
-		    try
-			{
-			    if(this.thread != null)
-				{
-				    Thread threadHelper = this.thread; 
-				    this.thread = null;
-				    threadHelper.interrupt();
-				}
-			}
-		    catch (Exception e1)
-			{
-			}
-		}
-
-	    connected = false;
-
-	    try 
-		{
-		    socket.close();
-		}
-	    catch (IOException e1) 
-		{
-		    e1.printStackTrace();
-		}
-	    socket = null;
-
-	    Message message = Message.obtain();
-	    message.what = 1;
-	    mHandler.sendMessageDelayed(message, 1);
-	}
-
-    private final Handler mHandler = new Handler() {
-	    public void handleMessage(Message msg ) 
-		{
-		    Message message;
-		    Button buttonConnect = (Button) findViewById(R.id.server_connect);
-
-		    if(connected)
-			buttonConnect.setText("Disconnect");
-		    else
-			buttonConnect.setText("Connect");
-		}
-	};
 
     // access methods for prefs (would have them in PrefWindow, but cant make it work)
     public String get_server_ip(){
@@ -452,4 +262,59 @@ public class Client extends Activity {
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	return sPref.getString("tag", PrefWindow.TAG);
     }
+
+    // Messages comes in from socket-handler due to sensd input or error
+    private final Handler mHandler = new Handler() {
+	    public void handleMessage(Message msg ) {
+		Message message;
+		switch (msg.what) {
+		case Client.SENSD: // New report from sensd			
+		    String s = (String)msg.obj;
+		    if (s.length()>0)
+			report.add(s) ;
+		    if (report.size() >= max_lines)
+			report.remove(0); //remove first line if max
+		    textupdate();
+		    break;
+		case Client.ERROR: // Something went wrong
+		    Log.d("RStrace", "Error"+(String)msg.obj);
+		    Toast.makeText(Client.client, "Error: "+(String)msg.obj, Toast.LENGTH_LONG).show();		    
+		    break;
+
+		case Client.STATUS: // Connect status changed
+		    Integer stat = (Integer)msg.obj;
+		    Button buttonConnect = (Button) findViewById(R.id.server_connect);
+
+		    Log.d("RStrace", "Client.Status="+stat);
+		    if (stat != null){
+			if (stat.equals(0)){
+			    if (connectthread!= null &&
+				connectthread.getState().equals(Thread.State.TERMINATED)){
+				Log.d("RStrace", "STATUS: Thread TERMINATED");
+				connectthread = null;
+			    }
+			    connectthread = null;
+
+			}
+			if (stat.equals(1))
+			    buttonConnect.setText("Disconnect");			    
+		    }
+		    break;
+		case Client.TIMER: // Periodic timer 
+		    // Sanity check: close terminated thread if not by other means
+		    if (connectthread != null){
+			if (connectthread.getState().equals(Thread.State.TERMINATED)){
+			    Log.d("RStrace", "TIME: Thread TERMINATED");
+			    connectthread = null;
+			}
+		    }
+		    message = Message.obtain();
+		    message.what = Client.TIMER;
+		    mHandler.sendMessageDelayed(message, TIMERINTERVAL);
+		    break;
+		}
+	    }
+	};
+
 }
+
