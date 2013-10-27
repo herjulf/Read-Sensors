@@ -71,13 +71,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private long nsoffset = 0; // guaranteed monotonic
 
     private Plot plot;
-    private PlotVector random; // Test
+    private PlotVector debug; 
 
     private Random rnd;
 
     private ArrayList <SensdId> idv = new ArrayList<SensdId>(); 
 
-    private int seq = 0;
     private boolean runPlot = false;
     private boolean resetPending = false;
 
@@ -100,9 +99,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.plot);
-	ConnectSocket.ploth = mHandler;
-	sid = Client.client.get_sid();
-	tag = Client.client.get_tag();
+	Client.ploth = mHandler;
+	sid = Client.client.get_pref_sid();
+	tag = Client.client.get_pref_tag();
 	image = (ImageView) findViewById(R.id.img);
 	image.setOnTouchListener(this);
 
@@ -157,9 +156,17 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    mHandler.removeMessages(PLOT);
 	if (mHandler.hasMessages(SAMPLE))
 	    mHandler.removeMessages(SAMPLE);
-	ConnectSocket.ploth = null;
+	Client.ploth = null;
 
 	Log.d("RStrace", "PlotWindow onDestroy");
+    }
+
+    // Send a message to other activity
+    private void message(Handler h, int what, Object msg){
+	Message message = Message.obtain();
+	message.what = what;
+	message.obj = msg;
+	h.sendMessage(message); // To other activity
     }
 
     // Initialize the Plot area
@@ -169,11 +176,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	plot = new Plot(R.id.img, display);
 	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
 	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
-	if (Client.debug == Client.DEBUG_PLOT){
+	if (true){
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
-	    random = new PlotVector(vec, "Random", 1, Plot.LINES, plot.nextColor());
-	    plot.add(random);
+	    debug = new PlotVector(vec, "Debug", 0, Plot.LINES, plot.nextColor());
+	    plot.add(debug);
 	}
+	message(Client.client.mHandler, Client.REPLAY, null);
     }
 
     // second & nanosecond to twamp timestamp 
@@ -183,6 +191,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	long q = ns << 32;
 	long subsec = q/1000000000L;
 	return (sec<<32) + subsec;
+    }
+
+    private static long Timestamp2s(long ts){ 
+	long sec = (ts&0xffffffff00000000L)>>32;
+	return sec;
     }
 
     // Get timestamp in owamp/twamp format. Epoch 1970.
@@ -225,7 +238,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    t = obj.tagv.get(j);
 		    t.pv.setWhere(0);
 		}
-	}	
+	}
+	if (tag == "Debug")
+	    debug.setWhere(1);
+	else
+	    debug.setWhere(0);
 
     }
 
@@ -677,12 +694,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    break;
 		case SAMPLE: // Periodic debug sample
 		    message = Message.obtain();
-		    if (Client.debug == Client.DEBUG_PLOT){ // debug
+		    if (tag == "Debug"){
 			int y = rnd.nextInt(10);
-			long ts = Timestamp();
+			long ts = Timestamp2s(Timestamp());
 			p = new Pt(ts, y);
-			random.sample(p);
-			seq++;
+			debug.sample(p);
 		    }
 		    message.what = SAMPLE;
 		    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);

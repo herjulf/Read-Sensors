@@ -58,8 +58,8 @@ class ConnectSocket implements Runnable {
     private String  server_ip;
     private int     server_port;
     private Handler mainHandler; 
-    public static Handler ploth = null; // PlotWindow handler
     private Socket socket;
+    private boolean killed = false;
 
     ConnectSocket(String srv_ip, int srv_port, Handler h){ 
 	server_ip = srv_ip;
@@ -68,7 +68,7 @@ class ConnectSocket implements Runnable {
     }
 
     // Send a message to other activity
-    protected void message(Handler h, int what, Object msg){
+    private void message(Handler h, int what, Object msg){
 	Message message = Message.obtain();
 	message.what = what;
 	message.obj = msg;
@@ -79,25 +79,32 @@ class ConnectSocket implements Runnable {
 	InputStream streamInput;
 
 	Log.d("RStrace", String.format("ConnectSocket Server=%s Port=%d", server_ip, server_port));
+	// Try to connect to server
 	try {
 	    socket = new Socket(server_ip, server_port);
 	}
 	catch (Exception e0)  {
 	    String str = e0.getMessage();
-	    
-	    if(str == null)
+	    Log.d("RStrace", String.format("ConnectSocket socket exception %s", str));
+/*
+    	    if(str == null)
 		str = "Connection closed";
 	    else
 		str = "Cannot connect to server:\r\n" + str;
+*/
 	    message(mainHandler, Client.ERROR, str);
+	    message(mainHandler, Client.STATUS, new Integer(0));
 	    return;
 	}
+	// Obtain an input stream
 	try {
 	    streamInput = socket.getInputStream();
 	}
 	catch (Exception e0){
 	    String str = e0.getMessage();
+	    Log.d("RStrace", String.format("ConnectSocket getInputStream exception %s", str));	    	    
 	    message(mainHandler, Client.ERROR, str);
+	    message(mainHandler, Client.STATUS, new Integer(0));
 	    return;
 	}
 
@@ -108,36 +115,30 @@ class ConnectSocket implements Runnable {
 	byte[] buf = new byte[2048];
 	while (true){
 	    int j = 0;
-	Log.d("RStrace", String.format("ConnectSocket loop 1"));
-	    if (Thread.currentThread().interrupted()) 
-                break;
-	Log.d("RStrace", String.format("ConnectSocket loop 2"));
 	    try	{
 		int i = buf.length;
 		j = streamInput.read(buf, 0, i);
-		Log.d("RStrace", String.format("ConnectSocket j="+j));
 		if (j == -1) {
 		    message(mainHandler, Client.ERROR, "Error while reading socket.");
-		    break;
+		    break; // Thread terminates
 		}
 	    }
 	    catch (Exception e0){
 		String str = e0.getMessage();
 		Log.d("RStrace", String.format("ConnectSocket exception %s", str));
-		message(mainHandler, Client.ERROR, str);
-		break;
+		// Send error only if not initiated from main
+		if (!killed)
+		    message(mainHandler, Client.ERROR, str);
+		break; // Thread terminates
 	    }
-	    if (j == 0)
+	    if (j == 0) // Read more data
 		continue;
 	    if (Thread.currentThread().interrupted()) 
-                break;
-	    Log.d("RStrace", String.format("ConnectSocket loop 2"));
+                break; // Thread terminates
+
+	    // Send data to plotter and main thread
 	    final String strData = new String(buf, 0, j).replace("\r", "");
-	    Log.d("RStrace", "strData:"+strData);
-	    if (ploth != null)
-		message(ploth, Client.SENSD, strData);
 	    message(mainHandler, Client.SENSD, strData);
-	    Log.d("RStrace", String.format("ConnectSocket loop 3"));
 	} // while
 	try {
 	    socket.close();
@@ -147,14 +148,19 @@ class ConnectSocket implements Runnable {
 	}
 	// Signal disconnected
 	message(mainHandler, Client.STATUS, new Integer(0));
-	Log.d("RStrace", String.format("ConnectSocket quit thread"));
-    }
+    } 
+
+    // Method that closes the socket if open. This is to interrupt the thread
+    // waiting in a blocking read
     public void kill(){
-	try {
-	    socket.close();
+	if (socket != null){
+	    try {
+		socket.close();
+	    }
+	    catch (IOException e0) {
+		e0.printStackTrace();
+	    }
 	}
-	catch (IOException e0) {
-	    e0.printStackTrace();
-	}
+	killed = true;
     }
 }

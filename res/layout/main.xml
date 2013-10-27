@@ -52,8 +52,7 @@
         android:id="@+id/server_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="onClick"
-        android:text="Connect" >
+        android:onClick="onClick" >
     </Button>
 	<LinearLayout android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:padding="5dip"

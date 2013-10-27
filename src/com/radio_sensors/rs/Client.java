@@ -59,16 +59,17 @@ public class Client extends Activity {
     final public static int STATUS = 2;          // Status change
     final public static int SENSD  = 3;          // Report arrived from sensd server
     final public static int TIMER  = 4;       // Interval timer every 1s (debug)
+    final public static int REPLAY = 5;       // Replay all stored sensd data
 
-    private static int TIMERINTERVAL = 1000; // interval between sample receives
+    private static int TIMERINTERVAL = 2000; // interval between sample receives
 
     private String server_ip = "";
     private int server_port = 0;
-    private Handler handler = null;
     private Thread connectthread = null;
     public static Client client = null;
+    private boolean active = false;           // Activity is active
 
-    ConnectSocket connect_cs;
+    ConnectSocket connect_cs;                 // Object containing connect-socket
 
     // Debug 
     final static int DEBUG_NONE        = 0;
@@ -78,33 +79,41 @@ public class Client extends Activity {
 
     public static int debug       = DEBUG_NONE;
 
+    public static Handler ploth = null; // PlotWindow handler
+
     // Textwindow
     private ArrayList<String> report = new ArrayList<String>();
-    private int max_lines = 20;
+    private int max_samples;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	client = this;
 	setContentView(R.layout.main);
-	this.handler = new Handler();
+
+	setDefaultKeyMode(DEFAULT_KEYS_DISABLE);
 	// Set-up default values from prefs
 	EditText et = (EditText) findViewById(R.id.server_ip);
-	et.setText(get_server_ip());
+	et.setText(get_pref_server_ip());
 	et = (EditText) findViewById(R.id.server_port);
-	et.setText(""+get_server_port());
+	et.setText(""+get_pref_server_port());
+	max_samples = get_pref_max_samples(); 
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	buttonConnect.setText("Connect");
+	// Start periodic timer
 	Message message = Message.obtain();
 	message.what = Client.TIMER;
 	mHandler.sendMessageDelayed(message, TIMERINTERVAL);
+
     }
 
+    // Called when 'connect/disconnect' button is clicked
     public void onClick(View view) {
-	// We can can change throughout the connection
 	EditText et_srv = (EditText) findViewById(R.id.server_ip);
 	EditText et_port = (EditText) findViewById(R.id.server_port);
 
 	if(connectthread != null) {
-	    Toast.makeText(this, "Disconnecting...", Toast.LENGTH_LONG).show();
+	    Toast.makeText(this, "Disconnecting...", Toast.LENGTH_SHORT).show();
 	    disconnect();
 	    return;
 	}
@@ -116,32 +125,32 @@ public class Client extends Activity {
 
     protected void onStart(){
 	super.onStart();
+	Log.d("RStrace", "Main onStart");
     }
 
     protected void onResume(){
 	super.onResume();
+	active = true;
+
+	Log.d("RStrace", "Main onResume");
     }
 
     protected void onPause(){
 	super.onPause();
+	active = false;
+	Log.d("RStrace", "Main onPause");
     }
 
     protected void onStop(){  // This is called when starting another activity
 	super.onStop();
+
+	Log.d("RStrace", "Main onStop");
     }
 
     protected void onDestroy()	{
 	super.onDestroy();
-	if(connectthread != null) {
-	    try		    {
-		connectthread.interrupt();
-//		connectthread = null;
-	    }
-	    catch (Exception e0) {
-		e0.printStackTrace();
-	    }
-	}
-
+	disconnect(); // Kills connect thread
+	Log.d("RStrace", "Main onDestroy");
     }
 
     // This is called on resize
@@ -151,9 +160,9 @@ public class Client extends Activity {
 	setContentView(R.layout.main);
 	// Set edit text fields from prefs
 	EditText et = (EditText) findViewById(R.id.server_ip);
-	et.setText(get_server_ip());
+	et.setText(get_pref_server_ip());
 	et = (EditText) findViewById(R.id.server_port);
-	et.setText(""+get_server_port());
+	et.setText(""+get_pref_server_port());
 
 	textupdate(); // Update text-sensd reports in window
 
@@ -166,7 +175,7 @@ public class Client extends Activity {
 
     }
 
-    // This is code for lower right button menu
+    // This is code for options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
@@ -203,34 +212,30 @@ public class Client extends Activity {
 	}
     }
 
+    // Connect to a server: create connectsocket object, a thread and start it.
     private void connect(String srv_ip, int srv_port) {
 	if(connectthread != null){
-	    connectthread.interrupt();
-//	    connectthread = null;
+	    // Should not happen
+	    return;
 	}
 	connect_cs = new ConnectSocket(srv_ip, srv_port, mHandler); // Here add parameters
 	connectthread = new Thread(connect_cs, "Connect Socket");
 	connectthread.start();
     }
 
+    // Post an interrupt to the connect thread and call its kill method
     private void disconnect() {
 	if(connectthread != null) {
 	    try{
-		connectthread.interrupt();
 		connect_cs.kill();
-//		connectthread = null;
+		connectthread.interrupt();
+		// connectthread is set to null only when detected by mHandler
 	    }
-	    catch (Exception e1)  {
+	    catch (Exception e1) {
 		e1.printStackTrace();
 	    }
 	}
-
-	// Tell activity status has changed
-	Message message = Message.obtain();
-	message.what = STATUS;
-	mHandler.sendMessage(message);
     }
-
 
     // Draw reports in text window. Scroll to bottom of texts.
     private void textupdate(){
@@ -246,25 +251,36 @@ public class Client extends Activity {
     }
 
     // access methods for prefs (would have them in PrefWindow, but cant make it work)
-    public String get_server_ip(){
+    public String get_pref_server_ip(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("server_ip", PrefWindow.SERVER_IP);
+	return sPref.getString("server_ip", PrefWindow.PREF_SERVER_IP);
     }
-    public int get_server_port(){
+    public int get_pref_server_port(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("server_port", PrefWindow.SERVER_PORT);
+	return sPref.getInt("server_port", PrefWindow.PREF_SERVER_PORT);
     }
-    public String get_sid(){
+    public String get_pref_sid(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("sid", PrefWindow.SID);
+	return sPref.getString("sid", PrefWindow.PREF_SID);
     }
-    public String get_tag(){
+    public String get_pref_tag(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("tag", PrefWindow.TAG);
+	return sPref.getString("tag", PrefWindow.PREF_TAG);
+    }
+    public int get_pref_max_samples(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("max_samples", PrefWindow.PREF_MAX_SAMPLES);
+    }
+    // Send a message to other activity
+    private void message(Handler h, int what, Object msg){
+	Message message = Message.obtain();
+	message.what = what;
+	message.obj = msg;
+	h.sendMessage(message); // To other activity
     }
 
     // Messages comes in from socket-handler due to sensd input or error
-    private final Handler mHandler = new Handler() {
+    public final Handler mHandler = new Handler() {
 	    public void handleMessage(Message msg ) {
 		Message message;
 		switch (msg.what) {
@@ -272,9 +288,12 @@ public class Client extends Activity {
 		    String s = (String)msg.obj;
 		    if (s.length()>0)
 			report.add(s) ;
-		    if (report.size() >= max_lines)
+		    if (report.size() >= max_samples)
 			report.remove(0); //remove first line if max
-		    textupdate();
+		    if (ploth != null)
+			message(ploth, Client.SENSD, s);
+		    if (active)
+			textupdate();         // update text if active
 		    break;
 		case Client.ERROR: // Something went wrong
 		    Log.d("RStrace", "Error"+(String)msg.obj);
@@ -294,13 +313,15 @@ public class Client extends Activity {
 				connectthread = null;
 			    }
 			    connectthread = null;
-
+			    buttonConnect.setText("Connect");			    
+			    Toast.makeText(Client.client, "Disconnected", Toast.LENGTH_SHORT).show();		    
 			}
-			if (stat.equals(1))
+			else if (stat.equals(1))
 			    buttonConnect.setText("Disconnect");			    
 		    }
 		    break;
 		case Client.TIMER: // Periodic timer 
+
 		    // Sanity check: close terminated thread if not by other means
 		    if (connectthread != null){
 			if (connectthread.getState().equals(Thread.State.TERMINATED)){
@@ -308,9 +329,15 @@ public class Client extends Activity {
 			    connectthread = null;
 			}
 		    }
+
 		    message = Message.obtain();
 		    message.what = Client.TIMER;
 		    mHandler.sendMessageDelayed(message, TIMERINTERVAL);
+		    break;
+		case Client.REPLAY: // Replay all sensd data
+		    if (ploth != null)
+			for (String str:report)
+			    message(ploth, Client.SENSD, str);
 		    break;
 		}
 	    }

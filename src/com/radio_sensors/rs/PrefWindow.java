@@ -57,11 +57,11 @@ public class PrefWindow extends Activity {
     // Default preference values. 
     // Only place where default values should appear.
     // XXX: Also set in res/layout/main.xml.
-    final public static String SERVER_IP = "Radio-Sensors.com"; 
-    final public static int SERVER_PORT = 1235;
-    final public static String SID  = "fcc23d000000511d";
-    final public static String TAG  = "T";
-
+    final public static String PREF_SERVER_IP = "Radio-Sensors.com"; 
+    final public static int    PREF_SERVER_PORT = 1235;
+    final public static String PREF_SID  = "fcc23d000000511d";
+    final public static String PREF_TAG  = "T";
+    final public static int    PREF_MAX_SAMPLES = 100;
 
     /** Called when the activity is first created. */
     @Override
@@ -115,10 +115,11 @@ public class PrefWindow extends Activity {
 
     // Read values from file and into layout
     private void setup(){
-	setTextVal(R.id.server_ip, Client.client.get_server_ip());
-	setIntVal(R.id.server_port, Client.client.get_server_port());
-	setTextVal(R.id.sid, Client.client.get_sid());
-	setTextVal(R.id.tag, Client.client.get_tag());
+	setTextVal(R.id.server_ip, Client.client.get_pref_server_ip());
+	setIntVal(R.id.server_port, Client.client.get_pref_server_port());
+	setTextVal(R.id.sid, Client.client.get_pref_sid());
+	setTextVal(R.id.tag, Client.client.get_pref_tag());
+	setIntVal(R.id.max_samples, Client.client.get_pref_max_samples());
     }
 
     // Read values from layout and into file
@@ -129,6 +130,7 @@ public class PrefWindow extends Activity {
 	ed.putInt("server_port", getIntVal(R.id.server_port));
 	ed.putString("sid", (String)getTextVal(R.id.sid));
 	ed.putString("tag", (String)getTextVal(R.id.tag));
+	ed.putInt("max_samples", getIntVal(R.id.max_samples));
 	ed.commit();
     }
 

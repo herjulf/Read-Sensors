@@ -79,4 +79,21 @@
       android:layout_span="2" />
  </TableRow>
 
+ <TableRow>
+  <TextView
+      android:id="@+id/max_samples_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Max samples: " />
+  <EditText
+      android:id="@+id/max_samples"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" 
+      android:text="100" 
+      android:numeric="decimal"
+      android:layout_column="2"
+      android:layout_span="2" />
+ </TableRow>
+
 </TableLayout>
