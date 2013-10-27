@@ -53,6 +53,18 @@ import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
 
+import android.hardware.usb.UsbManager;
+
+import com.hoho.android.usbserial.driver.FtdiSerialDriver;
+import com.hoho.android.usbserial.driver.UsbId;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialRuntimeException;
+import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
+import com.hoho.android.usbserial.util.SerialInputOutputManager;
+import com.hoho.android.usbserial.util.HexDump;
+
+
 public class Client extends Activity {
     // Messages
     final public static int ERROR  = -1;         // Something went wrong
@@ -221,6 +233,48 @@ public class Client extends Activity {
 	connect_cs = new ConnectSocket(srv_ip, srv_port, mHandler); // Here add parameters
 	connectthread = new Thread(connect_cs, "Connect Socket");
 	connectthread.start();
+    }
+
+  // Connect to USB device
+    private void connect_usb() {
+
+	// Get UsbManager from Android.
+	UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
+
+	// Find the first available driver.
+	UsbSerialDriver driver = UsbSerialProber.acquire(manager);
+
+	if (driver != null) {
+	    try {
+		driver.open();
+		driver.setParameters(38400, 8, STOPBITS_1, PARITY_NONE);
+	    } catch (IOException e) {
+		Log.e("USB", "Error setting up device: " + e.getMessage(), e);
+		try {
+		    driver.close();
+		} catch (IOException e2) {
+                                        // Ignore.
+		}
+		driver = null;
+		return;
+	    }
+
+	    try {
+		byte buffer[] = new byte[16];
+		int numBytesRead = driver.read(buffer, 1000);
+
+		Log.e("USB", "Read " + numBytesRead + " bytes.");
+	    } catch (IOException e) {
+		// Handle error.
+	    } finally {
+		try {
+		    driver.close();
+		} catch (IOException e2) {
+		    // Ignore.
+		}
+		driver = null;
+	    } 
+	}
     }
 
     // Post an interrupt to the connect thread and call its kill method
