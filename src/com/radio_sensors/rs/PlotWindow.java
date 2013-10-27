@@ -283,6 +283,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sm.add(NONE, ID_TAG, NONE, "P");
 	    sm.add(NONE, ID_TAG, NONE, "V_MCU");
 	    sm.add(NONE, ID_TAG, NONE, "RH");
+	    sm.add(NONE, ID_TAG, NONE, "RND");
 	    sm.add(NONE, ID_TAG, NONE, "V_IN");
 	    sm.add(NONE, ID_TAG, NONE, "V_A1");
 	    sm.add(NONE, ID_TAG, NONE, "V_A2");
@@ -551,6 +552,17 @@ public class PlotWindow extends Activity implements OnTouchListener{
 //		add_sample(id, tag, time, y, "UP");
 	    }
 	    else if (tag.equals("RH")){ // Relative Humidity in % (F)
+		try{
+		    y = Double.parseDouble(val);
+		}
+		catch (NumberFormatException e){
+		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    return 0;
+		}
+
+		add_sample(id, tag, time, y, "RH");
+	    }
+	    else if (tag.equals("RND")){ // Random 0-999 
 		try{
 		    y = Double.parseDouble(val);
 		}
