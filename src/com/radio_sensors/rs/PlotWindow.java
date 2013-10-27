@@ -229,24 +229,27 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
     }
 
+    // This is code for options, called everytime invoked
     public boolean onPrepareOptionsMenu(Menu menu) {
 	SensdId obj;
 	SubMenu sm;
 	MenuItem item;
-	item = menu.getItem(1); // sid
-	sm = item.getSubMenu();
-	sm.clear();
-	sm.setHeaderTitle("SensorId");
-	sm.add(NONE, ID_SENSORID, NONE, "All");
-	for(int i=0; i < idv.size() ; i++){ 
-	    obj = idv.get(i);
-	    sm.add(NONE, ID_SENSORID, NONE, obj.id);
+	item = menu.findItem(R.id.sid);
+	if (item != null && (sm = item.getSubMenu()) != null){
+	    sm.clear();
+	    sm.setHeaderTitle("SensorId");
+	    sm.add(NONE, ID_SENSORID, NONE, "All");
+	    for(int i=0; i < idv.size() ; i++){ 
+		obj = idv.get(i);
+		sm.add(NONE, ID_SENSORID, NONE, obj.id);
+	    }
 	}
 
 	return true;
     }
 
-    // This is code for lower right button menu
+    // This is code for options menu, called on activity-create. See also
+    // onPrepareOptionsMenu which is called on everytime it is shown
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
@@ -254,31 +257,32 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	MenuItem item;
 	SubMenu sm;
 	SensdId obj;
-	item = menu.getItem(2); // tag
-	sm = item.getSubMenu();
-	sm.setHeaderTitle("TagName");
-	sm.add(NONE, ID_TAG, NONE, "All"); 
-	sm.add(NONE, ID_TAG, NONE, "T");
-	sm.add(NONE, ID_TAG, NONE, "PS");
-	sm.add(NONE, ID_TAG, NONE, "P");
-	sm.add(NONE, ID_TAG, NONE, "V_MCU");
-	sm.add(NONE, ID_TAG, NONE, "RH");
-	sm.add(NONE, ID_TAG, NONE, "V_IN");
-	sm.add(NONE, ID_TAG, NONE, "V_A1");
-	sm.add(NONE, ID_TAG, NONE, "V_A2");
-	sm.add(NONE, ID_TAG, NONE, "V_A3");
-	sm.add(NONE, ID_TAG, NONE, "GWGPS_LON");
-	sm.add(NONE, ID_TAG, NONE, "GWGPS_LAT");
-	sm.add(NONE, ID_TAG, NONE, "P0");
-	sm.add(NONE, ID_TAG, NONE, "P0_T");
-	sm.add(NONE, ID_TAG, NONE, "P1");
-	sm.add(NONE, ID_TAG, NONE, "P1_T");
-	sm.add(NONE, ID_TAG, NONE, "LQI");
-	sm.add(NONE, ID_TAG, NONE, "ADDR");
-	sm.add(NONE, ID_TAG, NONE, "SEQ");
-	sm.add(NONE, ID_TAG, NONE, "RSSI");
-	sm.add(NONE, ID_TAG, NONE, "DRP");
-	sm.add(NONE, ID_TAG, NONE, "Debug");
+	item = menu.findItem(R.id.tag);
+	if (item != null && (sm = item.getSubMenu()) != null){
+	    sm.setHeaderTitle("TagName");
+	    sm.add(NONE, ID_TAG, NONE, "All"); 
+	    sm.add(NONE, ID_TAG, NONE, "T");
+	    sm.add(NONE, ID_TAG, NONE, "PS");
+	    sm.add(NONE, ID_TAG, NONE, "P");
+	    sm.add(NONE, ID_TAG, NONE, "V_MCU");
+	    sm.add(NONE, ID_TAG, NONE, "RH");
+	    sm.add(NONE, ID_TAG, NONE, "V_IN");
+	    sm.add(NONE, ID_TAG, NONE, "V_A1");
+	    sm.add(NONE, ID_TAG, NONE, "V_A2");
+	    sm.add(NONE, ID_TAG, NONE, "V_A3");
+	    sm.add(NONE, ID_TAG, NONE, "GWGPS_LON");
+	    sm.add(NONE, ID_TAG, NONE, "GWGPS_LAT");
+	    sm.add(NONE, ID_TAG, NONE, "P0");
+	    sm.add(NONE, ID_TAG, NONE, "P0_T");
+	    sm.add(NONE, ID_TAG, NONE, "P1");
+	    sm.add(NONE, ID_TAG, NONE, "P1_T");
+	    sm.add(NONE, ID_TAG, NONE, "LQI");
+	    sm.add(NONE, ID_TAG, NONE, "ADDR");
+	    sm.add(NONE, ID_TAG, NONE, "SEQ");
+	    sm.add(NONE, ID_TAG, NONE, "RSSI");
+	    sm.add(NONE, ID_TAG, NONE, "DRP");
+	    sm.add(NONE, ID_TAG, NONE, "Debug");
+	}
 	return true;
     }	
 
@@ -307,6 +311,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    return true;
 	case R.id.replot:
 	    plot.reset();
+	    return true;
+	case R.id.prefs:
+	    toActivity("PrefWindow");
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);

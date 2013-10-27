@@ -96,7 +96,7 @@ final class PlotVector {
 	where = w0;
     }
     public void sample(Pt pt){
-	Log.d("RStrace", String.format("sample: x=%f y=%f", pt.x, pt.y));
+//	Log.d("RStrace", String.format("sample: x=%f y=%f", pt.x, pt.y));
 	if (pt.y < ymin)
 	    ymin = pt.y;
 	if (pt.y > ymax)

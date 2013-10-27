@@ -2,13 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 	<item android:id="@+id/sid" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Select SensorId">
-	  <menu xmlns:android="http://schemas.android.com/apk/res/android">
-	  </menu>
+	  <menu xmlns:android="http://schemas.android.com/apk/res/android" />
 	</item>
 	<item android:id="@+id/tag" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Select Tag">
-	  <menu xmlns:android="http://schemas.android.com/apk/res/android">
-	  </menu>
+	  <menu xmlns:android="http://schemas.android.com/apk/res/android" />
 	</item>
 	<item android:id="@+id/replot" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="RePlot" />
