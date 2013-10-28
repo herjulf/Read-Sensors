@@ -247,7 +247,8 @@ public class Client extends Activity {
 	if (driver != null) {
 	    try {
 		driver.open();
-		driver.setParameters(38400, 8, STOPBITS_1, PARITY_NONE);
+		driver.setParameters(38400, 8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
+		Toast.makeText(this, "RS USB opened", Toast.LENGTH_SHORT).show();
 	    } catch (IOException e) {
 		Log.e("USB", "Error setting up device: " + e.getMessage(), e);
 		try {
@@ -262,8 +263,9 @@ public class Client extends Activity {
 	    try {
 		byte buffer[] = new byte[16];
 		int numBytesRead = driver.read(buffer, 1000);
-
-		Log.e("USB", "Read " + numBytesRead + " bytes.");
+		Toast.makeText(this, "RS USB" + numBytesRead, Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "RS USB" + new String(buffer), Toast.LENGTH_SHORT).show();
+		Log.e("RS USB", "Read " + numBytesRead + " bytes.");
 	    } catch (IOException e) {
 		// Handle error.
 	    } finally {
