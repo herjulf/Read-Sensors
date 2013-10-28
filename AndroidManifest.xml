@@ -43,7 +43,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
-        </activity>
+
+	    <intent-filter>
+	      <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+	    </intent-filter>
+	  <meta-data
+	      android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" 
+	      android:resource="@layout/device_filter" />
+	</activity>
 
     </application>
 </manifest>
