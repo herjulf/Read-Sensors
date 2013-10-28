@@ -61,12 +61,13 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private static int XWINDOW = 10; // how many seconds to show default
 
     private static int PLOTINTERVAL = 1000; // interval between plot calls in ms
-    private static int SAMPLEINTERVAL = 1000; // interval between sample receives
+    private long debugseq = 0;              // timrestamp for debug plot
+    private static int SAMPLEINTERVAL = 100; // interval between sample receives in ms
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Debug Sample
 
-    private String sid = null;
-    private String tag = null;
+    private static String sid = Client.client.get_pref_sid();
+    private static String tag = Client.client.get_pref_tag();
 
     private long nsoffset = 0; // guaranteed monotonic
 
@@ -98,17 +99,17 @@ public class PlotWindow extends Activity implements OnTouchListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
+
+	debugseq = Timestamp2s(Timestamp());
 	setContentView(R.layout.plot);
 	Client.ploth = mHandler;
-	sid = Client.client.get_pref_sid();
-	tag = Client.client.get_pref_tag();
 	image = (ImageView) findViewById(R.id.img);
 	image.setOnTouchListener(this);
 
 	rnd = new Random(42); // Init random generator
 
 	init_plot();
-
+	plot.fontsize_set(Client.client.get_pref_plot_fontsize());
 	// Initialize messages (plot for plotting, samle for test samples)
 
 	Message message = Message.obtain();
@@ -174,13 +175,14 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	// Initialize plotter
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
-	plot.xwin_set(60.0);  // at least 30 s at most 3 minutes of data
+	plot.xwin_set(Client.client.get_pref_plot_window());
 	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
-	if (true){
-	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
-	    debug = new PlotVector(vec, "Debug", 0, Plot.LINES, plot.nextColor());
-	    plot.add(debug);
-	}
+
+	// Special debug plotvector (enabled as tag)
+	ArrayList <Pt> vec = new ArrayList<Pt>(); 
+	debug = new PlotVector(vec, "Debug", 0, Client.client.get_pref_plot_style(), plot.nextColor());
+	plot.add(debug);
+
 	message(Client.client.mHandler, Client.REPLAY, null);
     }
 
@@ -355,7 +357,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
-
+	plot.fontsize_set(Client.client.get_pref_plot_fontsize());
 	image = (ImageView)findViewById(R.id.img);
 	image.setOnTouchListener(this);
     }
@@ -399,6 +401,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		touch_t = System.currentTimeMillis();
 //		Log.d("RStrace", "ACTION_MOVE DRAG delta="+delta);
 		plot.xmax_add(-7*delta);
+	    setActive();
+	    plot.autodraw(image);
 	    }
 	    else{
 //	    Log.d("RStrace", "ACTION_MOVE OTHER");
@@ -448,7 +452,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    stag = new SensdTag(tag, label);
 	    sid.tagv.add(stag);
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
-	    stag.pv = new PlotVector(vec, label, 0, Plot.LINES, plot.nextColor());
+	    stag.pv = new PlotVector(vec, label, 0, Client.client.get_pref_plot_style(), plot.nextColor());
 	    plot.add(stag.pv); //?
 	}
 	// 3. Add to plotvector
@@ -696,10 +700,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    message = Message.obtain();
 		    if (tag == "Debug"){
 			int y = rnd.nextInt(10);
-			long ts = Timestamp2s(Timestamp());
-			p = new Pt(ts, y);
+//			long ts = Timestamp2s(Timestamp());
+			p = new Pt(debugseq++, y);
 			debug.sample(p);
 		    }
+		    setActive();
+		    plot.autodraw(image);
 		    message.what = SAMPLE;
 		    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 		    break;
@@ -707,8 +713,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    if (!runPlot)
 			break;
 		    message = Message.obtain();
-		    setActive();
-		    plot.autodraw(image);
+//		    setActive();
+//		    plot.autodraw(image);
 		    message.what = PLOT;
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 		    break;

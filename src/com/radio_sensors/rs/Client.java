@@ -131,7 +131,7 @@ public class Client extends Activity {
     protected void onResume(){
 	super.onResume();
 	active = true;
-
+	textupdate(); // Update text-sensd reports in window
 	Log.d("RStrace", "Main onResume");
     }
 
@@ -270,6 +270,18 @@ public class Client extends Activity {
     public int get_pref_max_samples(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	return sPref.getInt("max_samples", PrefWindow.PREF_MAX_SAMPLES);
+    }
+    public int get_pref_plot_window(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("plot_window", PrefWindow.PREF_PLOT_WINDOW);
+    }
+    public int get_pref_plot_style(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("plot_style", PrefWindow.PREF_PLOT_STYLE);
+    }
+    public int get_pref_plot_fontsize(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getInt("plot_fontsize", PrefWindow.PREF_PLOT_FONTSIZE);
     }
     // Send a message to other activity
     private void message(Handler h, int what, Object msg){

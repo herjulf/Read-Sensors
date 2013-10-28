@@ -62,6 +62,9 @@ public class PrefWindow extends Activity {
     final public static String PREF_SID  = "fcc23d000000511d";
     final public static String PREF_TAG  = "T";
     final public static int    PREF_MAX_SAMPLES = 100;
+    final public static int    PREF_PLOT_WINDOW = Plot.XWINDOW; // seconds
+    final public static int    PREF_PLOT_STYLE = Plot.LINES; 
+    final public static int    PREF_PLOT_FONTSIZE = Plot.FONTSIZE; 
 
     /** Called when the activity is first created. */
     @Override
@@ -120,6 +123,9 @@ public class PrefWindow extends Activity {
 	setTextVal(R.id.sid, Client.client.get_pref_sid());
 	setTextVal(R.id.tag, Client.client.get_pref_tag());
 	setIntVal(R.id.max_samples, Client.client.get_pref_max_samples());
+	setIntVal(R.id.plot_window, Client.client.get_pref_plot_window());
+	setIntVal(R.id.plot_style, Client.client.get_pref_plot_style());
+	setIntVal(R.id.plot_fontsize, Client.client.get_pref_plot_fontsize());
     }
 
     // Read values from layout and into file
@@ -130,7 +136,9 @@ public class PrefWindow extends Activity {
 	ed.putInt("server_port", getIntVal(R.id.server_port));
 	ed.putString("sid", (String)getTextVal(R.id.sid));
 	ed.putString("tag", (String)getTextVal(R.id.tag));
-	ed.putInt("max_samples", getIntVal(R.id.max_samples));
+	ed.putInt("plot_window", getIntVal(R.id.plot_window));
+	ed.putInt("plot_style", getIntVal(R.id.plot_style));
+	ed.putInt("plot_fontsize", getIntVal(R.id.plot_fontsize));
 	ed.commit();
     }
 

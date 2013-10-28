@@ -34,6 +34,7 @@ import android.text.format.Time;
 import android.widget.ImageView;
 import android.view.Display;
 import android.util.Log;
+import java.util.Random;
 
 // Point class using double (PointF uses floats)
 final class Pt{
@@ -88,6 +89,7 @@ final class PlotVector {
     	vec = v0;
     	title = t0;
     	where = w0;
+    	style.clear();
     	style.add(s0);
     	color = c0;
     }
@@ -109,13 +111,9 @@ final class PlotVector {
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    private static final int FONTSIZE = 20; // font size
-    private static final int LEFTMARGIN = 1*(FONTSIZE+2); // left 
-    private static final int BOTTOMMARGIN = 2*(FONTSIZE+2); // lower
-    private static final int RIGHTMARGIN = 1*(FONTSIZE+2); // right
-    private static final int TOPMARGIN = 4; // right and upper
+    public static final int FONTSIZE = 20; // default font size
 
-    private static int XWINDOW = 10; // how many seconds to show default
+    public static int XWINDOW = 10; // how many seconds to show default
 
     public static final int POINTS = 1; // style
     public static final int LINES = 2; // style
@@ -131,6 +129,7 @@ public final class Plot {
 	
     public boolean liveUpdate = true; // Scroll x-axis as new values arrive
 
+    private int fontsize = FONTSIZE;
     private int nrPlots = 0;	
     private String xlabel;  // text to print on x-axis
     private String y1label = ""; // text to print on left-hand y-axis
@@ -141,10 +140,28 @@ public final class Plot {
 
     private int id;                 // resource id
 
+    private Random rnd = new Random(42); // Init random generator;
+
     Plot(int id0, Display display){ 
 	canvas = new Canvas();
 	id = id0;
 	plots = new ArrayList <PlotVector>();
+    }
+
+    public void fontsize_set(int sz){
+	fontsize = sz;
+    }
+    private int leftmargin(){
+	return fontsize;
+    }
+    private int rightmargin(){
+	return fontsize;
+    }
+    private int topmargin(){
+	return 4;
+    }
+    private int bottommargin(){
+	return 2*(fontsize + 2);
     }
 
     public void newDisplay(Display display){
@@ -154,26 +171,21 @@ public final class Plot {
 	w = display.getWidth();
 	h = display.getHeight();
 	// plotarea: px,py,pw,ph
-	px = x + LEFTMARGIN;
-	py = y + TOPMARGIN;
-	pw = w - LEFTMARGIN - RIGHTMARGIN;
-	ph = h - BOTTOMMARGIN - TOPMARGIN;
+	px = x + leftmargin();
+	py = y + topmargin();
+	pw = w - leftmargin() - rightmargin();
+	ph = h - bottommargin() - topmargin();
 	bitmap = Bitmap.createBitmap(w, h, Config.ARGB_8888); 
 	canvas.setBitmap(bitmap);
     }
 
     private int colornr = 0;
     public int nextColor(){
-	int c;
-	switch (colornr++){
-	case 0: c = Color.RED; break;
-	case 1: c = Color.GREEN; break;
-	case 2: c = Color.BLUE; break;
-	case 3: c = Color.CYAN; break;
-	case 4: c = Color.YELLOW; break;
-	default: c = Color.WHITE; break;
-	}
-	return c;
+	float[] hsv = new float[3];
+	hsv[0] = rnd.nextInt(360); 
+	hsv[1] = 1; 
+	hsv[2] = 1;
+	return Color.HSVToColor(hsv); 
     }
     // Reset plot area, scaling and axes to default
     public void reset(){
@@ -397,6 +409,7 @@ public final class Plot {
 	// assert |xvec| == |yvec|
 	if (!draw_grid(ax, ay1, ay2))
 	    return;
+	int i=0;
 	for(int j=0; j < plots.size() ; j++)  {
 	    PlotVector pv = plots.get(j);
 	    if (pv.where == 0) /* don't draw */
@@ -404,6 +417,7 @@ public final class Plot {
 	    vec = pv.vec;
 	    draw_plot_label(j, pv.title, pv.color);
 	    draw_plot(vec, ax, pv.where==1?ay1:ay2, pv.color, pv.style, agg);
+	    i++;
 	}
     } // draw
 
@@ -415,10 +429,10 @@ public final class Plot {
 	final Paint paint = new Paint();
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(Color.WHITE);
-	paint.setTextSize(FONTSIZE);
+	paint.setTextSize(fontsize);
 	float x = (float)(px+0.6*pw);
-	float x1 = x + title.length()*FONTSIZE*(float)0.8;
-	float y = py+(i+1)*2*FONTSIZE;
+	float x1 = x + title.length()*fontsize*(float)0.8;
+	float y = py+(i+1)*2*fontsize;
 	canvas.drawText(title, x, y, paint);
 	paint.setColor(color);
 	canvas.drawLine(x1,
@@ -433,7 +447,7 @@ public final class Plot {
 	{
 	    final Paint paint = new Paint();
 	    paint.setAntiAlias(true);
-	    paint.setTextSize(FONTSIZE);
+	    paint.setTextSize(fontsize);
 	    paint.setStyle(Paint.Style.FILL); 
 	    paint.setColor(Color.BLACK);  
 	    int ax1 = ax.ticks-1;
@@ -450,22 +464,22 @@ public final class Plot {
 	    canvas.drawRect(px, py, px + pw, py + ph, paint);
 	    // Write text
 	    paint.setTypeface(Typeface.SANS_SERIF ); 
-	    paint.setTextSize(FONTSIZE);
+	    paint.setTextSize(fontsize);
 	    paint.setColor(Color.WHITE);
 	    // axis label text
-	    canvas.drawText(xlabel, px+pw/2-FONTSIZE*2, y+h-2, paint);
+	    canvas.drawText(xlabel, px+pw/2-fontsize*2, y+h-2, paint);
 	    // y1 axis
-	    canvas.translate(x+FONTSIZE, y+ph/2);
+	    canvas.translate(x+fontsize, y+ph/2);
 	    canvas.rotate(-90, 0, 0);
 	    canvas.drawText(y1label, 0, 0, paint);
 	    canvas.rotate(90, 0, 0);
-	    canvas.translate(-x-FONTSIZE, -y-ph/2);
+	    canvas.translate(-x-fontsize, -y-ph/2);
 	    // y2 axis
-	    canvas.translate(px+pw+FONTSIZE+2, y+ph/2);
+	    canvas.translate(px+pw+fontsize+2, y+ph/2);
 	    canvas.rotate(90, 0, 0);
 	    canvas.drawText(y2label, 0, 0, paint);
 	    canvas.rotate(-90, 0, 0);
-	    canvas.translate(-px-pw-FONTSIZE-2, -y-ph/2);
+	    canvas.translate(-px-pw-fontsize-2, -y-ph/2);
 	    // text along x-axis
 	    paint.setColor(Color.WHITE);
 	    boolean subseconds = (ax.high-ax.low)<4.0;
@@ -474,10 +488,10 @@ public final class Plot {
 		for(int i=0; i < ax.ticks; i++) { 
 		    int x1 = px + (i * pw/ax1); //left
 		    if (i == ax1) // right
-			x1 -= FONTSIZE;
+			x1 -= fontsize;
 		    else
 			if (i != 0) // normal case
-			    x1 -= FONTSIZE/2;
+			    x1 -= fontsize/2;
 		    double x = ax.low+i*ax.spacing*xscale;
 		    Time t = new Time(); //ms
 		    t.set((long)(x*1000.0));
@@ -495,29 +509,29 @@ public final class Plot {
 			else
 			    s = String.format("%d:%d", t.minute, t.second);
 		    }
-		    canvas.drawText(s, x1, py+ph+FONTSIZE+2, paint);
+		    canvas.drawText(s, x1, py+ph+fontsize+2, paint);
 		}
 	    // text along y-axis
 	    if (ay11>0)
 		for(int i=0; i < ay1.ticks; i++) { 
 		    int y1 = py + (i * ph/ay11); //lower
 		    if (i == 0) //upper
-			y1 += FONTSIZE;
+			y1 += fontsize;
 		    else
 			if (i != ay11) // normal case
-			    y1 += FONTSIZE/2;
+			    y1 += fontsize/2;
 		    String s = String.format("%.2f", (ay1.high-i*ay1.spacing)*y1scale);
-		    canvas.drawText(s, FONTSIZE+2, y1, paint);
+		    canvas.drawText(s, fontsize+2, y1, paint);
 		}
 	    // text along y2-axis
 	    if (ay21>0)
 		for(int i=0; i < ay2.ticks; i++) { 
 		    int y2 = py + (i * ph/ay21); //lower
 		    if (i == 0) //upper
-			y2 += FONTSIZE;
+			y2 += fontsize;
 		    else
 			if (i != ay21) // normal case
-			    y2 += FONTSIZE/2;
+			    y2 += fontsize/2;
 		    String s = String.format("%.2f", (ay2.high-i*ay2.spacing)*y2scale);
 		    canvas.drawText(s, px+pw+2, y2, paint);
 		}
@@ -582,6 +596,7 @@ public final class Plot {
 	Pt pt_avg = new Pt(0, 0);   
 	final Paint paint = new Paint();
 
+	Log.d("RStrace", "style:"+style);
 	paint.setAntiAlias(true);
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(color);

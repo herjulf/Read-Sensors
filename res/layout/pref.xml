@@ -90,7 +90,55 @@
       android:id="@+id/max_samples"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content" 
-      android:text="100" 
+      android:numeric="decimal"
+      android:layout_column="2"
+      android:layout_span="2" />
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/plot_window_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Plot x-window[s]: " />
+  <EditText
+      android:id="@+id/plot_window"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" 
+      android:numeric="decimal"
+      android:layout_column="2"
+      android:layout_span="2" />
+ </TableRow>
+
+
+ <TableRow>
+  <TextView
+      android:id="@+id/plot_style_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Plot style[1,2,3]: " />
+  <EditText
+      android:id="@+id/plot_style"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" 
+      android:numeric="decimal"
+      android:layout_column="2"
+      android:layout_span="2" />
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/plot_fontsize_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Plot fontsize: " />
+  <EditText
+      android:id="@+id/plot_fontsize"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" 
       android:numeric="decimal"
       android:layout_column="2"
       android:layout_span="2" />
