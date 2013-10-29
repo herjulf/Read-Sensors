@@ -575,7 +575,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "RH");
+		add_sample(id, tag, time, y, "Random Data Test");
 	    }
 	    else if (tag.equals("V_IN")){ // Voltage Input (F)
 		try{
