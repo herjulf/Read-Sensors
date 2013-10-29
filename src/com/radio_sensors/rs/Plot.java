@@ -111,9 +111,9 @@ final class PlotVector {
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    public static final int FONTSIZE = 20; // default font size
+    public static final int FONTSIZE = 40; // default font size
 
-    public static int XWINDOW = 10; // how many seconds to show default
+    public static int XWINDOW = 240; // how many seconds to show default
 
     public static final int POINTS = 1; // style
     public static final int LINES = 2; // style
