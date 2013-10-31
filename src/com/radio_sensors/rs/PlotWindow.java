@@ -570,8 +570,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
-
-		add_sample(id, tg, time, y, "RH");
+		add_sample(id, tg, time, y, "Random Data Test");
 	    }
 	    else if (tg.equals("V_IN")){ // Voltage Input (F)
 		try{

@@ -131,6 +131,7 @@ public class PrefWindow extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
 	super.onConfigurationChanged(newConfig);
 	setContentView(R.layout.pref);
+	setup();
     }
 
     private void reset(){

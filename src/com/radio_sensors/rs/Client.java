@@ -53,18 +53,6 @@ import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
 
-import android.hardware.usb.UsbManager;
-
-import com.hoho.android.usbserial.driver.FtdiSerialDriver;
-import com.hoho.android.usbserial.driver.UsbId;
-import com.hoho.android.usbserial.driver.UsbSerialProber;
-import com.hoho.android.usbserial.driver.UsbSerialDriver;
-import com.hoho.android.usbserial.driver.UsbSerialRuntimeException;
-import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
-import com.hoho.android.usbserial.util.SerialInputOutputManager;
-import com.hoho.android.usbserial.util.HexDump;
-
-
 public class Client extends Activity {
     // Messages
     final public static int ERROR  = -1;         // Something went wrong
@@ -78,10 +66,12 @@ public class Client extends Activity {
     private String server_ip = "";
     private int server_port = 0;
     private Thread connectthread = null;
+    private Thread usbthread = null;
     public static Client client = null;
     private boolean active = false;           // Activity is active
 
     ConnectSocket connect_cs;                 // Object containing connect-socket
+    ConnectUSB connect_usb;                // Object containing 
 
     // Debug 
     final static int DEBUG_NONE        = 0;
@@ -125,9 +115,9 @@ public class Client extends Activity {
 	EditText et_port = (EditText) findViewById(R.id.server_port);
 
 	if(connectthread != null) {
-	    Toast.makeText(this, "Disconnecting...", Toast.LENGTH_SHORT).show();
-	    disconnect();
-	    return;
+	  Toast.makeText(this, "Disconnecting...", Toast.LENGTH_SHORT).show();
+	  disconnect();
+	  return;
 	}
 	server_ip = et_srv.getText().toString();
 	server_port = Integer.parseInt(et_port.getText().toString());
@@ -235,48 +225,14 @@ public class Client extends Activity {
 	connectthread.start();
     }
 
-  // Connect to USB device
     private void connect_usb() {
-
-	// Get UsbManager from Android.
-	UsbManager manager = (UsbManager) getSystemService(Context.USB_SERVICE);
-
-	// Find the first available driver.
-	UsbSerialDriver driver = UsbSerialProber.acquire(manager);
-
-	if (driver != null) {
-	    try {
-		driver.open();
-		driver.setParameters(38400, 8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
-		Toast.makeText(this, "RS USB opened", Toast.LENGTH_SHORT).show();
-	    } catch (IOException e) {
-		Log.e("USB", "Error setting up device: " + e.getMessage(), e);
-		try {
-		    driver.close();
-		} catch (IOException e2) {
-                                        // Ignore.
-		}
-		driver = null;
-		return;
-	    }
-
-	    try {
-		byte buffer[] = new byte[16];
-		int numBytesRead = driver.read(buffer, 1000);
-		Toast.makeText(this, "RS USB" + numBytesRead, Toast.LENGTH_SHORT).show();
-		Toast.makeText(this, "RS USB" + new String(buffer), Toast.LENGTH_SHORT).show();
-		Log.e("RS USB", "Read " + numBytesRead + " bytes.");
-	    } catch (IOException e) {
-		// Handle error.
-	    } finally {
-		try {
-		    driver.close();
-		} catch (IOException e2) {
-		    // Ignore.
-		}
-		driver = null;
-	    } 
+	if(usbthread != null){
+	    // Should not happen
+	    return;
 	}
+	connect_usb = new ConnectUSB(mHandler);
+	usbthread = new Thread(connect_usb, "USB connect");
+	usbthread.start();
     }
 
     // Post an interrupt to the connect thread and call its kill method
