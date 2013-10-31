@@ -120,7 +120,7 @@ public class Client extends Activity {
     }
 
     // Called when 'connect/disconnect' button is clicked
-    public void onClick(View view) {
+    public void onClickConnect(View view) {
 	EditText et_srv = (EditText) findViewById(R.id.server_ip);
 	EditText et_port = (EditText) findViewById(R.id.server_port);
 
@@ -322,6 +322,10 @@ public class Client extends Activity {
     public String get_pref_tag(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	return sPref.getString("tag", PrefWindow.PREF_TAG);
+    }
+    public String get_pref_user_tag(){
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	return sPref.getString("user_tag", null);
     }
     public int get_pref_max_samples(){
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);

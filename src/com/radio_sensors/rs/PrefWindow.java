@@ -24,6 +24,8 @@ import java.util.Vector;
 import java.util.Random;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -47,9 +49,12 @@ import android.os.Message;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.EditText;
+import android.widget.Button;
 import android.content.res.Configuration;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.view.Display;
 import android.util.Log;
 
@@ -59,7 +64,7 @@ public class PrefWindow extends Activity {
     // XXX: Also set in res/layout/main.xml.
     final public static String PREF_SERVER_IP = "Radio-Sensors.com"; 
     final public static int    PREF_SERVER_PORT = 1235;
-    final public static String PREF_SID  = "fcc23d000000511d";
+    final public static String PREF_SID  = "Learn"; // Learn is first tag found
     final public static String PREF_TAG  = "T";
     final public static int    PREF_MAX_SAMPLES = 100;
     final public static int    PREF_PLOT_WINDOW = Plot.XWINDOW; // seconds
@@ -71,13 +76,30 @@ public class PrefWindow extends Activity {
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.pref);
-	setTitle("Read-Sensors: Prefs");
+	setTitle("Preferences");
 	setup();
     }
 
+    // Called when 'tag' button is clicked
+    public void onClickTag(View view) {
+	AlertDialog.Builder dia = new AlertDialog.Builder(this);
+	dia.setTitle("Select Tag");
+	dia.setItems(R.array.tags_array, new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+		    Resources res = getResources();
+		    String[] items = res.getStringArray(R.array.tags_array);
+	final Button bt = (Button) findViewById(R.id.tag);
+	bt.setText(items[which]);
+		}
+	    });
+	dia.setInverseBackgroundForced(true);
+	dia.create();
+	dia.show();
+    }
+
     protected void onDestroy(){
-	    super.onDestroy();
-	}
+	super.onDestroy();
+    }
 
     // This is code for lower right button menu
     @Override
@@ -121,7 +143,9 @@ public class PrefWindow extends Activity {
 	setTextVal(R.id.server_ip, Client.client.get_pref_server_ip());
 	setIntVal(R.id.server_port, Client.client.get_pref_server_port());
 	setTextVal(R.id.sid, Client.client.get_pref_sid());
-	setTextVal(R.id.tag, Client.client.get_pref_tag());
+	final Button bt = (Button) findViewById(R.id.tag);
+	bt.setText(Client.client.get_pref_tag());
+	setTextVal(R.id.user_tag, Client.client.get_pref_user_tag());
 	setIntVal(R.id.max_samples, Client.client.get_pref_max_samples());
 	setIntVal(R.id.plot_window, Client.client.get_pref_plot_window());
 	setIntVal(R.id.plot_style, Client.client.get_pref_plot_style());
@@ -135,7 +159,9 @@ public class PrefWindow extends Activity {
 	ed.putString("server_ip", (String)getTextVal(R.id.server_ip));
 	ed.putInt("server_port", getIntVal(R.id.server_port));
 	ed.putString("sid", (String)getTextVal(R.id.sid));
-	ed.putString("tag", (String)getTextVal(R.id.tag));
+	final Button bt = (Button) findViewById(R.id.tag);
+	ed.putString("tag", (String)bt.getText());
+	ed.putString("user_tag", (String)getTextVal(R.id.user_tag));
 	ed.putInt("plot_window", getIntVal(R.id.plot_window));
 	ed.putInt("plot_style", getIntVal(R.id.plot_style));
 	ed.putInt("plot_fontsize", getIntVal(R.id.plot_fontsize));

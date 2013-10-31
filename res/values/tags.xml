@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="tags_array">
+	<item>All</item>
+	<item>User-defined</item>
+	<item>T</item>
+	<item>PS</item>
+	<item>P</item>
+	<item>V_MCU</item>
+	<item>RH</item>
+	<item>V_IN</item>
+	<item>V_A1</item>
+	<item>V_A2</item>
+	<item>V_A3</item>
+	<item>GWGPS_LON</item>
+	<item>GWGPS_LAT</item>
+	<item>P0</item>
+	<item>P0_T</item>
+	<item>P1</item>
+	<item>P1_T</item>
+	<item>LQI</item>
+	<item>ADDR</item>
+	<item>SEQ</item>
+	<item>RSSI</item>
+	<item>DRP</item>
+	<item>Debug</item>
+    </string-array>
+</resources>

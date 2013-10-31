@@ -37,7 +37,6 @@ import android.graphics.Point;
 import android.graphics.Region;
 import android.graphics.Typeface;
 import android.text.format.Time;
-
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.View.OnClickListener;
@@ -50,10 +49,11 @@ import android.os.Handler;
 import android.os.Bundle;
 import android.os.Message;
 import android.widget.ImageView;
-import android.widget.PopupMenu;
-import android.widget.PopupMenu.OnMenuItemClickListener;
-import android.content.res.Configuration;
+import android.widget.Button;
 import android.content.Intent;
+import android.content.DialogInterface;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.view.Display;
 import android.util.Log;
 
@@ -85,6 +85,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private long touch_t;             // Last mouse pointer time in ms
     private double zoomDist_x;        // How much to zoom in x-axis die to mouse pointer move
     private double zoomDist_y;        // How much to zoom in y-axis die to mouse pointer move
+
+    private AlertDialog.Builder dia;
 
     private static int NONE = 0;
     private static int DRAG = 1;
@@ -119,6 +121,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	message = Message.obtain();
 	message.what = SAMPLE; 
 	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
+
+	setTitle("Plot Sensor:"+sid+", Tag:"+tag);
 
 	/* XXX: move to onStart? */
 	Display display = getWindowManager().getDefaultDisplay(); 
@@ -218,15 +222,20 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	SensdId obj;
 	SensdTag t;
 
-	if (tag == null)
+	Log.d("RStrace", "try tag="+tag);
+	if (tag.equals("User-defined")){
+	    tag = Client.client.get_pref_user_tag();
+	    Log.d("RStrace", "ud tag="+tag);
+	}
+	if (tag.equals("All"))
 	    plot.y1label("Misc");
 	for(int i=0; i < idv.size() ; i++){
  	    obj = idv.get(i);
-	    if (sid == null || obj.id.equals(sid))
+	    if (sid == "All" || obj.id.equals(sid))
 		for(int j=0; j < obj.tagv.size(); j++){ 
 		    t = obj.tagv.get(j);
-		    if (tag == null || t.tag.equals(tag)){
-			if (tag != null && t.label != null){
+		    if (tag == "All" || t.tag.equals(tag)){
+			if (tag != "All" && t.label != null){
 			    plot.y1label(t.label);
 			}
 			t.pv.setWhere(1);
@@ -245,7 +254,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    debug.setWhere(1);
 	else
 	    debug.setWhere(0);
-
     }
 
     // This is code for options, called everytime invoked
@@ -258,12 +266,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sm.clear();
 	    sm.setHeaderTitle("SensorId");
 	    sm.add(NONE, ID_SENSORID, NONE, "All");
+	    sm.add(NONE, ID_SENSORID, NONE, "Learn");
 	    for(int i=0; i < idv.size() ; i++){ 
 		obj = idv.get(i);
 		sm.add(NONE, ID_SENSORID, NONE, obj.id);
 	    }
 	}
-
 	return true;
     }
 
@@ -277,32 +285,19 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	SubMenu sm;
 	SensdId obj;
 	item = menu.findItem(R.id.tag);
-	if (item != null && (sm = item.getSubMenu()) != null){
-	    sm.setHeaderTitle("TagName");
-	    sm.add(NONE, ID_TAG, NONE, "All"); 
-	    sm.add(NONE, ID_TAG, NONE, "T");
-	    sm.add(NONE, ID_TAG, NONE, "PS");
-	    sm.add(NONE, ID_TAG, NONE, "P");
-	    sm.add(NONE, ID_TAG, NONE, "V_MCU");
-	    sm.add(NONE, ID_TAG, NONE, "RH");
-	    sm.add(NONE, ID_TAG, NONE, "RND");
-	    sm.add(NONE, ID_TAG, NONE, "V_IN");
-	    sm.add(NONE, ID_TAG, NONE, "V_A1");
-	    sm.add(NONE, ID_TAG, NONE, "V_A2");
-	    sm.add(NONE, ID_TAG, NONE, "V_A3");
-	    sm.add(NONE, ID_TAG, NONE, "GWGPS_LON");
-	    sm.add(NONE, ID_TAG, NONE, "GWGPS_LAT");
-	    sm.add(NONE, ID_TAG, NONE, "P0");
-	    sm.add(NONE, ID_TAG, NONE, "P0_T");
-	    sm.add(NONE, ID_TAG, NONE, "P1");
-	    sm.add(NONE, ID_TAG, NONE, "P1_T");
-	    sm.add(NONE, ID_TAG, NONE, "LQI");
-	    sm.add(NONE, ID_TAG, NONE, "ADDR");
-	    sm.add(NONE, ID_TAG, NONE, "SEQ");
-	    sm.add(NONE, ID_TAG, NONE, "RSSI");
-	    sm.add(NONE, ID_TAG, NONE, "DRP");
-	    sm.add(NONE, ID_TAG, NONE, "Debug");
-	}
+
+	dia = new AlertDialog.Builder(this);
+	dia.setTitle("Select Tag");
+	dia.setItems(R.array.tags_array, new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+		    Resources res = getResources();
+		    String[] items = res.getStringArray(R.array.tags_array);
+		    tag = items[which];
+		    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
+		}
+	    });
+	dia.setInverseBackgroundForced(true);
+	dia.create();
 	return true;
     }	
 
@@ -318,16 +313,12 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    }
 	    else
 		sid = str; // active sid
-	    return true;
-	case ID_TAG: /* tag */
-	    str = (String)item.getTitle();
-	    if (str.equals("All"))
-		tag = null;
-	    else
-		tag = str;
+	    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
 	    return true;
 	case R.id.sid:
+	    return true;
 	case R.id.tag:
+	    dia.show();
 	    return true;
 	case R.id.replot:
 	    plot.reset();
@@ -359,6 +350,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
 	plot.fontsize_set(Client.client.get_pref_plot_fontsize());
+	setTitle("Plot Sensor:"+sid+", Tag:"+tag);
 	image = (ImageView)findViewById(R.id.img);
 	image.setOnTouchListener(this);
     }
@@ -439,19 +431,19 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	return null;
     }
 
-    private void add_sample(String id, String tag, Long x, Double y, String label){
-	SensdId sid;
+    private void add_sample(String id, String tag1, Long x, Double y, String label){
+	SensdId sid1;
 	SensdTag stag;
 
 	// 1. See if id exists in idvector, if no create it
-	if ((sid = findid(id)) == null){
-	    sid = new SensdId(id);
-	    idv.add(sid);
+	if ((sid1 = findid(id)) == null){
+	    sid1 = new SensdId(id);
+	    idv.add(sid1);
 	}
 	// 2. See if tag exists in tagvector, if no, create it
-	if ((stag = sid.findtag(tag)) == null){
-	    stag = new SensdTag(tag, label);
-	    sid.tagv.add(stag);
+	if ((stag = sid1.findtag(tag1)) == null){
+	    stag = new SensdTag(tag1, label);
+	    sid1.tagv.add(stag);
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    stag.pv = new PlotVector(vec, label, 0, Client.client.get_pref_plot_style(), plot.nextColor());
 	    plot.add(stag.pv); //?
@@ -473,7 +465,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private int sensd_msg(String s){
 	String[] sv;
 	String[] sv2;
-	String   tag, val;
+	String   tg, val;
 	Long     time=null; /* Time == x-coordinate */
 	String   id = null;
 	Double   y;
@@ -487,23 +479,27 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sv2 = sv[i].split("=");
 	    if (sv2.length != 2)
 		continue;
-	    tag = sv2[0];
+	    tg = sv2[0];
 	    val = sv2[1];
-	    if (tag.equals("UT")){ // Unix time (Id)
+	    if (tg.equals("UT")){ // Unix time (Id)
 		time = new Long(val);
 	    }
-	    else if (tag.equals("TZ")){ // Time Zone (String)
+	    else if (tg.equals("TZ")){ // Time Zone (String)
 	    }
-	    else if (tag .equals("ID")){ // Unique 64 bit ID (S)
+	    else if (tg .equals("ID")){ // Unique 64 bit ID (S)
 		id = val;
 	    }
-	    else if (tag .equals("E64")){ // EUI-64 Unique 64 bit ID (S)
+	    else if (tg .equals("E64")){ // EUI-64 Unique 64 bit ID (S)
 		id = val;
 	    }
 	}
 	if (id == null || time == null){
 	    Log.e("RStrace", "Sensd report does not contain id or time");
 	    return -1;
+	}
+	if (sid == "Learn"){
+	    sid = id; 
+	    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
 	}
 	/* Loop 2 : All value tags */
 	for (int i=0; i<sv.length; i++){	
@@ -512,159 +508,159 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sv2 = sv[i].split("=");
 	    if (sv2.length != 2)
 		continue;
-	    tag = sv2[0];
+	    tg = sv2[0];
 	    val = sv2[1];
-	    if (tag.equals("T")){ // temp in Celsius (F)
+	    if (tg.equals("T")){ // temp in Celsius (F)
 		y = Double.parseDouble(val);
-		add_sample(id, tag, time, y, "Temp[C]");
+		add_sample(id, tg, time, y, "Temp[C]");
 	    }
-	    else if (tag.equals("PS")){ // Power Save Indicator (B)
+	    else if (tg.equals("PS")){ // Power Save Indicator (B)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "PS");
+		add_sample(id, tg, time, y, "PS");
 	    }
-	    else if (tag.equals("P")){ // Pressure (F)
+	    else if (tg.equals("P")){ // Pressure (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "P");
+		add_sample(id, tg, time, y, "P");
 	    }
-	    else if (tag.equals("V_MCU")){ // Microcontorller Voltage (F)
+	    else if (tg.equals("V_MCU")){ // Microcontorller Voltage (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "V_MCU");
+		add_sample(id, tg, time, y, "V_MCU");
 	    }
-	    else if (tag.equals("UP")){ // Uptime (Ih)
+	    else if (tg.equals("UP")){ // Uptime (Ih)
 //		y = Double.parseDouble(val);
-//		add_sample(id, tag, time, y, "UP");
+//		add_sample(id, tg, time, y, "UP");
 	    }
-	    else if (tag.equals("RH")){ // Relative Humidity in % (F)
+	    else if (tg.equals("RH")){ // Relative Humidity in % (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "RH");
+		add_sample(id, tg, time, y, "RH");
 	    }
-	    else if (tag.equals("RND")){ // Random 0-999 
+	    else if (tg.equals("RND")){ // Random 0-999 
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "RH");
+		add_sample(id, tg, time, y, "RH");
 	    }
-	    else if (tag.equals("V_IN")){ // Voltage Input (F)
+	    else if (tg.equals("V_IN")){ // Voltage Input (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "V_IN");
+		add_sample(id, tg, time, y, "V_IN");
 	    }
-	    else if (tag.equals("V_A1")){ // Voltage Analog 1 (A1) (F)
+	    else if (tg.equals("V_A1")){ // Voltage Analog 1 (A1) (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "V_A1");
+		add_sample(id, tg, time, y, "V_A1");
 	    }
-	    else if (tag.equals("V_A2")){ // Voltage Analog 1 (A2) (F)
+	    else if (tg.equals("V_A2")){ // Voltage Analog 1 (A2) (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "V_A2");
+		add_sample(id, tg, time, y, "V_A2");
 	    }
-	    else if (tag.equals("V_A3")){ // Voltage Analog 1 (A3) (F)
+	    else if (tg.equals("V_A3")){ // Voltage Analog 1 (A3) (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "V_A3");
+		add_sample(id, tg, time, y, "V_A3");
 	    }
-	    else if (tag.equals("RSSI")){ // Reeiver Signal Strengh Indicator (Id)
+	    else if (tg.equals("RSSI")){ // Reeiver Signal Strengh Indicator (Id)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "RSSI");
+		add_sample(id, tg, time, y, "RSSI");
 	    }
-	    else if (tag.equals("LQI")){ // Link Quality Indicator (Id)
+	    else if (tg.equals("LQI")){ // Link Quality Indicator (Id)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "LQI");
+		add_sample(id, tg, time, y, "LQI");
 	    }
-	    else if (tag.equals("SEQ")){ // Sequental Number (packet) (Id)
+	    else if (tg.equals("SEQ")){ // Sequental Number (packet) (Id)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
 
-		add_sample(id, tag, time, y, "SEQ");
+		add_sample(id, tg, time, y, "SEQ");
 	    }
-	    else if (tag.equals("DRP")){ // Drop Probability (Contiki) (F)
+	    else if (tg.equals("DRP")){ // Drop Probability (Contiki) (F)
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
 		    return 0;
 		}
-		add_sample(id, tag, time, y, "DRP");
+		add_sample(id, tg, time, y, "DRP");
 	    }
-	    else if (tag.equals("ADDR")){  // (S)
+	    else if (tg.equals("ADDR")){  // (S)
 		try{
 		    y = Double.parseDouble(val);
 		}
@@ -672,10 +668,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    Log.e("RStrace", "NumberFormatException:"+val);
 		    return 0;
 		}
-		add_sample(id, tag, time, y, "ADDR");
+		add_sample(id, tg, time, y, "ADDR");
 
 	    }
-	    else if (tag.equals("GWGPS_LON")){  // (F)?
+	    else if (tg.equals("GWGPS_LON")){  // (F)?
 		try{
 		    y = Double.parseDouble(val);
 		}
@@ -683,9 +679,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    Log.e("RStrace", "NumberFormatException:"+val);
 		    return 0;
 		}
-		add_sample(id, tag, time, y, "GWGPS_LON");
+		add_sample(id, tg, time, y, "GWGPS_LON");
 	    }
-	    else if (tag.equals("GWGPS_LAT")){  // (F)?
+	    else if (tg.equals("GWGPS_LAT")){  // (F)?
 		try{
 		    y = Double.parseDouble(val);
 		}
@@ -693,7 +689,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    Log.e("RStrace", "NumberFormatException:"+val);
 		    return 0;
 		}
-		add_sample(id, tag, time, y, "GWGPS_LAT");
+		add_sample(id, tg, time, y, "GWGPS_LAT");
 	    }
 
 	}
