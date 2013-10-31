@@ -301,6 +301,10 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sm.add(NONE, ID_TAG, NONE, "SEQ");
 	    sm.add(NONE, ID_TAG, NONE, "RSSI");
 	    sm.add(NONE, ID_TAG, NONE, "DRP");
+	    sm.add(NONE, ID_TAG, NONE, "PRX");
+	    sm.add(NONE, ID_TAG, NONE, "BRX");
+	    sm.add(NONE, ID_TAG, NONE, "PPS");
+	    sm.add(NONE, ID_TAG, NONE, "MBPS");
 	    sm.add(NONE, ID_TAG, NONE, "Debug");
 	}
 	return true;
@@ -694,7 +698,39 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    return 0;
 		}
 		add_sample(id, tag, time, y, "GWGPS_LAT");
-	    }
+	    }else if (tag.equals("PRX")) { // (F)?
+			try {
+				y = Double.parseDouble(val);
+			} catch (NumberFormatException e) {
+				Log.e("RStrace", "NumberFormatException:" + val);
+				return 0;
+			}
+			add_sample(id, tag, time, y, "PRX");
+		}else if (tag.equals("BRX")) { // (F)?
+			try {
+				y = Double.parseDouble(val);
+			} catch (NumberFormatException e) {
+				Log.e("RStrace", "NumberFormatException:" + val);
+				return 0;
+			}
+			add_sample(id, tag, time, y, "BRX");
+		}else if (tag.equals("PPS")) { // (F)?
+			try {
+				y = Double.parseDouble(val);
+			} catch (NumberFormatException e) {
+				Log.e("RStrace", "NumberFormatException:" + val);
+				return 0;
+			}
+			add_sample(id, tag, time, y, "PPS");
+		}else if (tag.equals("MBPS")) { // (F)?
+			try {
+				y = Double.parseDouble(val);
+			} catch (NumberFormatException e) {
+				Log.e("RStrace", "NumberFormatException:" + val);
+				return 0;
+			}
+			add_sample(id, tag, time, y, "MBPS");
+		}
 
 	}
 	return 0;
