@@ -23,6 +23,6 @@
 	<item>SEQ</item>
 	<item>RSSI</item>
 	<item>DRP</item>
-	<item>Debug</item>
+	<item>RND</item>
     </string-array>
 </resources>

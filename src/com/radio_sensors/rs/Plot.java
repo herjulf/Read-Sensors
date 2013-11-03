@@ -97,6 +97,12 @@ final class PlotVector {
     public void setWhere(int w0){
 	where = w0;
     }
+
+    public void style_set(int s) {
+    	style.clear();
+    	style.add(s);	
+    }
+
     public void sample(Pt pt){
 //	Log.d("RStrace", String.format("sample: x=%f y=%f", pt.x, pt.y));
 	if (pt.y < ymin)
@@ -111,7 +117,7 @@ final class PlotVector {
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    public static final int FONTSIZE = 40; // default font size
+    public static final int FONTSIZE = 20; // default font size
 
     public static int XWINDOW = 240; // how many seconds to show default
 
@@ -131,7 +137,7 @@ public final class Plot {
 
     private int fontsize = FONTSIZE;
     private int nrPlots = 0;	
-    private String xlabel;  // text to print on x-axis
+    private String xlabel = "";  // text to print on x-axis
     private String y1label = ""; // text to print on left-hand y-axis
     private String y2label = ""; // text to print on right-hand y-axis
     private double xscale = 1.0;  // factor to multiply x-values for x-axis text
@@ -186,6 +192,16 @@ public final class Plot {
 	hsv[1] = 1; 
 	hsv[2] = 1;
 	return Color.HSVToColor(hsv); 
+    }
+    // Update style on all plotvectors
+    public void 
+    style_set(int style) {
+	PlotVector pv;
+
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.get(i); 
+	    pv.style_set(style);
+	}
     }
     // Reset plot area, scaling and axes to default
     public void reset(){
@@ -415,7 +431,7 @@ public final class Plot {
 	    if (pv.where == 0) /* don't draw */
 		continue;
 	    vec = pv.vec;
-	    draw_plot_label(j, pv.title, pv.color);
+	    draw_plot_label(i, pv.title, pv.color);
 	    draw_plot(vec, ax, pv.where==1?ay1:ay2, pv.color, pv.style, agg);
 	    i++;
 	}
@@ -443,8 +459,7 @@ public final class Plot {
     } // draw_plot_label
 	
     private boolean 
-    draw_grid(Autoscale ax, Autoscale ay1, Autoscale ay2)
-	{
+    draw_grid(Autoscale ax, Autoscale ay1, Autoscale ay2){
 	    final Paint paint = new Paint();
 	    paint.setAntiAlias(true);
 	    paint.setTextSize(fontsize);
@@ -596,7 +611,6 @@ public final class Plot {
 	Pt pt_avg = new Pt(0, 0);   
 	final Paint paint = new Paint();
 
-	Log.d("RStrace", "style:"+style);
 	paint.setAntiAlias(true);
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(color);

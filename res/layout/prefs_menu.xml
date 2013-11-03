@@ -4,6 +4,4 @@
 		android:title="Load" />
 	<item android:id="@+id/save" android:icon="@drawable/ic_menu_save"
 		android:title="Save" />
-	<item android:id="@+id/reset" android:icon="@drawable/ic_menu_save"
-		android:title="Reset" />
 </menu>

@@ -57,22 +57,17 @@ import android.content.res.Resources;
 import android.view.Display;
 import android.util.Log;
 
-public class PlotWindow extends Activity implements OnTouchListener{
+public class PlotWindow extends RSActivity implements OnTouchListener{
     private static int XWINDOW = 10; // how many seconds to show default
 
     private static int PLOTINTERVAL = 1000; // interval between plot calls in ms
-    private long debugseq = 0;              // timrestamp for debug plot
     private static int SAMPLEINTERVAL = 100; // interval between sample receives in ms
     final public static int PLOT = 5;      // Message
     final public static int SAMPLE = 8;      // Debug Sample
 
-    private static String sid = Client.client.get_pref_sid();
-    private static String tag = Client.client.get_pref_tag();
-
     private long nsoffset = 0; // guaranteed monotonic
 
     private Plot plot;
-    private PlotVector debug; 
 
     private Random rnd;
 
@@ -88,6 +83,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 
     private AlertDialog.Builder dia;
 
+    private String learn_id = null; // If sid == LEARN, set and use this.
+
     private static int NONE = 0;
     private static int DRAG = 1;
     private static int ZOOM = 3;
@@ -101,8 +98,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
-
-	debugseq = Timestamp2s(Timestamp());
+	main = Client.client; // Ugh, use a public static just to pass the instance.
 	setContentView(R.layout.plot);
 	Client.ploth = mHandler;
 	image = (ImageView) findViewById(R.id.img);
@@ -111,7 +107,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	rnd = new Random(42); // Init random generator
 
 	init_plot();
-	plot.fontsize_set(Client.client.get_pref_plot_fontsize());
 	// Initialize messages (plot for plotting, samle for test samples)
 
 	Message message = Message.obtain();
@@ -122,20 +117,34 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	message.what = SAMPLE; 
 	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 
-	setTitle("Plot Sensor:"+sid+", Tag:"+tag);
+	set_plot_title();
 
 	/* XXX: move to onStart? */
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+	super.onConfigurationChanged(newConfig);
+	setContentView(R.layout.plot);
+
+	Display display = getWindowManager().getDefaultDisplay(); 
+	plot.newDisplay(display);
+	set_plot_title();
+	image = (ImageView)findViewById(R.id.img);
+	image.setOnTouchListener(this);
 	setActive();
 	plot.autodraw(image);
-
     }
 
     protected void onStart(){
-	runPlot = true;
 	super.onStart();
+	runPlot = true;
 	Log.d("RStrace", "PlotWindow onStart");
+	update_plot();
+	setActive();
+	plot.autodraw(image);
     }
 
     protected void onResume(){
@@ -166,28 +175,23 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	Log.d("RStrace", "PlotWindow onDestroy");
     }
 
-    // Send a message to other activity
-    private void message(Handler h, int what, Object msg){
-	Message message = Message.obtain();
-	message.what = what;
-	message.obj = msg;
-	h.sendMessage(message); // To other activity
-    }
-
     // Initialize the Plot area
     private void init_plot(){
 	// Initialize plotter
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
-	plot.xwin_set(Client.client.get_pref_plot_window());
-	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
-
-	// Special debug plotvector (enabled as tag)
-	ArrayList <Pt> vec = new ArrayList<Pt>(); 
-	debug = new PlotVector(vec, "Debug", 0, Client.client.get_pref_plot_style(), plot.nextColor());
-	plot.add(debug);
-
 	message(Client.client.mHandler, Client.REPLAY, null);
+	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
+    }
+
+    // Update existing plot with pref values
+    private void update_plot(){
+	Display display = getWindowManager().getDefaultDisplay(); 
+	plot.xwin_set(get_plot_window());
+	plot.fontsize_set(get_plot_fontsize());
+	plot.xwin_set(get_plot_window());
+	// Go thru all plotvectors and set style
+	plot.style_set(get_plot_style());
     }
 
     // second & nanosecond to twamp timestamp 
@@ -216,63 +220,49 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	return ts;
     }
 
-    // Go through all plots and set active plotvectors according
-    // to global sid/tag setting
+    /*
+     * setActive
+     * Go through all plots and set active plotvectors according
+     * to global sid/tag setting. Note that actual plotting is made
+     * after this function by calling plot.autodraw() for example, based
+     * on this setting.
+     */
     private void setActive(){
-	SensdId obj;
-	SensdTag t;
+	SensdId sobj;
+	SensdTag tobj;
+	String sid = get_sensor_id();  // Selector
+	String tag = get_sensor_tag(); // Selector
+	String user_tag = get_user_tag();
 
-	Log.d("RStrace", "try tag="+tag);
-	if (tag.equals("User-defined")){
-	    tag = Client.client.get_pref_user_tag();
-	    Log.d("RStrace", "ud tag="+tag);
-	}
 	if (tag.equals("All"))
 	    plot.y1label("Misc");
 	for(int i=0; i < idv.size() ; i++){
- 	    obj = idv.get(i);
-	    if (sid == "All" || obj.id.equals(sid))
-		for(int j=0; j < obj.tagv.size(); j++){ 
-		    t = obj.tagv.get(j);
-		    if (tag == "All" || t.tag.equals(tag)){
-			if (tag != "All" && t.label != null){
-			    plot.y1label(t.label);
-			}
-			t.pv.setWhere(1);
+ 	    sobj = idv.get(i); // Sensor id objects 
+	    // sensor-id selection:
+	    // Either match, or sid is all, or sid is Learn and we learnt that id
+	    if (sid.equals("All") || sobj.id.equals(sid) ||
+		(sid.equals("Learn") && learn_id != null && sobj.id.equals(learn_id)))
+		for(int j=0; j < sobj.tagv.size(); j++){ 
+		    tobj = sobj.tagv.get(j); // Sensor tag objects
+		    // tag selection
+		    // Either direct match, or all, or User-defined and we defined this tag
+		    if (tag.equals("All") || tobj.tag.equals(tag) ||
+			(tag.equals("User-defined") && user_tag!= null && tobj.tag.equals(user_tag))){
+			    if (tag != "All" && tobj.label != null){
+				plot.y1label(tobj.label);
+			    }
+			    tobj.pv.setWhere(1); // show plotvector
 		    }
 		    else{
-			t.pv.setWhere(0);
+			tobj.pv.setWhere(0); // dont show plotvector
 		    }
 	    }
 	    else
-		for(int j=0; j < obj.tagv.size() ; j++){ 
-		    t = obj.tagv.get(j);
-		    t.pv.setWhere(0);
+		for(int j=0; j < sobj.tagv.size() ; j++){ 
+		    tobj = sobj.tagv.get(j);
+		    tobj.pv.setWhere(0); // dont show plotvector
 		}
 	}
-	if (tag == "Debug")
-	    debug.setWhere(1);
-	else
-	    debug.setWhere(0);
-    }
-
-    // This is code for options, called everytime invoked
-    public boolean onPrepareOptionsMenu(Menu menu) {
-	SensdId obj;
-	SubMenu sm;
-	MenuItem item;
-	item = menu.findItem(R.id.sid);
-	if (item != null && (sm = item.getSubMenu()) != null){
-	    sm.clear();
-	    sm.setHeaderTitle("SensorId");
-	    sm.add(NONE, ID_SENSORID, NONE, "All");
-	    sm.add(NONE, ID_SENSORID, NONE, "Learn");
-	    for(int i=0; i < idv.size() ; i++){ 
-		obj = idv.get(i);
-		sm.add(NONE, ID_SENSORID, NONE, obj.id);
-	    }
-	}
-	return true;
     }
 
     // This is code for options menu, called on activity-create. See also
@@ -281,23 +271,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
 	inflater.inflate(R.layout.plot_menu, menu);
-	MenuItem item;
-	SubMenu sm;
-	SensdId obj;
-	item = menu.findItem(R.id.tag);
-
-	dia = new AlertDialog.Builder(this);
-	dia.setTitle("Select Tag");
-	dia.setItems(R.array.tags_array, new DialogInterface.OnClickListener() {
-		public void onClick(DialogInterface dialog, int which) {
-		    Resources res = getResources();
-		    String[] items = res.getStringArray(R.array.tags_array);
-		    tag = items[which];
-		    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
-		}
-	    });
-	dia.setInverseBackgroundForced(true);
-	dia.create();
 	return true;
     }	
 
@@ -306,22 +279,9 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	// Handle item selection
 	String str;
 	switch (item.getItemId()) {
-	case ID_SENSORID: /* sensorid */
-	    str = (String)item.getTitle();
-	    if (str.equals("All")){
-		sid = null;
-	    }
-	    else
-		sid = str; // active sid
-	    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
-	    return true;
-	case R.id.sid:
-	    return true;
-	case R.id.tag:
-	    dia.show();
-	    return true;
 	case R.id.replot:
 	    plot.reset();
+	    plot.autodraw(image);
 	    return true;
 	case R.id.prefs:
 	    toActivity("PrefWindow");
@@ -331,29 +291,6 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	}
     }
 
-    private void toActivity(String name){
-	Intent i = new Intent();
-	i.setClassName("com.radio_sensors.rs", "com.radio_sensors.rs."+name);
-	try {
-	    startActivity(i); 
-	}
-	catch (Exception e1){
-	    e1.printStackTrace();
-	}
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-	super.onConfigurationChanged(newConfig);
-	setContentView(R.layout.plot);
-
-	Display display = getWindowManager().getDefaultDisplay(); 
-	plot.newDisplay(display);
-	plot.fontsize_set(Client.client.get_pref_plot_fontsize());
-	setTitle("Plot Sensor:"+sid+", Tag:"+tag);
-	image = (ImageView)findViewById(R.id.img);
-	image.setOnTouchListener(this);
-    }
 
     private double spacing(MotionEvent event) {
 	double x = event.getX(0) - event.getX(1);
@@ -445,7 +382,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    stag = new SensdTag(tag1, label);
 	    sid1.tagv.add(stag);
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
-	    stag.pv = new PlotVector(vec, label, 0, Client.client.get_pref_plot_style(), plot.nextColor());
+	    stag.pv = new PlotVector(vec, label, 0, get_plot_style(), plot.nextColor());
 	    plot.add(stag.pv); //?
 	}
 	// 3. Add to plotvector
@@ -453,6 +390,20 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	stag.pv.sample(p);
     }
 
+
+    /*
+     * set_plot_title
+     * The title is 
+     */
+    private void set_plot_title(){
+	String id = get_sensor_id();
+	String tag = get_sensor_tag();
+	if (id.equals("Learn") && learn_id != null)
+	    id = "L:"+learn_id;
+	if (tag.equals("User-defined") && get_user_tag() != null)
+	    tag = "U:"+get_user_tag();
+	setTitle("Plot Sensor:"+id+", Tag:"+tag);
+    }
 
     /*
      * Process sensd message.
@@ -465,7 +416,7 @@ public class PlotWindow extends Activity implements OnTouchListener{
     private int sensd_msg(String s){
 	String[] sv;
 	String[] sv2;
-	String   tg, val;
+	String   tag, val;
 	Long     time=null; /* Time == x-coordinate */
 	String   id = null;
 	Double   y;
@@ -479,17 +430,17 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sv2 = sv[i].split("=");
 	    if (sv2.length != 2)
 		continue;
-	    tg = sv2[0];
+	    tag = sv2[0];
 	    val = sv2[1];
-	    if (tg.equals("UT")){ // Unix time (Id)
+	    if (tag.equals("UT")){ // Unix time (Id)
 		time = new Long(val);
 	    }
-	    else if (tg.equals("TZ")){ // Time Zone (String)
+	    else if (tag.equals("TZ")){ // Time Zone (String)
 	    }
-	    else if (tg .equals("ID")){ // Unique 64 bit ID (S)
+	    else if (tag.equals("ID")){ // Unique 64 bit ID (S)
 		id = val;
 	    }
-	    else if (tg .equals("E64")){ // EUI-64 Unique 64 bit ID (S)
+	    else if (tag.equals("E64")){ // EUI-64 Unique 64 bit ID (S)
 		id = val;
 	    }
 	}
@@ -497,10 +448,11 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    Log.e("RStrace", "Sensd report does not contain id or time");
 	    return -1;
 	}
-	if (sid == "Learn"){
-	    sid = id; 
-	    setTitle("Plot Sensor:"+sid+", Tag:"+tag);
+	if (get_sensor_id().equals("Learn")){
+	    learn_id = id;
+	    set_plot_title();
 	}
+
 	/* Loop 2 : All value tags */
 	for (int i=0; i<sv.length; i++){	
 	    if (sv[i].length() == 0)
@@ -508,189 +460,23 @@ public class PlotWindow extends Activity implements OnTouchListener{
 	    sv2 = sv[i].split("=");
 	    if (sv2.length != 2)
 		continue;
-	    tg = sv2[0];
+	    tag = sv2[0];
 	    val = sv2[1];
-	    if (tg.equals("T")){ // temp in Celsius (F)
-		y = Double.parseDouble(val);
-		add_sample(id, tg, time, y, "Temp[C]");
-	    }
-	    else if (tg.equals("PS")){ // Power Save Indicator (B)
+	    
+	    if (tag.equals("UT") || tag.equals("TZ") || 
+		tag.equals("ID") || tag.equals("E64") ||
+		tag.equals("UP"))
+		;
+	    else{
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
+		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
 		    return 0;
 		}
-
-		add_sample(id, tg, time, y, "PS");
+		add_sample(id, tag, time, y, tag); // use tag as y-axis label
 	    }
-	    else if (tg.equals("P")){ // Pressure (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "P");
-	    }
-	    else if (tg.equals("V_MCU")){ // Microcontorller Voltage (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "V_MCU");
-	    }
-	    else if (tg.equals("UP")){ // Uptime (Ih)
-//		y = Double.parseDouble(val);
-//		add_sample(id, tg, time, y, "UP");
-	    }
-	    else if (tg.equals("RH")){ // Relative Humidity in % (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "RH");
-	    }
-	    else if (tg.equals("RND")){ // Random 0-999 
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-		add_sample(id, tg, time, y, "Random Data Test");
-	    }
-	    else if (tg.equals("V_IN")){ // Voltage Input (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "V_IN");
-	    }
-	    else if (tg.equals("V_A1")){ // Voltage Analog 1 (A1) (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "V_A1");
-	    }
-	    else if (tg.equals("V_A2")){ // Voltage Analog 1 (A2) (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "V_A2");
-	    }
-	    else if (tg.equals("V_A3")){ // Voltage Analog 1 (A3) (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "V_A3");
-	    }
-	    else if (tg.equals("RSSI")){ // Reeiver Signal Strengh Indicator (Id)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "RSSI");
-	    }
-	    else if (tg.equals("LQI")){ // Link Quality Indicator (Id)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "LQI");
-	    }
-	    else if (tg.equals("SEQ")){ // Sequental Number (packet) (Id)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-
-		add_sample(id, tg, time, y, "SEQ");
-	    }
-	    else if (tg.equals("DRP")){ // Drop Probability (Contiki) (F)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "Illegal number format:"+tg+"="+val);
-		    return 0;
-		}
-		add_sample(id, tg, time, y, "DRP");
-	    }
-	    else if (tg.equals("ADDR")){  // (S)
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "NumberFormatException:"+val);
-		    return 0;
-		}
-		add_sample(id, tg, time, y, "ADDR");
-
-	    }
-	    else if (tg.equals("GWGPS_LON")){  // (F)?
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "NumberFormatException:"+val);
-		    return 0;
-		}
-		add_sample(id, tg, time, y, "GWGPS_LON");
-	    }
-	    else if (tg.equals("GWGPS_LAT")){  // (F)?
-		try{
-		    y = Double.parseDouble(val);
-		}
-		catch (NumberFormatException e){
-		    Log.e("RStrace", "NumberFormatException:"+val);
-		    return 0;
-		}
-		add_sample(id, tg, time, y, "GWGPS_LAT");
-	    }
-
 	}
 	return 0;
     }
@@ -702,17 +488,13 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		switch (msg.what) {
 		case Client.SENSD: // New report from sensd
 		    sensd_msg((String)msg.obj);
-		    break;
-		case SAMPLE: // Periodic debug sample
-		    message = Message.obtain();
-		    if (tag == "Debug"){
-			int y = rnd.nextInt(10);
-//			long ts = Timestamp2s(Timestamp());
-			p = new Pt(debugseq++, y);
-			debug.sample(p);
-		    }
 		    setActive();
 		    plot.autodraw(image);
+		    break;
+		case SAMPLE: // Periodic 
+		    message = Message.obtain();
+//		    setActive();
+//		    plot.autodraw(image);
 		    message.what = SAMPLE;
 		    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 		    break;
@@ -720,8 +502,8 @@ public class PlotWindow extends Activity implements OnTouchListener{
 		    if (!runPlot)
 			break;
 		    message = Message.obtain();
-//		    setActive();
-//		    plot.autodraw(image);
+		    setActive(); // Actually not necessary now that plot is on sensd
+		    plot.autodraw(image);
 		    message.what = PLOT;
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 		    break;

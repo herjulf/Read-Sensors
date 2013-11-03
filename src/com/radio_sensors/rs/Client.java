@@ -53,7 +53,8 @@ import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
 
-public class Client extends Activity {
+
+public class Client extends RSActivity {
     // Messages
     final public static int ERROR  = -1;         // Something went wrong
     final public static int STATUS = 2;          // Status change
@@ -63,13 +64,12 @@ public class Client extends Activity {
 
     private static int TIMERINTERVAL = 2000; // interval between sample receives
 
-    private String server_ip = "";
-    private int server_port = 0;
+
     private Thread connectthread = null;
     private Thread usbthread = null;
     public static Client client = null;
     private boolean active = false;           // Activity is active
-
+    
     ConnectSocket connect_cs;                 // Object containing connect-socket
     ConnectUSB connect_usb;                // Object containing 
 
@@ -90,22 +90,44 @@ public class Client extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
-	client = this;
+	client = this; 
+	main = this;
+
 	setContentView(R.layout.main);
 
-	setDefaultKeyMode(DEFAULT_KEYS_DISABLE);
-	// Set-up default values from prefs
-	EditText et = (EditText) findViewById(R.id.server_ip);
-	et.setText(get_pref_server_ip());
-	et = (EditText) findViewById(R.id.server_port);
-	et.setText(""+get_pref_server_port());
-	max_samples = get_pref_max_samples(); 
+	pref2running(); 	// Set global values from persistent storage
+
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setText("Connect");
+
 	// Start periodic timer
 	Message message = Message.obtain();
 	message.what = Client.TIMER;
 	mHandler.sendMessageDelayed(message, TIMERINTERVAL);
+    }
+
+    // This is called on resize
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+	super.onConfigurationChanged(newConfig);
+
+	setContentView(R.layout.main);
+	Log.d("RStrace", "Main onConfigurationChanged");
+
+	// Set edit text fields from prefs
+	EditText et = (EditText) findViewById(R.id.server_ip);
+	et.setText(get_server_ip());
+	et = (EditText) findViewById(R.id.server_port);
+	et.setText(""+get_server_port());
+
+	textupdate(); // Update text-sensd reports in window
+
+	// Set connected/disconnected button text
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	if(connectthread != null)
+	    buttonConnect.setText("Disconnect");
+	else
+	    buttonConnect.setText("Connect");
 
     }
 
@@ -119,14 +141,21 @@ public class Client extends Activity {
 	  disconnect();
 	  return;
 	}
-	server_ip = et_srv.getText().toString();
-	server_port = Integer.parseInt(et_port.getText().toString());
+	set_server_ip(et_srv.getText().toString());
+	set_server_port(Integer.parseInt(et_port.getText().toString()));
 	
-	connect(server_ip, server_port);
+	connect(get_server_ip(), get_server_port());
     }
 
     protected void onStart(){
 	super.onStart();
+
+	// Set-up default values from running
+	EditText et = (EditText) findViewById(R.id.server_ip);
+	et.setText(get_server_ip());
+	et = (EditText) findViewById(R.id.server_port);
+	et.setText(""+get_server_port());
+
 	Log.d("RStrace", "Main onStart");
     }
 
@@ -155,27 +184,6 @@ public class Client extends Activity {
 	Log.d("RStrace", "Main onDestroy");
     }
 
-    // This is called on resize
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-	super.onConfigurationChanged(newConfig);
-	setContentView(R.layout.main);
-	// Set edit text fields from prefs
-	EditText et = (EditText) findViewById(R.id.server_ip);
-	et.setText(get_pref_server_ip());
-	et = (EditText) findViewById(R.id.server_port);
-	et.setText(""+get_pref_server_port());
-
-	textupdate(); // Update text-sensd reports in window
-
-	// Set connected/disconnected button text
-	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	if(connectthread != null)
-	    buttonConnect.setText("Disconnect");
-	else
-	    buttonConnect.setText("Connect");
-
-    }
 
     // This is code for options menu
     @Override
@@ -200,17 +208,6 @@ public class Client extends Activity {
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
-	}
-    }
-
-    private void toActivity(String name){
-	Intent i = new Intent();
-	i.setClassName("com.radio_sensors.rs", "com.radio_sensors.rs."+name);
-	try {
-	    startActivity(i); 
-	}
-	catch (Exception e1){
-	    e1.printStackTrace();
 	}
     }
 
@@ -262,50 +259,8 @@ public class Client extends Activity {
         sv.smoothScrollTo(0, tv.getBottom());
     }
 
-    // access methods for prefs (would have them in PrefWindow, but cant make it work)
-    public String get_pref_server_ip(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("server_ip", PrefWindow.PREF_SERVER_IP);
-    }
-    public int get_pref_server_port(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("server_port", PrefWindow.PREF_SERVER_PORT);
-    }
-    public String get_pref_sid(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("sid", PrefWindow.PREF_SID);
-    }
-    public String get_pref_tag(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("tag", PrefWindow.PREF_TAG);
-    }
-    public String get_pref_user_tag(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getString("user_tag", null);
-    }
-    public int get_pref_max_samples(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("max_samples", PrefWindow.PREF_MAX_SAMPLES);
-    }
-    public int get_pref_plot_window(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("plot_window", PrefWindow.PREF_PLOT_WINDOW);
-    }
-    public int get_pref_plot_style(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("plot_style", PrefWindow.PREF_PLOT_STYLE);
-    }
-    public int get_pref_plot_fontsize(){
-	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
-	return sPref.getInt("plot_fontsize", PrefWindow.PREF_PLOT_FONTSIZE);
-    }
-    // Send a message to other activity
-    private void message(Handler h, int what, Object msg){
-	Message message = Message.obtain();
-	message.what = what;
-	message.obj = msg;
-	h.sendMessage(message); // To other activity
-    }
+
+
 
     // Messages comes in from socket-handler due to sensd input or error
     public final Handler mHandler = new Handler() {
@@ -316,7 +271,7 @@ public class Client extends Activity {
 		    String s = (String)msg.obj;
 		    if (s.length()>0)
 			report.add(s) ;
-		    if (report.size() >= max_samples)
+		    if (report.size() >= get_max_samples())
 			report.remove(0); //remove first line if max
 		    if (ploth != null)
 			message(ploth, Client.SENSD, s);

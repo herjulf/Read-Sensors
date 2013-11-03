@@ -45,7 +45,6 @@ import android.view.MenuItem;
 import android.view.MenuInflater;
 import android.os.Handler;
 import android.os.Bundle;
-import android.os.Message;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.EditText;
@@ -58,44 +57,85 @@ import android.content.res.Resources;
 import android.view.Display;
 import android.util.Log;
 
-public class PrefWindow extends Activity {
-    // Default preference values. 
-    // Only place where default values should appear.
-    // XXX: Also set in res/layout/main.xml.
-    final public static String PREF_SERVER_IP = "Radio-Sensors.com"; 
-    final public static int    PREF_SERVER_PORT = 1235;
-    final public static String PREF_SID  = "Learn"; // Learn is first tag found
-    final public static String PREF_TAG  = "T";
-    final public static int    PREF_MAX_SAMPLES = 100;
-    final public static int    PREF_PLOT_WINDOW = Plot.XWINDOW; // seconds
-    final public static int    PREF_PLOT_STYLE = Plot.LINES; 
-    final public static int    PREF_PLOT_FONTSIZE = Plot.FONTSIZE; 
+public class PrefWindow extends RSActivity {
+    private String[] sensor_items;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
+	Log.d("RStrace", "PrefWindow onCreate");
+	main = Client.client; // Ugh, use a public static just to pass the instance.
 	setContentView(R.layout.pref);
 	setTitle("Preferences");
-	setup();
+	running2gui();
     }
 
     // Called when 'tag' button is clicked
     public void onClickTag(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
-	dia.setTitle("Select Tag");
+	dia.setTitle("Select Sensor Tag");
 	dia.setItems(R.array.tags_array, new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
 		    Resources res = getResources();
 		    String[] items = res.getStringArray(R.array.tags_array);
-	final Button bt = (Button) findViewById(R.id.tag);
-	bt.setText(items[which]);
+		    final Button bt = (Button) findViewById(R.id.tag);
+		    bt.setText(items[which]);
 		}
 	    });
 	dia.setInverseBackgroundForced(true);
 	dia.create();
 	dia.show();
     }
+
+    // Called when 'sid' button is clicked
+    public void onClickSid(View view) {
+	AlertDialog.Builder dia = new AlertDialog.Builder(this);
+	dia.setTitle("Select Sensor id");
+	sensor_items = new String[2];
+	sensor_items[0] = "All";
+	sensor_items[1] = "Learn";
+/*
+XXX: Add learnt sid:s
+	    for(int i=0; i < PlotWindowidv.size() ; i++){ 
+		obj = idv.get(i);
+		sm.add(NONE, ID_SENSORID, NONE, obj.id);
+	    }
+*/
+
+	dia.setItems(sensor_items, new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+		    Resources res = getResources();
+		    final Button bt = (Button) findViewById(R.id.sid);
+		    bt.setText(sensor_items[which]);
+		}
+	    });
+	dia.setInverseBackgroundForced(true);
+	dia.create();
+	dia.show();
+    }
+
+    protected void onStart(){
+	super.onStart();
+	Log.d("RStrace", "PrefWindow onStart");
+    }
+
+    protected void onResume(){
+	super.onResume();
+	Log.d("RStrace", "PrefWindow onResume");
+    }
+
+    protected void onPause(){
+	super.onPause();
+	Log.d("RStrace", "PrefWindow onPause");
+	gui2running(); // commit values to running
+    }
+
+    protected void onStop(){  
+	super.onStop();
+	Log.d("RStrace", "PrefWindow onStop");
+    }
+
 
     protected void onDestroy(){
 	super.onDestroy();
@@ -114,55 +154,76 @@ public class PrefWindow extends Activity {
 	// Handle item selection
 	switch (item.getItemId()) {
 	case R.id.load:
-	    setup();
+	    pref2gui();
 	    return true;
 	case R.id.save:
-	    save();
-	    return true;
-	case R.id.reset:
-	    reset();
+	    gui2pref();
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-	super.onConfigurationChanged(newConfig);
-	setContentView(R.layout.pref);
-	setup();
+    // running -> GUI
+    private void running2gui(){
+	Button bt;
+	setTextVal(R.id.server_ip, get_server_ip());
+	setIntVal(R.id.server_port, get_server_port());
+	bt = (Button) findViewById(R.id.sid);
+	bt.setText(get_sensor_id());
+	bt = (Button) findViewById(R.id.tag);
+	bt.setText(get_sensor_tag());
+	setTextVal(R.id.user_tag, get_user_tag());
+	setIntVal(R.id.max_samples, get_max_samples());
+	setIntVal(R.id.plot_window, get_plot_window());
+	setIntVal(R.id.plot_style, get_plot_style());
+	setIntVal(R.id.plot_fontsize, get_plot_fontsize());
+    }
+    // GUI -> running
+    private void gui2running(){
+	Button bt;
+	set_server_ip((String)getTextVal(R.id.server_ip));
+	set_server_port(getIntVal(R.id.server_port));
+	bt = (Button) findViewById(R.id.sid);
+	set_sensor_id((String)bt.getText());
+	bt = (Button) findViewById(R.id.tag);
+	set_sensor_tag((String)bt.getText());
+	set_user_tag((String)getTextVal(R.id.user_tag));
+	set_max_samples(getIntVal(R.id.max_samples));
+	set_plot_window(getIntVal(R.id.plot_window));
+	set_plot_style(getIntVal(R.id.plot_style));
+	set_plot_fontsize(getIntVal(R.id.plot_fontsize));
     }
 
-    private void reset(){
-	setTextVal(R.id.server_ip, "<null>");
-	setIntVal(R.id.server_port, 0);
-    }
-
-    // Read values from file and into layout
-    private void setup(){
-	setTextVal(R.id.server_ip, Client.client.get_pref_server_ip());
-	setIntVal(R.id.server_port, Client.client.get_pref_server_port());
-	setTextVal(R.id.sid, Client.client.get_pref_sid());
-	final Button bt = (Button) findViewById(R.id.tag);
-	bt.setText(Client.client.get_pref_tag());
-	setTextVal(R.id.user_tag, Client.client.get_pref_user_tag());
-	setIntVal(R.id.max_samples, Client.client.get_pref_max_samples());
-	setIntVal(R.id.plot_window, Client.client.get_pref_plot_window());
-	setIntVal(R.id.plot_style, Client.client.get_pref_plot_style());
-	setIntVal(R.id.plot_fontsize, Client.client.get_pref_plot_fontsize());
+    // Read values from running -> GUI
+    private void pref2gui(){
+	Button bt;
+	setTextVal(R.id.server_ip, get_pref_server_ip());
+	setIntVal(R.id.server_port, get_pref_server_port());
+	bt = (Button) findViewById(R.id.sid);
+	bt.setText(get_pref_sensor_id());
+	bt = (Button) findViewById(R.id.tag);
+	bt.setText(get_pref_sensor_tag());
+	setTextVal(R.id.user_tag, get_pref_user_tag());
+	setIntVal(R.id.max_samples, get_pref_max_samples());
+	setIntVal(R.id.plot_window, get_pref_plot_window());
+	setIntVal(R.id.plot_style, get_pref_plot_style());
+	setIntVal(R.id.plot_fontsize, get_pref_plot_fontsize());
     }
 
     // Read values from layout and into file
-    private void save() {
+    private void gui2pref() {
+	Button bt;
 	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
 	SharedPreferences.Editor ed = sPref.edit();
 	ed.putString("server_ip", (String)getTextVal(R.id.server_ip));
 	ed.putInt("server_port", getIntVal(R.id.server_port));
-	ed.putString("sid", (String)getTextVal(R.id.sid));
-	final Button bt = (Button) findViewById(R.id.tag);
+	bt = (Button) findViewById(R.id.sid);
+	ed.putString("sid", (String)bt.getText());
+	bt = (Button) findViewById(R.id.tag);
 	ed.putString("tag", (String)bt.getText());
 	ed.putString("user_tag", (String)getTextVal(R.id.user_tag));
+	ed.putInt("max_samples", getIntVal(R.id.max_samples));
 	ed.putInt("plot_window", getIntVal(R.id.plot_window));
 	ed.putInt("plot_style", getIntVal(R.id.plot_style));
 	ed.putInt("plot_fontsize", getIntVal(R.id.plot_fontsize));

@@ -41,6 +41,7 @@
       android:layout_height="wrap_content" 
       android:numeric="decimal"
       android:layout_column="2"
+      android:freezesText="true"
       android:layout_span="2" />
  </TableRow>
 
