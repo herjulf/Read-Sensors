@@ -54,8 +54,9 @@ public class AboutBox {
     static String VersionNumber = " 0.3  2013-10-29";
     public static void Show(Activity callingActivity) {
         //Use a Spannable to allow for links highlighting
-        SpannableString aboutText = new SpannableString("Version " + VersionNumber + "\n\n"
-	+ callingActivity.getString(R.string.about));
+        SpannableString aboutText = new SpannableString("Version " + VersionNumber + 
+	 System.getProperty ("line.separator") +
+	 callingActivity.getString(R.string.about));
         //Generate views to pass to AlertDialog.Builder and to set the text
         View about;
         TextView tvAbout;

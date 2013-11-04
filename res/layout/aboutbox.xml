@@ -11,6 +11,7 @@
         <TextView android:id="@+id/aboutText"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
+	    android:singleLine = "false"
             android:textColor="#FFF"/>  
     </LinearLayout>
 </ScrollView>
