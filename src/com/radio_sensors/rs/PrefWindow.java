@@ -71,7 +71,11 @@ public class PrefWindow extends RSActivity {
 	running2gui();
     }
 
-    // Called when 'tag' button is clicked
+    /*
+     * onClickTag
+     * Called when 'tag' button is clicked in pref.xml
+     * Build a dialogue menu of sensor ids and select one
+     */
     public void onClickTag(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
 	dia.setTitle("Select Sensor Tag");
@@ -88,7 +92,11 @@ public class PrefWindow extends RSActivity {
 	dia.show();
     }
 
-    // Called when 'sid' button is clicked
+    /*
+     * onClickSid
+     * Called when 'sid' button is clicked in pref.xml
+     * Build a dialogue menu of sensor ids and select one
+     */
     public void onClickSid(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
 	dia.setTitle("Select Sensor id");

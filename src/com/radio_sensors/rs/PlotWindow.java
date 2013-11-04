@@ -338,17 +338,19 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 //	    Log.d("RStrace", "ACTION_MOVE OTHER");
 		if (touch_mode == ZOOM){
 		    double dist_x = Math.abs(event.getX(0) - event.getX(1));
-		    double dist_y = Math.abs(event.getX(0) - event.getX(1));
+//		    double dist_y = Math.abs(event.getX(0) - event.getX(1));
 		    if (dist_x > 10f) {
 			if (zoomDist_x > 0)
 			    plot.xscale_mult(zoomDist_x / dist_x);
 			zoomDist_x = dist_x;
 		    }
+/*
 		    if (dist_y > 10f) {
 			if (zoomDist_y > 0)
 			    plot.yscale_mult(zoomDist_y / dist_y);
 			zoomDist_y = dist_y;
 		    }
+*/
 		}
 	    }
 	    break;
