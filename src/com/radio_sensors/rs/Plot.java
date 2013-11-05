@@ -327,12 +327,12 @@ public final class Plot {
 	    }
 	    
 	}
-	// XXX
 
 	if (y1vals==false && y2vals==false){
 	    xmin1 = 0;
 	    xmax1 = 10;
 	}
+
 	/* Now compute xwindow: how much to show of x-axis: [xmin, xmax]:
 	   If scrolled to old x-values, do not auto-scroll with new values by updating max
 	*/
@@ -402,6 +402,84 @@ public final class Plot {
 	Autoscale ax = new Autoscale(xmin, xmax);
 	Autoscale ay1 = new Autoscale(y1min, y1max);
 	Autoscale ay2 = new Autoscale(y2min, y2max);
+	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
+	double aggF = 0.0; 
+
+	// Loop 3: compute level of aggregation in x-axis
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.get(i);
+	    if (pv.vec.size() > 0){
+		int nr = points_in_interval(pv.vec, xmin, xmax);
+		aggF = Math.max(aggF, nr/pix);
+	    }
+	}
+	int agg = Math.max(1, (int)Math.floor(aggF*4));
+	
+	draw(ax, ay1, ay2, agg); // Finally draw it.	
+    }
+
+    // draw plot and auto-scale x-axis with fixed y1-scale. Ignore y2
+    // XXX should be merged with autodraw (where y1min,y1max i fixed
+    public void draw_y1fix(ImageView image, double y1min, double y1max){
+	PlotVector pv;
+	double xmin1 = Double.POSITIVE_INFINITY; // Tentative x-interval min
+	double xmax1 = Double.NEGATIVE_INFINITY;
+	boolean y1vals = false;
+
+	// Clear bitmap
+	image.setImageBitmap(bitmap); 
+
+	// Loop 1a: compute tentative x-interval [xmin1, xmax1] for y1 plots
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.get(i);
+	    if (pv.where != 1) /* Keep only y1 plots */
+		continue;
+	    if (pv.vec.size() > 0){
+		y1vals = true; 
+		xmin1 = Math.min(xmin1, pv.vec.get(0).x);
+		int size = pv.vec.size();
+		xmax1 = Math.max(xmax1, pv.vec.get(size-1).x);
+	    }
+	}
+	if (y1vals==false){
+	    xmin1 = 0;
+	    xmax1 = 10;
+	}
+
+	/* Now compute xwindow: how much to show of x-axis: [xmin, xmax]:
+	   If scrolled to old x-values, do not auto-scroll with new values by updating max
+	*/
+
+	if (liveUpdate)
+	    xmax = xmax1;
+	else
+	    if (xmax1 < xmax){
+		liveUpdate = true;
+		xmax = xmax1;
+	    }
+	/*
+                  xmin1                         xmax
+	  ----------|------------------------------|------>
+                     <-----------xmax-xwin1--------> 
+	 */
+	double xws = xwin*xscale;
+	if (liveUpdate){
+	    if (xws > xmax - xmin1){ // window larger than #samples
+		xmin = xmin1;         // Start at left of screen
+		xmax = xmin + xws;
+	    }
+	    else
+		xmin = xmax - xws;   // window smaller: crop x at window limit
+	}
+	else{
+	    if (xmax < xmin1) // not live and scrolled beyond x-values
+		xmax = xmin1 + xws/3; // ensure some x-values are visible.
+	    xmin = xmax - xws;
+	}
+
+	Autoscale ax = new Autoscale(xmin, xmax);
+	Autoscale ay1 = new Autoscale(y1min, y1max);
+	Autoscale ay2 = new Autoscale(y1min, y1max);
 	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
 	double aggF = 0.0; 
 

@@ -100,17 +100,12 @@ public class PrefWindow extends RSActivity {
     public void onClickSid(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
 	dia.setTitle("Select Sensor id");
-	sensor_items = new String[2];
-	sensor_items[0] = "All";
-	sensor_items[1] = "Learn";
-/*
-XXX: Add learnt sid:s
-	    for(int i=0; i < PlotWindowidv.size() ; i++){ 
-		obj = idv.get(i);
-		sm.add(NONE, ID_SENSORID, NONE, obj.id);
-	    }
-*/
-
+	sensor_items = new String[2+main.sensor_ids.size()];
+	int i = 0;
+	sensor_items[i++] = "All";
+	sensor_items[i++] = "Learn";
+	for (String s : main.sensor_ids)
+	    sensor_items[i++] = s;
 	dia.setItems(sensor_items, new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
 		    Resources res = getResources();
@@ -186,6 +181,8 @@ XXX: Add learnt sid:s
 	setIntVal(R.id.plot_window, get_plot_window());
 	setIntVal(R.id.plot_style, get_plot_style());
 	setIntVal(R.id.plot_fontsize, get_plot_fontsize());
+	setDoubleVal(R.id.plot_ymin, get_plot_ymin());
+	setDoubleVal(R.id.plot_ymax, get_plot_ymax());
     }
     // GUI -> running
     private void gui2running(){
@@ -201,6 +198,8 @@ XXX: Add learnt sid:s
 	set_plot_window(getIntVal(R.id.plot_window));
 	set_plot_style(getIntVal(R.id.plot_style));
 	set_plot_fontsize(getIntVal(R.id.plot_fontsize));
+	set_plot_ymin(getDoubleVal(R.id.plot_ymin));
+	set_plot_ymax(getDoubleVal(R.id.plot_ymax));
     }
 
     // Read values from running -> GUI
@@ -254,6 +253,30 @@ XXX: Add learnt sid:s
     private void setIntVal(int id, int i){
 	final EditText et = (EditText) findViewById(id);
 	et.setText(i+"");
+    }
+    private Double getDoubleVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	if (et.getText()==null || et.getText().toString().equals(""))
+	    return null;
+	else{
+	    try {
+		Double d = new Double(et.getText().toString());
+		return d;
+	    }
+	    catch (Exception e1) {
+		String str = e1.getMessage();
+		Toast.makeText(this, "Error when parsing floar:"+str, Toast.LENGTH_SHORT).show();
+		return null;
+	    }
+	}
+    }
+    private void setDoubleVal(int id, Double d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.doubleValue()+"");
     }
 
 }

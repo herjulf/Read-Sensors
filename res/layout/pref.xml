@@ -1,180 +1,200 @@
 <?xml version="1.0" encoding="utf-8"?>
 
- <!--ScrollView
-     android:id="@+id/ScrollView01"
-	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent" android:layout_height="fill_parent">
-    <LinearLayout
+<ScrollView
+    android:id="@+id/ScrollView01"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="fill_parent">
+  <LinearLayout
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
-      android:orientation="vertical"-->
-<TableLayout 
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:shrinkColumns="1" 
-    android:stretchColumns="2" 
-    xmlns:android="http://schemas.android.com/apk/res/android" >
+      android:orientation="vertical">
+    <TableLayout 
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
 
- <TableRow>
+	android:stretchColumns="*" 
+	xmlns:android="http://schemas.android.com/apk/res/android" >
 
-  <TextView
-      android:id="@+id/server_ip_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Server: " />
+      <TableRow>
 
-  <EditText
-      android:id="@+id/server_ip"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="2"
-      android:text="" />
-      android:layout_span="2" />
- </TableRow>
+	<TextView
+	    android:id="@+id/server_ip_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="Server: " />
 
+	<EditText
+	    android:id="@+id/server_ip"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="" 
+	    android:layout_span="2"
+	    />
 
- <TableRow>
+      </TableRow>
 
-  <TextView
-      android:id="@+id/server_port_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Port: " />
+      <TableRow>
 
-  <EditText
-      android:id="@+id/server_port"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:text="" 
-      android:numeric="decimal"
-      android:layout_column="2"
-      android:layout_span="2" />
- </TableRow>
+	<TextView
+	    android:id="@+id/server_port_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Port: " />
 
- <TableRow>
+	<EditText
+	    android:id="@+id/server_port"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
 
-  <TextView
-      android:id="@+id/sid_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Sensor id: " />
-    <Button
-        android:id="@+id/sid"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-	android:layout_column="2"
-        android:onClick="onClickSid" >
-    </Button>
-  <!--EditText
-      android:id="@+id/sid"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="2"
-      android:layout_span="2" /-->
- </TableRow>
+      <TableRow>
 
- <TableRow>
-  <TextView
-      android:id="@+id/tag_text"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Tag: " />
+	<TextView
+	    android:id="@+id/sid_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Sensor id: " />
+	<Button
+	    android:id="@+id/sid"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:layout_span="2"
+	    android:onClick="onClickSid" >
+	</Button>
+      </TableRow>
 
-    <Button
-        android:id="@+id/tag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-	android:layout_column="2"
-        android:onClick="onClickTag" >
-    </Button>
+      <TableRow>
+	<TextView
+	    android:id="@+id/tag_text"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Tag: " />
 
- </TableRow>
+	<Button
+	    android:id="@+id/tag"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:layout_span="2"
+	    android:onClick="onClickTag" >
+	</Button>
 
- <TableRow>
-  <TextView
-      android:id="@+id/user_tag_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="User-defined tag: " />
-  <EditText
-      android:id="@+id/user_tag"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:layout_column="2"
-      android:text=""
-      android:layout_span="2" />
- </TableRow>
+      </TableRow>
 
- <TableRow>
-  <TextView
-      android:id="@+id/max_samples_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Max samples: " />
-  <EditText
-      android:id="@+id/max_samples"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:numeric="decimal"
-      android:layout_column="2"
-      android:layout_span="2" />
- </TableRow>
+      <TableRow>
+	<TextView
+	    android:id="@+id/user_tag_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="User-defined tag: " />
+	<EditText
+	    android:id="@+id/user_tag"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:layout_column="1"
+	    android:text=""
+	    android:layout_span="2" />
+      </TableRow>
 
- <TableRow>
-  <TextView
-      android:id="@+id/plot_window_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Plot x-window[s]: " />
-  <EditText
-      android:id="@+id/plot_window"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:numeric="decimal"
-      android:layout_column="2"
-      android:layout_span="2" />
- </TableRow>
+      <TableRow>
+	<TextView
+	    android:id="@+id/max_samples_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Max samples: " />
+	<EditText
+	    android:id="@+id/max_samples"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/plot_window_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Plot x-window[s]: " />
+	<EditText
+	    android:id="@+id/plot_window"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
 
 
- <TableRow>
-  <TextView
-      android:id="@+id/plot_style_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Plot style[1,2,3]: " />
-  <EditText
-      android:id="@+id/plot_style"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:numeric="decimal"
-      android:layout_column="2"
-      android:layout_span="2" />
- </TableRow>
+      <TableRow>
+	<TextView
+	    android:id="@+id/plot_style_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Plot style[1,2,3]: " />
+	<EditText
+	    android:id="@+id/plot_style"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
 
- <TableRow>
-  <TextView
-      android:id="@+id/plot_fontsize_txt"
-      android:layout_width="fill_parent"
-      android:layout_height="wrap_content"
-      android:layout_column="0"
-      android:text="Plot fontsize: " />
-  <EditText
-      android:id="@+id/plot_fontsize"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:numeric="decimal"
-      android:layout_column="2"
-      android:layout_span="2" />
- </TableRow>
+      <TableRow>
+	<TextView
+	    android:id="@+id/plot_fontsize_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Plot fontsize: " />
+	<EditText
+	    android:id="@+id/plot_fontsize"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+      <TableRow>
+	<TextView
+	    android:id="@+id/plot_y_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Plot ymin/ymax: " />
+	<EditText
+	    android:id="@+id/plot_ymin"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    />
+	<EditText
+	    android:id="@+id/plot_ymax"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="2"
+	     />
+      </TableRow>
 
-</TableLayout>
-	<!--/LinearLayout>
-</ScrollView-->
+    </TableLayout>
+  </LinearLayout>
+</ScrollView>

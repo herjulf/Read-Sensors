@@ -81,6 +81,11 @@ abstract class RSActivity extends Activity{
     private int    plot_window;  
     private int    plot_style;  
     private int    plot_fontsize;  
+    private Double plot_ymin = null;  
+    private Double plot_ymax = null;  
+
+    protected ArrayList<String> sensor_ids = new ArrayList<String>();
+    private ArrayList<String> sensor_tags = new ArrayList<String>();
 
     /*
      * Access methods for persistent data
@@ -140,7 +145,29 @@ abstract class RSActivity extends Activity{
     protected void set_plot_fontsize(int fontsize){
 	main.plot_fontsize = fontsize;
     }
+    protected Double get_plot_ymin(){
+	return main.plot_ymin;
+    }
+    protected void set_plot_ymin(Double y){
+	main.plot_ymin = y;
+    }
+    protected Double get_plot_ymax(){
+	return main.plot_ymax;
+    }
+    protected void set_plot_ymax(Double y){
+	main.plot_ymax = y;
+    }
 
+    protected void add_sensor_ids(String id){
+	if (!main.sensor_ids.contains(id))
+	    main.sensor_ids.add(id);
+    }
+    protected void add_sensor_tags(String tag){
+	if (!main.sensor_tags.contains(tag)) // XXX Work for strings?
+	    main.sensor_tags.add(tag);
+    }
+
+    /*------------------------------------------------------*/
     private SharedPreferences getpref(){
 	return getSharedPreferences("Read-Sensors", 0);
     }

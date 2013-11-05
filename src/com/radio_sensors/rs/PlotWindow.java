@@ -134,8 +134,18 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	set_plot_title();
 	image = (ImageView)findViewById(R.id.img);
 	image.setOnTouchListener(this);
+	plot();
+    }
+
+    private void plot(){
 	setActive();
-	plot.autodraw(image);
+	if (get_plot_ymin()!=null && get_plot_ymax()!=null)
+	    plot.draw_y1fix(image, 
+				get_plot_ymin().doubleValue(), 
+				get_plot_ymax().doubleValue());
+	else
+	    plot.autodraw(image);
+
     }
 
     protected void onStart(){
@@ -143,8 +153,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	runPlot = true;
 	Log.d("RStrace", "PlotWindow onStart");
 	update_plot();
-	setActive();
-	plot.autodraw(image);
+	plot();
     }
 
     protected void onResume(){
@@ -184,7 +193,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
     }
 
-    // Update existing plot with pref values
+    // Update existing plot with global values
     private void update_plot(){
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.xwin_set(get_plot_window());
@@ -281,7 +290,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	switch (item.getItemId()) {
 	case R.id.replot:
 	    plot.reset();
-	    plot.autodraw(image);
+	    plot();
 	    return true;
 	case R.id.prefs:
 	    toActivity("PrefWindow");
@@ -321,8 +330,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	case MotionEvent.ACTION_POINTER_UP:
 	    touch_mode = NONE;
 //	    Log.d("RStrace", "touch_mode=NONE");
-	    setActive();
-	    plot.autodraw(image);
+	    plot();
 	    break;
 	case MotionEvent.ACTION_MOVE:
 	    if (touch_mode == DRAG) {
@@ -331,8 +339,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		touch_t = System.currentTimeMillis();
 //		Log.d("RStrace", "ACTION_MOVE DRAG delta="+delta);
 		plot.xmax_add(-7*delta);
-	    setActive();
-	    plot.autodraw(image);
+		plot();
 	    }
 	    else{
 //	    Log.d("RStrace", "ACTION_MOVE OTHER");
@@ -378,6 +385,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	if ((sid1 = findid(id)) == null){
 	    sid1 = new SensdId(id);
 	    idv.add(sid1);
+	    add_sensor_ids(id);
 	}
 	// 2. See if tag exists in tagvector, if no, create it
 	if ((stag = sid1.findtag(tag1)) == null){
@@ -490,13 +498,11 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		switch (msg.what) {
 		case Client.SENSD: // New report from sensd
 		    sensd_msg((String)msg.obj);
-		    setActive();
-		    plot.autodraw(image);
+		    plot();
 		    break;
 		case SAMPLE: // Periodic 
 		    message = Message.obtain();
-//		    setActive();
-//		    plot.autodraw(image);
+//		    plot();
 		    message.what = SAMPLE;
 		    mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 		    break;
@@ -504,8 +510,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		    if (!runPlot)
 			break;
 		    message = Message.obtain();
-		    setActive(); // Actually not necessary now that plot is on sensd
-		    plot.autodraw(image);
+		    plot(); // Actually not necessary now that plot is on sensd
 		    message.what = PLOT;
 		    mHandler.sendMessageDelayed(message, PLOTINTERVAL);
 		    break;
