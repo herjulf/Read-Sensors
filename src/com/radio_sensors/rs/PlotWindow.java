@@ -117,8 +117,6 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	message.what = SAMPLE; 
 	mHandler.sendMessageDelayed(message, SAMPLEINTERVAL);
 
-	set_plot_title();
-
 	/* XXX: move to onStart? */
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
@@ -131,7 +129,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot.newDisplay(display);
-	set_plot_title();
+
 	image = (ImageView)findViewById(R.id.img);
 	image.setOnTouchListener(this);
 	plot();
@@ -152,6 +150,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	super.onStart();
 	runPlot = true;
 	Log.d("RStrace", "PlotWindow onStart");
+	set_plot_title();
 	update_plot();
 	plot();
     }
