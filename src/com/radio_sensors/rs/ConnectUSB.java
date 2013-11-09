@@ -108,29 +108,22 @@ class ConnectUSB implements Runnable {
     }
 
     public void run() {
-	while (true){
+	boolean done = false;
+	
+	while (! done ){
 	    if(driver == null)
 		usb_connect();
 	    try {
 		byte buf[] = new byte[1024];
 		int nBytes = driver.read(buf, 100000); // 100000 is Delay i ms
-		Toast.makeText(Client.client, "RS USB Numbytes" + nBytes, Toast.LENGTH_SHORT).show();
-		Toast.makeText(Client.client, "RS USB" + new String(buf), Toast.LENGTH_SHORT).show();
-
 		// Send data to plotter and main thread
 		final String strData = new String(buf, 0, nBytes).replace("\r", "");
 		message(mainHandler, Client.SENSD, strData);
+		Log.d("RS USB", "run 5 + strData");
 	    } catch (IOException e) {
-	    Toast.makeText(Client.client, "Error reading device: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-	    } finally {
-		try {
-		    driver.close();
-		} catch (IOException e2) {
-		    // Ignore.
-		}
-		driver = null;
+		Log.d("USB", "Error reading device: " + e.getMessage(), e);
 	    } 
-	} 
+	}
     }
     
     // Method that closes the socket if open. This is to interrupt the thread
