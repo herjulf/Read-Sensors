@@ -58,9 +58,10 @@ public class Client extends RSActivity {
     // Messages
     final public static int ERROR  = -1;         // Something went wrong
     final public static int STATUS = 2;          // Status change
-    final public static int SENSD  = 3;          // Report arrived from sensd server
-    final public static int TIMER  = 4;       // Interval timer every 1s (debug)
-    final public static int REPLAY = 5;       // Replay all stored sensd data
+    final public static int STATUS_USB = 3;          // Status change
+    final public static int SENSD  = 4;          // Report arrived from sensd server
+    final public static int TIMER  = 5;       // Interval timer every 1s (debug)
+    final public static int REPLAY = 6;       // Replay all stored sensd data
 
     private static int TIMERINTERVAL = 2000; // interval between sample receives
 
@@ -141,9 +142,20 @@ public class Client extends RSActivity {
 	  disconnect();
 	  return;
 	}
+
+	if(usbthread != null) {
+	  Toast.makeText(this, "USB Disconnecting...", Toast.LENGTH_SHORT).show();
+	  disconnect();
+	  return;
+	}
+
+	if(connect_usb() == true) {
+	    Toast.makeText(this, "USB connecting", Toast.LENGTH_SHORT).show();
+	    return;
+	}
+
 	set_server_ip(et_srv.getText().toString());
 	set_server_port(Integer.parseInt(et_port.getText().toString()));
-	
 	connect(get_server_ip(), get_server_port());
     }
 
@@ -222,18 +234,35 @@ public class Client extends RSActivity {
 	connectthread.start();
     }
 
-    private void connect_usb() {
+    private boolean connect_usb() {
 	if(usbthread != null){
 	    // Should not happen
-	    return;
+	    return true;
 	}
+
 	connect_usb = new ConnectUSB(mHandler);
+	if( connect_usb.usb_connect() == false )
+	    return false;
+
 	usbthread = new Thread(connect_usb, "USB connect");
 	usbthread.start();
+	return true;
     }
 
     // Post an interrupt to the connect thread and call its kill method
     private void disconnect() {
+
+	if(usbthread != null) {
+	    try{
+		connect_usb.kill();
+		usbthread.interrupt();
+		// usbthread is set to null only when detected by mHandler
+	    }
+	    catch (Exception e1) {
+		e1.printStackTrace();
+	    }
+	}
+
 	if(connectthread != null) {
 	    try{
 		connect_cs.kill();
@@ -301,6 +330,26 @@ public class Client extends RSActivity {
 			}
 			else if (stat.equals(1))
 			    buttonConnect.setText("Disconnect");			    
+		    }
+		    break;
+		case Client.STATUS_USB: // Connect status changed
+		    stat = (Integer)msg.obj;
+		    buttonConnect = (Button) findViewById(R.id.server_connect);
+
+		    Log.d("RStrace", "Client.Status="+stat);
+		    if (stat != null){
+			if (stat.equals(0)){
+			    if (usbthread!= null &&
+				usbthread.getState().equals(Thread.State.TERMINATED)){
+				Log.d("RStrace", "STATUS: USB Thread TERMINATED");
+				usbthread = null;
+			    }
+			    usbthread = null;
+			    buttonConnect.setText("Connect USB");			    
+			    Toast.makeText(Client.client, "USB Disconnected", Toast.LENGTH_SHORT).show();		    
+			}
+			else if (stat.equals(1))
+			    buttonConnect.setText("Disconnect USB");			    
 		    }
 		    break;
 		case Client.TIMER: // Periodic timer 
