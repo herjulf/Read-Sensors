@@ -76,9 +76,13 @@ class ConnectUSB implements Runnable {
 	mainHandler = h;
     }
 
-    private void usb_connect() {
+    public boolean usb_connect() {
+
+	Log.d("USB", "Connect 00");
 	manager = (UsbManager) Client.client.getSystemService(Context.USB_SERVICE);
 	driver = UsbSerialProber.acquire(manager);
+
+	Log.d("USB", "Connect 01");
 
 	if (driver != null) {
 	    try {
@@ -94,9 +98,14 @@ class ConnectUSB implements Runnable {
                                         // Ignore.
 		}
 		driver = null;
-		return;
+		return false;
 	    }
+	    // Signal connected
+	    //message(mainHandler, Client.STATUS_USB, new Integer(1));
+	    Log.d("USB", "Connect 02 OK");
+	    return true;
 	}
+	return false;
     }
 
     // Send a message to other activity
@@ -109,15 +118,19 @@ class ConnectUSB implements Runnable {
 
     public void run() {
 	boolean done = false;
-	
+
+	int j = 0;
 	while (! done ){
 	    if(driver == null)
 		usb_connect();
 	    try {
 		byte buf[] = new byte[1024];
-		int nBytes = driver.read(buf, 100000); // 100000 is Delay i ms
+		j = driver.read(buf, 1000000); // 100000 is Delay i ms
 		// Send data to plotter and main thread
-		final String strData = new String(buf, 0, nBytes).replace("\r", "");
+		if(j == 0) 
+		    continue;
+		final String strData = new String(buf, 0, j).replace("\r", "");
+		j = 0;
 		message(mainHandler, Client.SENSD, strData);
 		Log.d("RS USB", "run 5 + strData");
 	    } catch (IOException e) {
