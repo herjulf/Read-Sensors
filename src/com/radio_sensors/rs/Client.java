@@ -148,12 +148,16 @@ public class Client extends RSActivity {
 	  disconnect();
 	  return;
 	}
-
-	if(connect_usb() == true) {
-	    Toast.makeText(this, "USB connecting", Toast.LENGTH_SHORT).show();
-	    return;
+	
+	/* USBConnect introduced in SDK version 12 */
+	Log.d("RStrace", "SDK version="+android.os.Build.VERSION.SDK_INT);
+	if (android.os.Build.VERSION.SDK_INT >= 12) {
+	    // only for gingerbread and newer versions
+	    if(connect_usb() == true) {
+		Toast.makeText(this, "USB connecting", Toast.LENGTH_SHORT).show();
+		return;
+	    }
 	}
-
 	set_server_ip(et_srv.getText().toString());
 	set_server_port(Integer.parseInt(et_port.getText().toString()));
 	connect(get_server_ip(), get_server_port());
