@@ -81,7 +81,6 @@ class ConnectUSB implements Runnable {
 
     public boolean usb_connect() {
 
-	Log.d("USB", "Connect 00");
 	manager = (UsbManager) Client.client.getSystemService(Context.USB_SERVICE);
 	driver = UsbSerialProber.acquire(manager);
 
@@ -89,21 +88,19 @@ class ConnectUSB implements Runnable {
 	    try {
 		driver.open();
 		driver.setParameters(38400, 8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
-		Toast.makeText(Client.client, "RS USB opened", Toast.LENGTH_SHORT).show();
 	    } catch (IOException e) {
 		Toast.makeText(Client.client, "Error setting up device: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-		//Log.e("USB", "Error setting up device: " + e.getMessage(), e);
+		Log.e("USB", "Error setting up device: " + e.getMessage(), e);
 		try {
 		    driver.close();
 		} catch (IOException e2) {
-                                        // Ignore.
+                      // Ignore.
 		}
 		driver = null;
 		return false;
 	    }
 	    // Signal connected
 	    //message(mainHandler, Client.STATUS_USB, new Integer(1));
-	    Log.d("USB", "Connect 02 OK");
 	    return true;
 	}
 	return false;
@@ -114,7 +111,7 @@ class ConnectUSB implements Runnable {
 	Message message = Message.obtain();
 	message.what = what;
 	message.obj = msg;
-	h.sendMessage(message); // To other activity
+	h.sendMessage(message); 
     }
 
     public void run() {
@@ -127,7 +124,7 @@ class ConnectUSB implements Runnable {
 		usb_connect();
 	    try {
 		byte buf[] = new byte[10000];
-		j = driver.read(buf, 0); // 100000 is Delay i ms
+		j = driver.read(buf, 0); // buf and delay in ms
 		// Send data to plotter and main thread
 	
 		if(j == 0) 
@@ -145,9 +142,8 @@ class ConnectUSB implements Runnable {
 		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+strData);
 		strData = "";
 
-		Log.d("RS USB", "run 5 + strData");
 	    } catch (IOException e) {
-		Log.d("USB", "Error reading device: " + e.getMessage(), e);
+		Log.e("USB", "Error reading device: " + e.getMessage(), e);
 	    } 
 	}
     }
@@ -164,5 +160,6 @@ class ConnectUSB implements Runnable {
 	    }
 	}
 	killed = true;
+	//message(mainHandler, Client.STATUS_USB, new Integer(0));
     }
 }
