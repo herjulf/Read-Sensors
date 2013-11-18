@@ -52,6 +52,9 @@ import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
 
+import java.util.*;
+import java.text.*;
+
 import android.hardware.usb.UsbManager;
 
 import com.hoho.android.usbserial.driver.FtdiSerialDriver;
@@ -81,8 +84,6 @@ class ConnectUSB implements Runnable {
 	Log.d("USB", "Connect 00");
 	manager = (UsbManager) Client.client.getSystemService(Context.USB_SERVICE);
 	driver = UsbSerialProber.acquire(manager);
-
-	Log.d("USB", "Connect 01");
 
 	if (driver != null) {
 	    try {
@@ -118,20 +119,32 @@ class ConnectUSB implements Runnable {
 
     public void run() {
 	boolean done = false;
+	String strData = "";
 
 	int j = 0;
 	while (! done ){
 	    if(driver == null)
 		usb_connect();
 	    try {
-		byte buf[] = new byte[1024];
-		j = driver.read(buf, 1000000); // 100000 is Delay i ms
+		byte buf[] = new byte[10000];
+		j = driver.read(buf, 0); // 100000 is Delay i ms
 		// Send data to plotter and main thread
+	
 		if(j == 0) 
 		    continue;
-		final String strData = new String(buf, 0, j).replace("\r", "");
-		j = 0;
-		message(mainHandler, Client.SENSD, strData);
+		
+		String s1 = new String(buf, 0, j);
+		strData = strData + s1;
+
+		if(buf[j-1] != 0x1A) {
+		    continue;
+		}
+
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+		SimpleDateFormat ftz = new SimpleDateFormat("z ");
+		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+strData);
+		strData = "";
+
 		Log.d("RS USB", "run 5 + strData");
 	    } catch (IOException e) {
 		Log.d("USB", "Error reading device: " + e.getMessage(), e);
