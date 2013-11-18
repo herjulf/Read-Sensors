@@ -1,5 +1,21 @@
-// GPL CopyRight 2013 by Robert Olsson robert@Radio-Sensors.COM 
+// Copyright (C) 2013 Olof Hagsand and Robert Olsson
+//
+// This file is part of Read-Sensors.
+//
+// Read-Sensors is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// Read-Sensors is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Read-Sensors; see the file COPYING.
 // Some code reused from Andriod Cookbook
+
 package com.radio_sensors.rs;
 
 import java.util.Vector;
@@ -51,7 +67,7 @@ import android.text.util.Linkify;
 import android.util.Log;
 
 public class AboutBox {
-    static String VersionNumber = " 0.3  2013-10-29";
+    static String VersionNumber = " 0.4  2013-11-19";
     public static void Show(Activity callingActivity) {
         //Use a Spannable to allow for links highlighting
         SpannableString aboutText = new SpannableString("Version " + VersionNumber + 
