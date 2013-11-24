@@ -114,37 +114,44 @@ class ConnectUSB implements Runnable {
 	h.sendMessage(message); 
     }
 
+    private String usb_readline(byte[] buf)
+    {
+	int j;
+	String line = "";
+
+	while( true ) {
+	    try {
+		j = driver.read(buf, 0); // buf and delay in ms
+		// Send data to plotter and main thread
+		
+	    } catch (IOException e) {
+		Log.e("USB", "Error reading device: " + e.getMessage(), e);
+		return line;
+	    } 
+	    if(j == 0) 
+		continue;
+	    String s1 = new String(buf, 0, j);
+	    line = line + s1;
+	    
+	    if(buf[j-1] != 0x1A) {
+		continue;
+	    }
+	    return line;
+	}
+    }
+
     public void run() {
 	boolean done = false;
-	String strData = "";
-
-	int j = 0;
+	String line = "";
 	while (! done ){
 	    if(driver == null)
 		usb_connect();
-	    try {
-		byte buf[] = new byte[10000];
-		j = driver.read(buf, 0); // buf and delay in ms
-		// Send data to plotter and main thread
-	
-		if(j == 0) 
-		    continue;
-		
-		String s1 = new String(buf, 0, j);
-		strData = strData + s1;
 
-		if(buf[j-1] != 0x1A) {
-		    continue;
-		}
-
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
-		SimpleDateFormat ftz = new SimpleDateFormat("z ");
-		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+strData);
-		strData = "";
-
-	    } catch (IOException e) {
-		Log.e("USB", "Error reading device: " + e.getMessage(), e);
-	    } 
+	    byte buf[] = new byte[10000];
+	    line = usb_readline(buf);
+	    SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+	    SimpleDateFormat ftz = new SimpleDateFormat("z ");
+	    message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
 	}
     }
     
