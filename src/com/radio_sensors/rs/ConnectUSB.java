@@ -114,7 +114,7 @@ class ConnectUSB implements Runnable {
 	h.sendMessage(message); 
     }
 
-    private String usb_readline(byte[] buf)
+    private String usb_readline(byte[] buf) throws IOException
     {
 	int j;
 	String line = "";
@@ -125,8 +125,7 @@ class ConnectUSB implements Runnable {
 		// Send data to plotter and main thread
 		
 	    } catch (IOException e) {
-		Log.e("USB", "Error reading device: " + e.getMessage(), e);
-		return line;
+		throw new IOException(e);
 	    } 
 	    if(j == 0) 
 		continue;
@@ -146,15 +145,20 @@ class ConnectUSB implements Runnable {
 	while (! done ){
 	    if(driver == null)
 		usb_connect();
-
-	    byte buf[] = new byte[10000];
-	    line = usb_readline(buf);
-	    SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
-	    SimpleDateFormat ftz = new SimpleDateFormat("z ");
-	    message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
-	}
+	    
+	    try {
+		byte buf[] = new byte[10000];
+		line = usb_readline(buf);
+		SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+		SimpleDateFormat ftz = new SimpleDateFormat("z ");
+		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
+	    }
+	    catch  (IOException e) {
+		Log.e("USB", "Error reading device: " + e.getMessage(), e);
+	    }
+	}	    
     }
-    
+
     // Method that closes the socket if open. This is to interrupt the thread
     // waiting in a blocking read
     public void kill(){
