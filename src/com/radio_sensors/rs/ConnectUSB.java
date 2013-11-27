@@ -66,7 +66,10 @@ import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.hoho.android.usbserial.util.HexDump;
 
-class ConnectUSB implements Runnable {
+
+
+
+class ConnectUSB extends RSActivity implements Runnable {
     private Handler mainHandler; 
     private boolean killed = false;
 
@@ -74,9 +77,26 @@ class ConnectUSB implements Runnable {
     private UsbManager manager;
     private UsbSerialDriver driver;
 
+    private int    report_interval;  
+    private int    report_mask;  
+
+
     ConnectUSB(Handler h){ 
 	usb_connect();
 	mainHandler = h;
+    }
+
+    private int get_report_interval(){
+	return report_interval;
+    }
+    private void set_report_interval(int i){
+	report_interval = i;
+    }
+    private int get_report_mask(){
+	return report_mask;
+    }
+    private void set_report_mask(int i){
+	report_mask = i;
     }
 
     public boolean usb_connect() {
@@ -99,19 +119,66 @@ class ConnectUSB implements Runnable {
 		driver = null;
 		return false;
 	    }
-	    // Signal connected
-	    //message(mainHandler, Client.STATUS_USB, new Integer(1));
+	    parse_settings();
 	    return true;
 	}
 	return false;
     }
 
-    // Send a message to other activity
-    private void message(Handler h, int what, Object msg){
-	Message message = Message.obtain();
-	message.what = what;
-	message.obj = msg;
-	h.sendMessage(message); 
+    public String parse_string(String ss, String tag) 
+    {
+	String[] s = ss.split(" ");
+	String s1 = "";
+
+	for (int i = 0; i < s.length; i++)  
+	    {  
+		s1 = s[i];  
+		if(s1.indexOf(tag) == 0) 
+		    return s[i+1];
+	    }
+	return "";
+    }
+
+    public int parse_int(String ss, String tag) 
+    {
+	String[] s = ss.split(" ");
+	String s1 = "";
+
+	for (int i = 0; i < s.length; i++)  
+	    {  
+		s1 = s[i];  
+		if(s1.indexOf(tag) == 0) {
+		    //Toast.makeText(Client.client, "Kalle" + HexDump.dumpHexString(s[i+1].getBytes()), Toast.LENGTH_SHORT).show();
+		    return Integer.decode(s[i+1]);
+		}
+	    }
+	return 0;
+    }
+
+    public void parse_settings() 
+    {
+	byte b1[] = new byte[1000];
+	String l0 ="";
+	String l1 ="";
+	String l2 ="";
+	String l3 ="";
+
+	    try {
+		usb_write("ss\r".getBytes());
+		l0 = usb_readline(b1);
+		l1 = l0.replace("\n", " ");
+		l2 = l1.replace("\r", " ");
+		l3 = l2.replace("\t", " ");
+	    }
+	    catch  (IOException e) {
+		Log.e("USB", "Error reading device: " + e.getMessage(), e);
+	    }
+	    set_report_interval(parse_int(l3, "report_interval")); 
+	    set_report_mask(parse_int(l3, "report_mask")); 
+
+	    //Toast.makeText(Client.client, Integer.toString(i), Toast.LENGTH_SHORT).show();
+
+	    Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), get_report_mask()), Toast.LENGTH_SHORT).show();
     }
 
     private String usb_readline(byte[] buf) throws IOException
@@ -136,6 +203,22 @@ class ConnectUSB implements Runnable {
 		continue;
 	    }
 	    return line;
+	}
+    }
+
+    private int usb_write(byte[] buf) throws IOException
+    {
+	int j = 0;
+
+	while( true ) {
+	    try {
+		j = driver.write(buf, 0); // buf and delay in ms
+		// Send data to plotter and main thread
+		
+	    } catch (IOException e) {
+		throw new IOException(e);
+	    } 
+	    return j;
 	}
     }
 
