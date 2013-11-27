@@ -77,6 +77,7 @@ final class Pt{
 // A single plot instance. Eg a function.
 // Contains info about each individual plot.
 final class PlotVector {
+    public static final float LINEWIDTH = (float)1.0;
     public String title; // title for plot
     public int where;        // y1(=1) or y2 (=2)-axis or not-active (0)
     public ArrayList <Pt> vec;
@@ -84,6 +85,7 @@ final class PlotVector {
     public int color;
     public double ymin = Double.POSITIVE_INFINITY;
     public double ymax = Double.NEGATIVE_INFINITY;
+    private float linewidth = LINEWIDTH;
 
     PlotVector(ArrayList <Pt> v0, String t0, int w0, int s0, int c0){
     	vec = v0;
@@ -101,6 +103,13 @@ final class PlotVector {
     public void style_set(int s) {
     	style.clear();
     	style.add(s);	
+    }
+
+    public void linewidth_set(float w) {
+	linewidth = w;
+    }
+    public float linewidth_get() {
+	return linewidth;
     }
 
     public void sample(Pt pt){
@@ -203,6 +212,16 @@ public final class Plot {
 	    pv.style_set(style);
 	}
     }
+    // Update style on all plotvectors
+    public void 
+    linewidth_set(float w) {
+	PlotVector pv;
+
+	for (int i=0; i<plots.size(); i++){
+	    pv = plots.get(i); 
+	    pv.linewidth_set(w);
+	}
+    }
     // Reset plot area, scaling and axes to default
     public void reset(){
 	liveUpdate = true;
@@ -210,7 +229,7 @@ public final class Plot {
 	xscale = 1.0;
     }
 
-    public double get_pw(){ // plot area
+    public double get_pw(){ // plot area width
 	return pw;
     }
     public void 
@@ -290,6 +309,7 @@ public final class Plot {
     } // points_in_interval
 
     // Now draw plot and auto-scale axis depending on plot contents
+    // XXX: This should be separated into different functions
     public void autodraw(ImageView image){
 	PlotVector pv;
 	boolean y1vals = false; // There are values in y1 plots
@@ -399,6 +419,7 @@ public final class Plot {
 	    y2max = 1;
 	}
 
+	// Compute the x and y axis: where labels should be,...
 	Autoscale ax = new Autoscale(xmin, xmax);
 	Autoscale ay1 = new Autoscale(y1min, y1max);
 	Autoscale ay2 = new Autoscale(y2min, y2max);
@@ -510,7 +531,8 @@ public final class Plot {
 		continue;
 	    vec = pv.vec;
 	    draw_plot_label(i, pv.title, pv.color);
-	    draw_plot(vec, ax, pv.where==1?ay1:ay2, pv.color, pv.style, agg);
+	    draw_plot(vec, ax, pv.where==1?ay1:ay2, pv.color, pv.style, agg, 
+		      pv.linewidth_get());
 	    i++;
 	}
     } // draw
@@ -681,7 +703,9 @@ public final class Plot {
 	      Autoscale ay,
 	      int color,
 	      Set <Integer> style,
-	      int agg){ // aggregation
+	      int agg, // aggregation
+	      float width
+	){ 
 	Pt ptv;
 	Point pt;
 	boolean skip = false;
@@ -692,6 +716,7 @@ public final class Plot {
 	paint.setAntiAlias(true);
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(color);
+	paint.setStrokeWidth(width);
 	try {
 	    canvas.clipRect(px, py, px+pw, py+ph, Region.Op.REPLACE); // clip it.
 	    for (int i = 0 ; i< vec.size(); i+=agg)	{

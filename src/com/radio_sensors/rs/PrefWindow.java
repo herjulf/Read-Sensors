@@ -183,6 +183,7 @@ public class PrefWindow extends RSActivity {
 	setIntVal(R.id.plot_fontsize, get_plot_fontsize());
 	setDoubleVal(R.id.plot_ymin, get_plot_ymin());
 	setDoubleVal(R.id.plot_ymax, get_plot_ymax());
+	setFloatVal(R.id.plot_linewidth, get_plot_linewidth());
     }
     // GUI -> running
     private void gui2running(){
@@ -200,6 +201,7 @@ public class PrefWindow extends RSActivity {
 	set_plot_fontsize(getIntVal(R.id.plot_fontsize));
 	set_plot_ymin(getDoubleVal(R.id.plot_ymin));
 	set_plot_ymax(getDoubleVal(R.id.plot_ymax));
+	set_plot_linewidth(getFloatVal(R.id.plot_linewidth));
     }
 
     // Read values from running -> GUI
@@ -216,6 +218,7 @@ public class PrefWindow extends RSActivity {
 	setIntVal(R.id.plot_window, get_pref_plot_window());
 	setIntVal(R.id.plot_style, get_pref_plot_style());
 	setIntVal(R.id.plot_fontsize, get_pref_plot_fontsize());
+	setFloatVal(R.id.plot_linewidth, get_pref_plot_linewidth());
     }
 
     // Read values from layout and into file
@@ -234,6 +237,7 @@ public class PrefWindow extends RSActivity {
 	ed.putInt("plot_window", getIntVal(R.id.plot_window));
 	ed.putInt("plot_style", getIntVal(R.id.plot_style));
 	ed.putInt("plot_fontsize", getIntVal(R.id.plot_fontsize));
+	ed.putFloat("plot_linewidth", getFloatVal(R.id.plot_linewidth));
 	ed.commit();
     }
 
@@ -277,6 +281,31 @@ public class PrefWindow extends RSActivity {
 	    et.setText(null);
 	else
 	    et.setText(d.doubleValue()+"");
+    }
+    private Float getFloatVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	if (et.getText()==null || et.getText().toString().equals(""))
+	    return null;
+	else{
+	    try {
+		Float d = new Float(et.getText().toString());
+		return d;
+	    }
+	    catch (Exception e1) {
+		String str = e1.getMessage();
+		Toast.makeText(this, "Error when parsing floar:"+str, Toast.LENGTH_SHORT).show();
+		return null;
+	    }
+	}
+    }
+
+    private void setFloatVal(int id, Float d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.floatValue()+"");
     }
 
 }

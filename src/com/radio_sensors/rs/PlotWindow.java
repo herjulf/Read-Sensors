@@ -200,6 +200,8 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	plot.xwin_set(get_plot_window());
 	// Go thru all plotvectors and set style
 	plot.style_set(get_plot_style());
+	// Go thru all plotvectors and set linewidth
+	plot.linewidth_set(get_plot_linewidth());
     }
 
     // second & nanosecond to twamp timestamp 

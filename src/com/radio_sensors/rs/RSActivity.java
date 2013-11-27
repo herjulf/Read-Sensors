@@ -68,6 +68,7 @@ abstract class RSActivity extends Activity{
     final private static int    PREF_PLOT_WINDOW = Plot.XWINDOW; // seconds
     final private static int    PREF_PLOT_STYLE = Plot.LINES; 
     final private static int    PREF_PLOT_FONTSIZE = 20; 
+    final private static float  PREF_PLOT_LINEWIDTH = PlotVector.LINEWIDTH; 
 
     protected RSActivity main; // This is the main activity (Client)
     /* The following variables only have values for main instance.
@@ -83,6 +84,7 @@ abstract class RSActivity extends Activity{
     private int    plot_fontsize;  
     private Double plot_ymin = null;  
     private Double plot_ymax = null;  
+    private float plot_linewidth;  
 
     protected ArrayList<String> sensor_ids = new ArrayList<String>();
     private ArrayList<String> sensor_tags = new ArrayList<String>();
@@ -157,6 +159,12 @@ abstract class RSActivity extends Activity{
     protected void set_plot_ymax(Double y){
 	main.plot_ymax = y;
     }
+    protected Float get_plot_linewidth(){
+	return main.plot_linewidth;
+    }
+    protected void set_plot_linewidth(float w){
+	main.plot_linewidth = w;
+    }
 
     protected void add_sensor_ids(String id){
 	if (!main.sensor_ids.contains(id))
@@ -203,6 +211,9 @@ abstract class RSActivity extends Activity{
     protected int get_pref_plot_fontsize(){
 	return getpref().getInt("plot_fontsize", PREF_PLOT_FONTSIZE);
     }
+    protected float get_pref_plot_linewidth(){
+	return getpref().getFloat("plot_linewidth", PREF_PLOT_LINEWIDTH);
+    }
 
     // Load preferences -> running values 
     protected void pref2running(){
@@ -215,6 +226,7 @@ abstract class RSActivity extends Activity{
 	set_plot_window(get_pref_plot_window());
 	set_plot_style(get_pref_plot_style());
 	set_plot_fontsize(get_pref_plot_fontsize());
+	set_plot_linewidth(get_pref_plot_linewidth());
     }
 
     // Send a message to other activity
