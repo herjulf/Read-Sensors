@@ -244,7 +244,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	SensdTag tobj;
 	String sid = get_sensor_id();  // Selector
 	String tag = get_sensor_tag(); // Selector
-	String user_tag = get_user_tag();
+//	String user_tag = get_user_tag();
 
 	if (tag.equals("All"))
 	    plot.y1label("Misc");
@@ -258,8 +258,9 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		    tobj = sobj.tagv.get(j); // Sensor tag objects
 		    // tag selection
 		    // Either direct match, or all, or User-defined and we defined this tag
-		    if (tag.equals("All") || tobj.tag.equals(tag) ||
-			(tag.equals("User-defined") && user_tag!= null && tobj.tag.equals(user_tag))){
+		    if (tag.equals("All") || tobj.tag.equals(tag)){
+
+//			||(tag.equals("User-defined") && user_tag!= null && tobj.tag.equals(user_tag)))
 			    if (tag != "All" && tobj.label != null){
 				plot.y1label(tobj.label);
 			    }
@@ -394,6 +395,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	if ((stag = sid1.findtag(tag1)) == null){
 	    stag = new SensdTag(tag1, label);
 	    sid1.tagv.add(stag);
+	    add_sensor_tags(tag1);
 	    ArrayList <Pt> vec = new ArrayList<Pt>(); 
 	    stag.pv = new PlotVector(vec, label, 0, get_plot_style(), plot.nextColor());
 	    plot.add(stag.pv); //?
@@ -413,8 +415,8 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	String tag = get_sensor_tag();
 	if (id.equals("Learn") && learn_id != null)
 	    id = "L:"+learn_id;
-	if (tag.equals("User-defined") && get_user_tag() != null)
-	    tag = "U:"+get_user_tag();
+//	if (tag.equals("User-defined") && get_user_tag() != null)
+//	    tag = "U:"+get_user_tag();
 	setTitle("Plot Sensor:"+id+", Tag:"+tag);
     }
 

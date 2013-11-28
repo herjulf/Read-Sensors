@@ -79,12 +79,16 @@ public class PrefWindow extends RSActivity {
     public void onClickTag(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
 	dia.setTitle("Select Sensor Tag");
-	dia.setItems(R.array.tags_array, new DialogInterface.OnClickListener() {
+	sensor_items = new String[1+main.sensor_tags.size()];
+	int i = 0;
+	sensor_items[i++] = "All";
+	for (String s : main.sensor_tags)
+	    sensor_items[i++] = s;
+	dia.setItems(sensor_items, new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
 		    Resources res = getResources();
-		    String[] items = res.getStringArray(R.array.tags_array);
 		    final Button bt = (Button) findViewById(R.id.tag);
-		    bt.setText(items[which]);
+		    bt.setText(sensor_items[which]);
 		}
 	    });
 	dia.setInverseBackgroundForced(true);
@@ -176,7 +180,7 @@ public class PrefWindow extends RSActivity {
 	bt.setText(get_sensor_id());
 	bt = (Button) findViewById(R.id.tag);
 	bt.setText(get_sensor_tag());
-	setTextVal(R.id.user_tag, get_user_tag());
+//	setTextVal(R.id.user_tag, get_user_tag());
 	setIntVal(R.id.max_samples, get_max_samples());
 	setIntVal(R.id.plot_window, get_plot_window());
 	setIntVal(R.id.plot_style, get_plot_style());
@@ -194,7 +198,7 @@ public class PrefWindow extends RSActivity {
 	set_sensor_id((String)bt.getText());
 	bt = (Button) findViewById(R.id.tag);
 	set_sensor_tag((String)bt.getText());
-	set_user_tag((String)getTextVal(R.id.user_tag));
+//	set_user_tag((String)getTextVal(R.id.user_tag));
 	set_max_samples(getIntVal(R.id.max_samples));
 	set_plot_window(getIntVal(R.id.plot_window));
 	set_plot_style(getIntVal(R.id.plot_style));
@@ -213,7 +217,7 @@ public class PrefWindow extends RSActivity {
 	bt.setText(get_pref_sensor_id());
 	bt = (Button) findViewById(R.id.tag);
 	bt.setText(get_pref_sensor_tag());
-	setTextVal(R.id.user_tag, get_pref_user_tag());
+//	setTextVal(R.id.user_tag, get_pref_user_tag());
 	setIntVal(R.id.max_samples, get_pref_max_samples());
 	setIntVal(R.id.plot_window, get_pref_plot_window());
 	setIntVal(R.id.plot_style, get_pref_plot_style());
@@ -232,7 +236,7 @@ public class PrefWindow extends RSActivity {
 	ed.putString("sid", (String)bt.getText());
 	bt = (Button) findViewById(R.id.tag);
 	ed.putString("tag", (String)bt.getText());
-	ed.putString("user_tag", (String)getTextVal(R.id.user_tag));
+//	ed.putString("user_tag", (String)getTextVal(R.id.user_tag));
 	ed.putInt("max_samples", getIntVal(R.id.max_samples));
 	ed.putInt("plot_window", getIntVal(R.id.plot_window));
 	ed.putInt("plot_style", getIntVal(R.id.plot_style));

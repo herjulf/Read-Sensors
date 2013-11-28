@@ -92,7 +92,7 @@
 
       </TableRow>
 
-      <TableRow>
+      <!--TableRow>
 	<TextView
 	    android:id="@+id/user_tag_txt"
 	    android:layout_width="0dip"
@@ -106,7 +106,7 @@
 	    android:layout_column="1"
 	    android:text=""
 	    android:layout_span="2" />
-      </TableRow>
+      </TableRow-->
 
       <TableRow>
 	<TextView

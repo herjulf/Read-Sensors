@@ -87,7 +87,7 @@ abstract class RSActivity extends Activity{
     private float plot_linewidth;  
 
     protected ArrayList<String> sensor_ids = new ArrayList<String>();
-    private ArrayList<String> sensor_tags = new ArrayList<String>();
+    protected ArrayList<String> sensor_tags = new ArrayList<String>();
 
     /*
      * Access methods for persistent data
@@ -117,12 +117,14 @@ abstract class RSActivity extends Activity{
     protected void set_sensor_tag(String tag){
 	main.sensor_tag = tag;
     }
+/*
     protected String get_user_tag(){
 	return main.user_tag;
     }
     protected void set_user_tag(String tag){
 	main.user_tag = tag;
     }
+*/
     protected int get_max_samples(){
 	return main.max_samples;
     }
@@ -171,7 +173,7 @@ abstract class RSActivity extends Activity{
 	    main.sensor_ids.add(id);
     }
     protected void add_sensor_tags(String tag){
-	if (!main.sensor_tags.contains(tag)) // XXX Work for strings?
+	if (!main.sensor_tags.contains(tag))
 	    main.sensor_tags.add(tag);
     }
 
@@ -196,9 +198,11 @@ abstract class RSActivity extends Activity{
     protected String get_pref_sensor_tag(){
 	return getpref().getString("tag", PREF_SENSOR_TAG);
     }
+/*
     protected String get_pref_user_tag(){
 	return getpref().getString("user_tag", null);
     }
+*/
     protected int get_pref_max_samples(){
 	return getpref().getInt("max_samples", PREF_MAX_SAMPLES);
     }
@@ -221,7 +225,7 @@ abstract class RSActivity extends Activity{
 	set_server_port(get_pref_server_port());
 	set_sensor_id(get_pref_sensor_id());
 	set_sensor_tag(get_pref_sensor_tag());
-	set_user_tag(get_pref_user_tag());
+//	set_user_tag(get_pref_user_tag());
 	set_max_samples(get_pref_max_samples());
 	set_plot_window(get_pref_plot_window());
 	set_plot_style(get_pref_plot_style());
