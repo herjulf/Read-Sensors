@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -427,15 +429,30 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
     private int sensd_msg(String s){
 	String[] sv;
 	String[] sv2;
+	String   ts;        /* timestring */
 	String   tag, val;
 	Long     time=null; /* Time == x-coordinate */
 	String   id = null;
 	Double   y;
 
-	sv = s.split("[ \n\\[\\]]");
 	Log.d("RStrace", "report="+s);
+	sv = s.split("[ \n\\[\\]]");
+	if (sv.length<2){
+	    Log.e("RStrace", "Sensd report is too short");
+	    return -1;
+	}
+	ts = sv[0]+" "+sv[1];
+	SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	Date date = null;
+        try {
+            date = ft.parse(ts);
+        } catch (Exception e) {
+	    Log.e("RStrace", "Failed to parse date:"+ts);
+	    return -1;
+        }
+	time = new Long(date.getTime()/1000L);
 	/* Loop 1 : first identify time and id. Maybe they come in reverse order? */
-	for (int i=0; i<sv.length; i++){	
+	for (int i=2; i<sv.length; i++){	
 	    if (sv[i].length() == 0)
 		continue;
 	    sv2 = sv[i].split("=");
@@ -443,10 +460,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		continue;
 	    tag = sv2[0];
 	    val = sv2[1];
-	    if (tag.equals("UT")){ // Unix time (Id)
-		time = new Long(val);
-	    }
-	    else if (tag.equals("TZ")){ // Time Zone (String)
+	    if (tag.equals("TZ")){ // Time Zone (String)
 	    }
 	    else if (tag.equals("ID")){ // Unique 64 bit ID (S)
 		id = val;
@@ -465,7 +479,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	}
 
 	/* Loop 2 : All value tags */
-	for (int i=0; i<sv.length; i++){	
+	for (int i=2; i<sv.length; i++){	
 	    if (sv[i].length() == 0)
 		continue;
 	    sv2 = sv[i].split("=");
