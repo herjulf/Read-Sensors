@@ -66,40 +66,20 @@ import com.hoho.android.usbserial.driver.CdcAcmSerialDriver;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.hoho.android.usbserial.util.HexDump;
 
-
-
-
 class ConnectUSB extends RSActivity implements Runnable {
     private Handler mainHandler; 
     private boolean killed = false;
 
     private SerialInputOutputManager mSerialIoManager;
     private UsbManager manager;
-    private UsbSerialDriver driver;
-
-    private int    report_interval;  
-    private int    report_mask;  
-
+    public UsbSerialDriver driver;
 
     ConnectUSB(Handler h){ 
-	usb_connect();
+	connect();
 	mainHandler = h;
     }
 
-    private int get_report_interval(){
-	return report_interval;
-    }
-    private void set_report_interval(int i){
-	report_interval = i;
-    }
-    private int get_report_mask(){
-	return report_mask;
-    }
-    private void set_report_mask(int i){
-	report_mask = i;
-    }
-
-    public boolean usb_connect() {
+    public boolean connect() {
 
 	manager = (UsbManager) Client.client.getSystemService(Context.USB_SERVICE);
 	driver = UsbSerialProber.acquire(manager);
@@ -119,69 +99,12 @@ class ConnectUSB extends RSActivity implements Runnable {
 		driver = null;
 		return false;
 	    }
-	    parse_settings();
 	    return true;
 	}
 	return false;
     }
 
-    public String parse_string(String ss, String tag) 
-    {
-	String[] s = ss.split(" ");
-	String s1 = "";
-
-	for (int i = 0; i < s.length; i++)  
-	    {  
-		s1 = s[i];  
-		if(s1.indexOf(tag) == 0) 
-		    return s[i+1];
-	    }
-	return "";
-    }
-
-    public int parse_int(String ss, String tag) 
-    {
-	String[] s = ss.split(" ");
-	String s1 = "";
-
-	for (int i = 0; i < s.length; i++)  
-	    {  
-		s1 = s[i];  
-		if(s1.indexOf(tag) == 0) {
-		    //Toast.makeText(Client.client, "Kalle" + HexDump.dumpHexString(s[i+1].getBytes()), Toast.LENGTH_SHORT).show();
-		    return Integer.decode(s[i+1]);
-		}
-	    }
-	return 0;
-    }
-
-    public void parse_settings() 
-    {
-	byte b1[] = new byte[1000];
-	String l0 ="";
-	String l1 ="";
-	String l2 ="";
-	String l3 ="";
-
-	    try {
-		usb_write("ss\r".getBytes());
-		l0 = usb_readline(b1);
-		l1 = l0.replace("\n", " ");
-		l2 = l1.replace("\r", " ");
-		l3 = l2.replace("\t", " ");
-	    }
-	    catch  (IOException e) {
-		Log.e("USB", "Error reading device: " + e.getMessage(), e);
-	    }
-	    set_report_interval(parse_int(l3, "report_interval")); 
-	    set_report_mask(parse_int(l3, "report_mask")); 
-
-	    //Toast.makeText(Client.client, Integer.toString(i), Toast.LENGTH_SHORT).show();
-
-	    Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), get_report_mask()), Toast.LENGTH_SHORT).show();
-    }
-
-    private String usb_readline(byte[] buf) throws IOException
+    public String readline(byte[] buf) throws IOException
     {
 	int j;
 	String line = "";
@@ -206,7 +129,7 @@ class ConnectUSB extends RSActivity implements Runnable {
 	}
     }
 
-    private int usb_write(byte[] buf) throws IOException
+    public int write(byte[] buf) throws IOException
     {
 	int j = 0;
 
@@ -227,11 +150,11 @@ class ConnectUSB extends RSActivity implements Runnable {
 	String line = "";
 	while (! done ){
 	    if(driver == null)
-		usb_connect();
+		connect();
 	    
 	    try {
 		byte buf[] = new byte[10000];
-		line = usb_readline(buf);
+		line = readline(buf);
 		SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
 		SimpleDateFormat ftz = new SimpleDateFormat("z ");
 		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);

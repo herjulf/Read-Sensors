@@ -67,12 +67,12 @@ public class Client extends RSActivity {
 
 
     private Thread connectthread = null;
-    private Thread usbthread = null;
+    public  Thread usbthread = null;
     public static Client client = null;
     private boolean active = false;           // Activity is active
     
     ConnectSocket connect_cs;                 // Object containing connect-socket
-    ConnectUSB connect_usb;                // Object containing 
+    ConnectUSB USB; 
 
     // Debug 
     final static int DEBUG_NONE        = 0;
@@ -222,6 +222,9 @@ public class Client extends RSActivity {
 	case R.id.plot:
 	    toActivity("PlotWindow");
 	    return true;
+	case R.id.conf:
+	    toActivity("ConfWindow");
+	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
@@ -244,11 +247,11 @@ public class Client extends RSActivity {
 	    return true;
 	}
 
-	connect_usb = new ConnectUSB(mHandler);
-	if( connect_usb.usb_connect() == false )
+	USB = new ConnectUSB(mHandler);
+	if( USB.connect() == false )
 	    return false;
 
-	usbthread = new Thread(connect_usb, "USB connect");
+	usbthread = new Thread(USB, "USB connect");
 	usbthread.start();
 	return true;
     }
@@ -258,7 +261,7 @@ public class Client extends RSActivity {
 
 	if(usbthread != null) {
 	    try{
-		connect_usb.kill();
+		USB.kill();
 		usbthread.interrupt();
 		// usbthread is set to null only when detected by mHandler
 	    }

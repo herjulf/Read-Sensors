@@ -2,6 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 	<item android:id="@+id/about" android:icon="@drawable/ic_launcher"
 		android:title="About" />
+	<item android:id="@+id/conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Config" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Settings" />
 	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
