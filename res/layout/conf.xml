@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    android:id="@+id/ScrollView01"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="fill_parent">
+  <LinearLayout
+      android:layout_width="fill_parent"
+      android:layout_height="fill_parent"
+      android:orientation="vertical">
+    <TableLayout 
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+
+	android:stretchColumns="*" 
+	xmlns:android="http://schemas.android.com/apk/res/android" >
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/ri_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="Report Interval: " />
+	<EditText
+	    android:id="@+id/ri"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/report_mask_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Report Mask: " />
+	<EditText
+	    android:id="@+id/report_mask"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/de_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="Debug: " />
+	<EditText
+	    android:id="@+id/ch"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/eui64_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="EUI64: " />
+
+	<EditText
+	    android:id="@+id/eui64"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/pan_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="PAN: " />
+	<EditText
+	    android:id="@+id/pan"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/ch_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="Channel: " />
+	<EditText
+	    android:id="@+id/ch"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/tx_pwr_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:layout_span="1" 
+	    android:text="TX Power: " />
+	<EditText
+	    android:id="@+id/tx_pwr"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:numeric="decimal"
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+    </TableLayout>
+  </LinearLayout>
+</ScrollView>
