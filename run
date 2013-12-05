@@ -45,6 +45,16 @@ function make_key()
     keytool -genkey -v -keystore RS.keystore -alias RS -keyalg RSA -validity 10000
 }
 
+function debug_over_ip()
+{
+    # Get IP address ov android
+    adb tcpip 5555
+    adb connect 192.168.2.91:5555
+    # Disconnect USB cable
+    adb logcat
+}
+
+
 
 remove
 run
