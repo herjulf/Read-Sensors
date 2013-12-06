@@ -65,7 +65,7 @@ public class ConfWindow extends RSActivity {
     private int report_mask;  
     private String pan;
     private int chan;
-    private int tx_power;
+    private int tx_pwr;
     private String firmware;
     private String id;
     private String i2c;
@@ -86,7 +86,6 @@ public class ConfWindow extends RSActivity {
     private boolean hum_pwr;
     private int debug;
     private String pwrs;
-
 
     private String[] sensor_items;
 
@@ -111,6 +110,30 @@ public class ConfWindow extends RSActivity {
     }
     private void set_report_mask(int i){
 	report_mask = i;
+    }
+    private int get_debug(){
+	return debug;
+    }
+    private void set_debug(int i){
+	debug = i;
+    }
+    private int get_tx_pwr(){
+	return tx_pwr;
+    }
+    private void set_tx_pwr(int i){
+	tx_pwr = i;
+    }
+    private int get_chan(){
+	return chan;
+    }
+    private void set_chan(int i){
+	chan = i;
+    }
+    private void set_eui64(String s){
+	eui64 = s;
+    }
+    private void set_firmware(String s){
+	firmware = s;
     }
 
     protected void onStart(){
@@ -197,25 +220,64 @@ public class ConfWindow extends RSActivity {
 	String l2 ="";
 	String l3 ="";
 
-	    if(USB.driver == null)
-		USB.connect();
+	USB = Client.USB;
+	Log.d("USB", "Point 0");		
 
 	    try {
+		if(USB.driver == null)
+		    USB.connect();
+
+		Log.d("USB", "Point 1");		
 		USB.write("ss\r".getBytes());
+		Log.d("USB", "Point 2");		
 		l0 = USB.readline(b1);
+		Log.d("USB", "Point 3");		
 		l1 = l0.replace("\n", " ");
 		l2 = l1.replace("\r", " ");
-		l3 = l2.replace("=", " ");
+		l3 = l2.replace("=", " ");	
+		Log.d("USB", "Point 4");		
 	    }
 	    catch  (IOException e) {
 		Log.e("USB", "Error reading device: " + e.getMessage(), e);
 	    }
 	    set_report_interval(parse_int(l3, "report_interval")); 
+	    Log.d("USB", "Point 5");		
 	    set_report_mask(parse_int(l3, "report_mask")); 
+	    Log.d("USB", "Point 6");		
+
+	    set_debug(parse_int(l3, "debug")); 
+	    set_tx_pwr(parse_int(l3, "tx_pwr")); 
+	    set_chan(parse_int(l3, "chan")); 
+	    set_eui64(parse_string(l3, "eui64")); 
+	    set_firmware(parse_string(l3, "firmware")); 
 
 	    //Toast.makeText(Client.client, Integer.toString(i), Toast.LENGTH_SHORT).show();
 
-	    Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), get_report_mask()), Toast.LENGTH_SHORT).show();
+	    Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), 
+							get_report_mask()), Toast.LENGTH_SHORT).show();
+
+	    String foo = "";
+	    setTextVal(R.id.eui64, "0x" + eui64);
+	    setTextVal(R.id.firmware, firmware);
+	    setTextVal(R.id.report_mask, "0x" + Integer.toHexString(report_mask) );
+	    setIntVal(R.id.report_interval, report_interval);
+	    setIntVal(R.id.debug, debug);
+	    setIntVal(R.id.tx_pwr, tx_pwr);
+	    setIntVal(R.id.chan, chan);
+    }
+
+    private String getTextVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return et.getText().toString();
+    }
+
+    private void setTextVal(int id, String s){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(s);
+    }
+    private void setIntVal(int id, int i){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(i+"");
     }
 
     // running -> GUI
@@ -230,7 +292,7 @@ public class ConfWindow extends RSActivity {
     // Read values from running -> GUI
     private void sensor2gui(){
 	Button bt;
-
 	parse_settings();
+
     }
 }

@@ -17,14 +17,31 @@
 
       <TableRow>
 	<TextView
-	    android:id="@+id/ri_txt"
+	    android:id="@+id/firmware_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Firmware: " />
+
+	<EditText
+	    android:id="@+id/firmware"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/report_interval_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
 	    android:layout_span="1" 
 	    android:text="Report Interval: " />
 	<EditText
-	    android:id="@+id/ri"
+	    android:id="@+id/report_interval"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="1"
@@ -46,21 +63,22 @@
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content" 
 	    android:text="-1" 
-	    android:numeric="decimal"
+	    android:digits="0123456789ABCDEF"
+	    android:inputType="textCapCharacters"
 	    android:layout_column="1"
 	    android:layout_span="2" />
       </TableRow>
 
       <TableRow>
 	<TextView
-	    android:id="@+id/de_txt"
+	    android:id="@+id/debug_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
 	    android:layout_span="1" 
 	    android:text="Debug: " />
 	<EditText
-	    android:id="@+id/ch"
+	    android:id="@+id/debug"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="1"
@@ -109,14 +127,14 @@
 
       <TableRow>
 	<TextView
-	    android:id="@+id/ch_txt"
+	    android:id="@+id/chan_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
 	    android:layout_span="1" 
 	    android:text="Channel: " />
 	<EditText
-	    android:id="@+id/ch"
+	    android:id="@+id/chan"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="1"
