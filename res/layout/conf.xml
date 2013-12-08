@@ -76,7 +76,7 @@
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
 	    android:layout_span="1" 
-	    android:text="Debug: " />
+	    android:text="Debug Mask: " />
 	<EditText
 	    android:id="@+id/debug"
 	    android:layout_width="0dip"
@@ -94,7 +94,7 @@
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
-	    android:text="EUI64: " />
+	    android:text="EUI64 ID: " />
 
 	<EditText
 	    android:id="@+id/eui64"
@@ -162,6 +162,228 @@
 	    android:numeric="decimal"
 	    android:layout_span="2"
 	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/uptime_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Uptime: " />
+
+	<EditText
+	    android:id="@+id/uptime"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/RIME_addr_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="RIME Addr: " />
+
+	<EditText
+	    android:id="@+id/RIME_addr"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/v_mcu_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="MCU Volt: " />
+
+	<EditText
+	    android:id="@+id/v_mcu"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/v_in_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="IN Volt: " />
+
+	<EditText
+	    android:id="@+id/v_in"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/v_a1_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="A1 Volt: " />
+
+	<EditText
+	    android:id="@+id/v_a1"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/v_a2_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="A2 Volt: " />
+
+	<EditText
+	    android:id="@+id/v_a2"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/v_a3_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Light: " />
+
+	<EditText
+	    android:id="@+id/v_a3"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/intr_p0_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="P0 interrupt: " />
+
+	<EditText
+	    android:id="@+id/intr_p0"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/intr_sec_p0_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="P0 interrupt/sec: " />
+
+	<EditText
+	    android:id="@+id/intr_sec_p0"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/intr_p1_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="P1 interrupt: " />
+
+	<EditText
+	    android:id="@+id/intr_p1"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/intr_sec_p1_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="P1 interrupt/sec: " />
+
+	<EditText
+	    android:id="@+id/intr_sec_p1"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/temp_board_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Temp board C: " />
+
+	<EditText
+	    android:id="@+id/temp_board"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/temp_extern_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Temp extern. C: " />
+
+	<EditText
+	    android:id="@+id/temp_extren"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:text="-1"
+	    android:layout_column="1"
+	    android:layout_span="2" />
       </TableRow>
 
     </TableLayout>
