@@ -378,7 +378,7 @@
 	    android:text="Temp extern. C: " />
 
 	<EditText
-	    android:id="@+id/temp_extren"
+	    android:id="@+id/temp_extern"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
