@@ -56,6 +56,7 @@ import android.content.res.Resources;
 import android.view.Display;
 import android.util.Log;
 import java.io.IOException;
+import android.os.Message;
 
 public class ConfWindow extends RSActivity {
 
@@ -77,11 +78,14 @@ public class ConfWindow extends RSActivity {
 
     private double v_in;
     private double v_mcu;
+    private double v_a1;
+    private double v_a2;
+    private double v_light;
     private boolean usb_pwr;
-    private int intr_total_P0;
-    private double intr_sec_P0;
-    private int intr_total_P1;
-    private double intr_sec_P1;
+    private int intr_p0;
+    private double intr_sec_p0;
+    private int intr_p1;
+    private double intr_sec_p1;
     private String log_mode;
     private boolean hum_pwr;
     private int debug;
@@ -94,9 +98,13 @@ public class ConfWindow extends RSActivity {
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	Log.d("RStrace", "ConfWindow onCreate");
-	main = Client.client; // Ugh, use a public static just to pass the instance.
+	//main = Client.client; // Ugh, use a public static just to pass the instance.
+	ConnectUSB.confh = mHandler;
 	setContentView(R.layout.conf);
 	setTitle("Sensor Configuration");
+
+	if(Client.client.usbthread != null)
+	    sensor2gui();
     }
 
     private int get_report_interval(){
@@ -135,6 +143,40 @@ public class ConfWindow extends RSActivity {
     private void set_firmware(String s){
 	firmware = s;
     }
+    private void set_uptime(String s){
+	uptime = s;
+    }
+    private void set_RIME_addr(String s){
+	RIME_addr = s;
+    }
+    private void set_v_mcu(Double d){
+	v_mcu = d;
+    }
+    private void set_v_in(Double d){
+	v_in = d;
+    }
+    private void set_v_a1(Double d){
+	v_a1 = d;
+    }
+    private void set_v_a2(Double d){
+	v_a1 = d;
+    }
+    private void set_v_light(Double d){
+	v_light = d;
+    }
+    private void set_intr_p0(int i){
+	intr_p0 = i;
+    }
+    private void set_intr_sec_p0(Double d){
+	intr_sec_p0 = d;
+    }
+    private void set_intr_p1(int i){
+	intr_p1 = i;
+    }
+    private void set_intr_sec_p1(Double d){
+	intr_sec_p1 = d;
+    }
+
 
     protected void onStart(){
 	super.onStart();
@@ -212,60 +254,95 @@ public class ConfWindow extends RSActivity {
 	return 0;
     }
 
-    public void parse_settings() 
+    public double parse_double(String ss, String tag) 
     {
-	byte b1[] = new byte[1000];
-	String l0 ="";
-	String l1 ="";
-	String l2 ="";
-	String l3 ="";
+	String[] s = ss.split(" ");
+	String s1 = "";
 
+	for (int i = 0; i < s.length; i++)  
+	    {  
+		s1 = s[i];  
+		if(s1.indexOf(tag) == 0) {
+		    //Toast.makeText(Client.client, "Kalle" + HexDump.dumpHexString(s[i+1].getBytes()), Toast.LENGTH_SHORT).show();
+		    return Double.parseDouble(s[i+1]);
+		}
+	    }
+	return 0;
+    }
+
+    private void parse_settings() 
+    {
 	USB = Client.USB;
-	Log.d("USB", "Point 0");		
 
 	    try {
 		if(USB.driver == null)
 		    USB.connect();
 
-		Log.d("USB", "Point 1");		
 		USB.write("ss\r".getBytes());
-		Log.d("USB", "Point 2");		
-		l0 = USB.readline(b1);
-		Log.d("USB", "Point 3");		
-		l1 = l0.replace("\n", " ");
-		l2 = l1.replace("\r", " ");
-		l3 = l2.replace("=", " ");	
-		Log.d("USB", "Point 4");		
+		Log.d("USB", "Point 1");		
 	    }
 	    catch  (IOException e) {
 		Log.e("USB", "Error reading device: " + e.getMessage(), e);
 	    }
-	    set_report_interval(parse_int(l3, "report_interval")); 
-	    Log.d("USB", "Point 5");		
-	    set_report_mask(parse_int(l3, "report_mask")); 
-	    Log.d("USB", "Point 6");		
-
-	    set_debug(parse_int(l3, "debug")); 
-	    set_tx_pwr(parse_int(l3, "tx_pwr")); 
-	    set_chan(parse_int(l3, "chan")); 
-	    set_eui64(parse_string(l3, "eui64")); 
-	    set_firmware(parse_string(l3, "firmware")); 
-
-	    //Toast.makeText(Client.client, Integer.toString(i), Toast.LENGTH_SHORT).show();
-
-	    Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), 
-							get_report_mask()), Toast.LENGTH_SHORT).show();
-
-	    String foo = "";
-	    setTextVal(R.id.eui64, "0x" + eui64);
-	    setTextVal(R.id.firmware, firmware);
-	    setTextVal(R.id.report_mask, "0x" + Integer.toHexString(report_mask) );
-	    setIntVal(R.id.report_interval, report_interval);
-	    setIntVal(R.id.debug, debug);
-	    setIntVal(R.id.tx_pwr, tx_pwr);
-	    setIntVal(R.id.chan, chan);
     }
 
+    private void parse_ss(String l0)
+    {
+	String l1 ="";
+	String l2 ="";
+	String l3 ="";
+
+	l1 = l0.replace("\n", " ");
+	l2 = l1.replace("\r", " ");
+	l3 = l2.replace("=", " ");	
+	
+	set_report_interval(parse_int(l3, "report_interval")); 
+	set_report_mask(parse_int(l3, "report_mask")); 
+	set_debug(parse_int(l3, "debug")); 
+	set_tx_pwr(parse_int(l3, "tx_pwr")); 
+	set_chan(parse_int(l3, "chan")); 
+	set_eui64(parse_string(l3, "eui64")); 
+	set_firmware(parse_string(l3, "firmware")); 
+	set_uptime(parse_string(l3, "uptime")); 
+	set_RIME_addr(parse_string(l3, "RIME_addr")); 
+
+	//Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), 
+	//					    get_report_mask()), Toast.LENGTH_SHORT).show();
+
+	set_v_mcu(parse_double(l3, "v_mcu")); 
+	set_v_in(parse_double(l3, "v_in")); 
+	set_v_a1(parse_double(l3, "v_a1")); 
+	set_v_a2(parse_double(l3, "v_a2")); 
+	set_v_light(parse_double(l3, "v_light")); 
+
+	set_intr_p0(parse_int(l3, "intr_p0")); 
+	set_intr_sec_p0(parse_double(l3, "intr_sec_p0")); 
+	set_intr_p1(parse_int(l3, "intr_p1")); 
+	set_intr_sec_p1(parse_double(l3, "intr_sec_p1")); 
+
+	setTextVal(R.id.eui64, "0x" + eui64);
+	setTextVal(R.id.firmware, firmware);
+	setTextVal(R.id.report_mask, "0x" + Integer.toHexString(report_mask) );
+	setIntVal(R.id.report_interval, report_interval);
+	setIntVal(R.id.debug, debug);
+	setIntVal(R.id.tx_pwr, tx_pwr);
+	setIntVal(R.id.chan, chan);
+	setTextVal(R.id.uptime, uptime);
+
+	setTextVal(R.id.RIME_addr, RIME_addr);
+
+	setDoubleVal(R.id.v_mcu, v_mcu);
+	setDoubleVal(R.id.v_in, v_in);
+	setDoubleVal(R.id.v_a1, v_a1);
+	setDoubleVal(R.id.v_a2, v_a2);
+	setDoubleVal(R.id.v_a3, v_light);
+
+	setIntVal(R.id.intr_p0, intr_p0);
+	setDoubleVal(R.id.intr_sec_p0, intr_sec_p0);
+	setIntVal(R.id.intr_p1, intr_p1);
+	setDoubleVal(R.id.intr_sec_p1, intr_sec_p1);
+    }
+    
     private String getTextVal(int id){
 	final EditText et = (EditText) findViewById(id);
 	return et.getText().toString();
@@ -280,6 +357,15 @@ public class ConfWindow extends RSActivity {
 	et.setText(i+"");
     }
 
+    private void setDoubleVal(int id, Double d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.doubleValue()+"");
+    }
+
     // running -> GUI
     private void running2gui(){
 	Button bt;
@@ -291,8 +377,23 @@ public class ConfWindow extends RSActivity {
 
     // Read values from running -> GUI
     private void sensor2gui(){
-	Button bt;
 	parse_settings();
-
     }
+
+    private final Handler mHandler = new Handler() {
+	    public void handleMessage(Message msg) {
+		Message message;
+
+		switch (msg.what) {
+
+		case Client.SENSD_CMD:      // Command from sensd
+		    parse_ss((String)msg.obj);
+		    break;
+
+		default:	
+		    Log.e("Plot handler", "Unknown what: " + msg.what + " "+(String) msg.obj);  			
+		    break;
+		}
+	    }
+	};
 }
