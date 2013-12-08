@@ -90,6 +90,8 @@ public class ConfWindow extends RSActivity {
     private boolean hum_pwr;
     private int debug;
     private String pwrs;
+    private double temp_board;
+    private double temp_extern;
 
     private String[] sensor_items;
 
@@ -176,7 +178,12 @@ public class ConfWindow extends RSActivity {
     private void set_intr_sec_p1(Double d){
 	intr_sec_p1 = d;
     }
-
+    private void set_temp_board(Double d){
+	temp_board = d;
+    }
+    private void set_temp_extern(Double d){
+	temp_extern = d;
+    }
 
     protected void onStart(){
 	super.onStart();
@@ -319,6 +326,8 @@ public class ConfWindow extends RSActivity {
 	set_intr_sec_p0(parse_double(l3, "intr_sec_p0")); 
 	set_intr_p1(parse_int(l3, "intr_p1")); 
 	set_intr_sec_p1(parse_double(l3, "intr_sec_p1")); 
+	set_temp_board(parse_double(l3, "temp_board")); 
+	set_temp_extern(parse_double(l3, "temp_extern")); 
 
 	setTextVal(R.id.eui64, "0x" + eui64);
 	setTextVal(R.id.firmware, firmware);
@@ -341,6 +350,8 @@ public class ConfWindow extends RSActivity {
 	setDoubleVal(R.id.intr_sec_p0, intr_sec_p0);
 	setIntVal(R.id.intr_p1, intr_p1);
 	setDoubleVal(R.id.intr_sec_p1, intr_sec_p1);
+	setDoubleVal(R.id.temp_board, temp_board);
+	setDoubleVal(R.id.temp_extern, temp_extern);
     }
     
     private String getTextVal(int id){
