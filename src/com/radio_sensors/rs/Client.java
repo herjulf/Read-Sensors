@@ -59,9 +59,10 @@ public class Client extends RSActivity {
     final public static int ERROR  = -1;         // Something went wrong
     final public static int STATUS = 2;          // Status change
     final public static int STATUS_USB = 3;          // Status change
-    final public static int SENSD  = 4;          // Report arrived from sensd server
+    final public static int SENSD  = 4;          // Report from sensd server
     final public static int TIMER  = 5;       // Interval timer every 1s (debug)
     final public static int REPLAY = 6;       // Replay all stored sensd data
+    final public static int SENSD_CMD  = 10;          // Report arrived from sensd server
 
     private static int TIMERINTERVAL = 2000; // interval between sample receives
 
@@ -72,7 +73,7 @@ public class Client extends RSActivity {
     private boolean active = false;           // Activity is active
     
     ConnectSocket connect_cs;                 // Object containing connect-socket
-    ConnectUSB USB; 
+    public static ConnectUSB USB = null; 
 
     // Debug 
     final static int DEBUG_NONE        = 0;
