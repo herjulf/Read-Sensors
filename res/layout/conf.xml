@@ -29,7 +29,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2"
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -103,7 +108,12 @@
 	    android:text="-1"
 	    android:numeric="decimal"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -122,6 +132,10 @@
 	    android:text="-1" 
 	    android:numeric="decimal"
 	    android:layout_span="2"
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
 	    />
       </TableRow>
 
@@ -178,7 +192,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -195,7 +214,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -212,7 +236,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -229,7 +258,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -238,7 +272,8 @@
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
-	    android:text="A1 Volt: " />
+	    android:text="A1 Volt: "
+	    />
 
 	<EditText
 	    android:id="@+id/v_a1"
@@ -246,7 +281,13 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2"
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
+
       </TableRow>
 
       <TableRow>
@@ -263,7 +304,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2"
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -280,7 +326,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2"
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -297,7 +348,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -314,7 +370,13 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
+
       </TableRow>
 
 
@@ -332,7 +394,13 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
+
       </TableRow>
 
       <TableRow>
@@ -349,7 +417,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -366,7 +439,13 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
+
       </TableRow>
 
       <TableRow>
@@ -383,7 +462,12 @@
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
     </TableLayout>
