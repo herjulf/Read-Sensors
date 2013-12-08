@@ -74,6 +74,8 @@ class ConnectUSB extends RSActivity implements Runnable {
     private UsbManager manager;
     public UsbSerialDriver driver;
 
+    public static Handler confh = null; // ConfWindow handler
+
     ConnectUSB(Handler h){ 
 	connect();
 	mainHandler = h;
@@ -148,6 +150,7 @@ class ConnectUSB extends RSActivity implements Runnable {
     public void run() {
 	boolean done = false;
 	String line = "";
+
 	while (! done ){
 	    if(driver == null)
 		connect();
@@ -155,9 +158,16 @@ class ConnectUSB extends RSActivity implements Runnable {
 	    try {
 		byte buf[] = new byte[10000];
 		line = readline(buf);
-		SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
-		SimpleDateFormat ftz = new SimpleDateFormat("z ");
-		message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
+		/* Check report seq. */
+		if( line.indexOf("&:") > -1 ) { 
+		    SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+		    SimpleDateFormat ftz = new SimpleDateFormat("z ");
+		    message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
+		}
+		else {
+		    if (confh != null)
+			message(confh, Client.SENSD_CMD, line);
+		}
 	    }
 	    catch  (IOException e) {
 		Log.e("USB", "Error reading device: " + e.getMessage(), e);
