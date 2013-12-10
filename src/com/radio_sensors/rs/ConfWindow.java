@@ -58,6 +58,8 @@ import android.util.Log;
 import java.io.IOException;
 import android.os.Message;
 
+import com.hoho.android.usbserial.util.HexDump;
+
 public class ConfWindow extends RSActivity {
 
     ConnectUSB USB;  
@@ -254,7 +256,7 @@ public class ConfWindow extends RSActivity {
 	    {  
 		s1 = s[i];  
 		if(s1.indexOf(tag) == 0) {
-		    //Toast.makeText(Client.client, "Kalle" + HexDump.dumpHexString(s[i+1].getBytes()), Toast.LENGTH_SHORT).show();
+		    // Toast.makeText(Client.client, "Kalle" + HexDump.dumpHexString(s[i+1].getBytes()), Toast.LENGTH_SHORT).show();
 		    return Integer.decode(s[i+1]);
 		}
 	    }
@@ -277,7 +279,7 @@ public class ConfWindow extends RSActivity {
 	return 0;
     }
 
-    private void parse_settings() 
+    private void send_cmd(String cmd) 
     {
 	USB = Client.USB;
 
@@ -285,12 +287,26 @@ public class ConfWindow extends RSActivity {
 		if(USB.driver == null)
 		    USB.connect();
 
-		USB.write("ss\r".getBytes());
-		Log.d("USB", "Point 1");		
+		USB.write(cmd.getBytes());
+		Log.d("USB", "send cmd");		
 	    }
 	    catch  (IOException e) {
 		Log.e("USB", "Error reading device: " + e.getMessage(), e);
 	    }
+    }
+
+    private void parse_cmd(String l0)
+    {
+	String[] t = l0.split("\r\n");
+
+	//for (int i = 0; i < tokens.length; i++)
+	//	Toast.makeText(Client.client, HexDump.dumpHexString(tokens[i].getBytes()), Toast.LENGTH_SHORT).show();
+
+	if ( t[0].equals("ss") )
+	     parse_ss(l0);
+	
+	else
+	    Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
     }
 
     private void parse_ss(String l0)
@@ -388,7 +404,7 @@ public class ConfWindow extends RSActivity {
 
     // Read values from running -> GUI
     private void sensor2gui(){
-	parse_settings();
+	send_cmd("ss\r");
     }
 
     private final Handler mHandler = new Handler() {
@@ -398,6 +414,8 @@ public class ConfWindow extends RSActivity {
 		switch (msg.what) {
 
 		case Client.SENSD_CMD:      // Command from sensd
+		    String hd = (String) msg.obj;
+		    //Toast.makeText(Client.client, "Cmd" + HexDump.dumpHexString(hd.getBytes()), Toast.LENGTH_SHORT).show();
 		    parse_ss((String)msg.obj);
 		    break;
 
