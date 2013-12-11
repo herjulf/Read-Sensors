@@ -108,7 +108,7 @@ public class ConfWindow extends RSActivity {
 	setTitle("Sensor Configuration");
 
 	if(Client.client.usbthread != null)
-	    sensor2gui();
+	    send_cmd("ss\r");
     }
 
     private int get_report_interval(){
@@ -216,7 +216,7 @@ public class ConfWindow extends RSActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 	MenuInflater inflater = getMenuInflater();
-	inflater.inflate(R.layout.prefs_menu, menu);
+	inflater.inflate(R.layout.conf_menu, menu);
 	return true;
     }	
 
@@ -224,10 +224,17 @@ public class ConfWindow extends RSActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
 	switch (item.getItemId()) {
-	case R.id.load:
+
+	case R.id.command:
 	if(Client.client.usbthread != null)
-	    sensor2gui();
-	    return true;
+	    enter_cmd();
+	return true;
+
+	case R.id.refresh:
+	if(Client.client.usbthread != null)
+	    send_cmd("ss\r");
+	return true;
+
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
@@ -299,14 +306,45 @@ public class ConfWindow extends RSActivity {
     {
 	String[] t = l0.split("\r\n");
 
-	//for (int i = 0; i < tokens.length; i++)
-	//	Toast.makeText(Client.client, HexDump.dumpHexString(tokens[i].getBytes()), Toast.LENGTH_SHORT).show();
+	//for (int i = 0; i < t.length; i++)
+	//	Toast.makeText(Client.client, HexDump.dumpHexString(t[i].getBytes()), Toast.LENGTH_SHORT).show();
 
 	if ( t[0].equals("ss") )
 	     parse_ss(l0);
 	
 	else
 	    Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
+    }
+
+    // Read values from running -> GUI
+    private void sensor2gui(){
+       send_cmd("ss\r");
+    }
+
+    private void enter_cmd()
+    {
+	AlertDialog.Builder alert = new AlertDialog.Builder(this);
+	
+	alert.setTitle("Command Window");
+	alert.setMessage("");
+	
+        // Set an EditText view to get user input 
+	final EditText input = new EditText(this);
+	alert.setView(input);
+	alert.setPositiveButton("Send", new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int whichButton) {
+		    String cmd = input.getText().toString() + "\r";
+		    send_cmd(cmd);
+		}
+	    });
+	
+	alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int whichButton) {
+		    // Canceled.
+		}
+	    });
+	
+	alert.show();
     }
 
     private void parse_ss(String l0)
@@ -402,11 +440,6 @@ public class ConfWindow extends RSActivity {
 	Button bt;
     }
 
-    // Read values from running -> GUI
-    private void sensor2gui(){
-	send_cmd("ss\r");
-    }
-
     private final Handler mHandler = new Handler() {
 	    public void handleMessage(Message msg) {
 		Message message;
@@ -416,7 +449,7 @@ public class ConfWindow extends RSActivity {
 		case Client.SENSD_CMD:      // Command from sensd
 		    String hd = (String) msg.obj;
 		    //Toast.makeText(Client.client, "Cmd" + HexDump.dumpHexString(hd.getBytes()), Toast.LENGTH_SHORT).show();
-		    parse_ss((String)msg.obj);
+		    parse_cmd(hd);
 		    break;
 
 		default:	
