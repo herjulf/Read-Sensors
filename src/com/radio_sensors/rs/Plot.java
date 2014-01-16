@@ -20,6 +20,8 @@ package com.radio_sensors.rs;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.ArrayList;
+import java.util.TimeZone;
+import java.util.Random;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -34,7 +36,6 @@ import android.text.format.Time;
 import android.widget.ImageView;
 import android.view.Display;
 import android.util.Log;
-import java.util.Random;
 
 // Point class using double (PointF uses floats)
 final class Pt{
@@ -86,6 +87,7 @@ final class PlotVector {
     public double ymin = Double.POSITIVE_INFINITY;
     public double ymax = Double.NEGATIVE_INFINITY;
     private float linewidth = LINEWIDTH;
+    public String name;
 
     PlotVector(ArrayList <Pt> v0, String t0, int w0, int s0, int c0){
     	vec = v0;
@@ -120,6 +122,11 @@ final class PlotVector {
 	    ymax = pt.y;
 	vec.add(pt);
     }
+    public void samplexy(double x, double y){
+    	Pt pt = new Pt(x, y);  
+	sample(pt);
+    }
+
 } // PlotVector
 
 // The complete plot
@@ -127,6 +134,8 @@ public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
     public static final int FONTSIZE = 20; // default font size
+
+    public static final int GRIDNR = 3;    // min nr of grid lines
 
     public static int XWINDOW = 240; // how many seconds to show default
 
@@ -153,6 +162,8 @@ public final class Plot {
     private double y1scale = 1.0; // factor to multiply y-values for left y-axis text
     private double y2scale = 1.0; // factor to multiply y-values for right y-axis text
 
+    private int gridx;            /* Min nr of grid-lines in x-direction */
+    private int gridy;            /* Min nr of grid-lines in y-direction */
     private int id;                 // resource id
 
     private Random rnd = new Random(42); // Init random generator;
@@ -161,6 +172,17 @@ public final class Plot {
 	canvas = new Canvas();
 	id = id0;
 	plots = new ArrayList <PlotVector>();
+    }
+
+    /* find plotvector by name */
+    public PlotVector pv_find(String name){
+        PlotVector pv;
+        for (int i=0 ; i < plots.size(); i++ ){
+	    pv = plots.get(i);
+	    if (pv.name == name)
+		return pv;
+	}
+	return null;
     }
 
     public void fontsize_set(int sz){
@@ -179,6 +201,14 @@ public final class Plot {
 	return 2*(fontsize + 2);
     }
 
+    private String printdate(Time t){
+	return String.format("%d-%02d-%02d", t.year, t.month+1, t.monthDay);
+    }
+
+    private String printtime(Time t){
+	return String.format("%02d:%02d:%02d", t.hour, t.minute, t.second);
+    }
+
     public void newDisplay(Display display){
 	// bitmap: x,y,w,h
 	x = 0;
@@ -192,6 +222,9 @@ public final class Plot {
 	ph = h - bottommargin() - topmargin();
 	bitmap = Bitmap.createBitmap(w, h, Config.ARGB_8888); 
 	canvas.setBitmap(bitmap);
+	/* Automatically compute number of min grid lines in x & y directions */
+	gridx = Math.max(GRIDNR, Math.round(w/(8*fontsize)));
+	gridy = Math.max(GRIDNR, Math.round(h/(8*fontsize)));
     }
 
     private int colornr = 0;
@@ -212,7 +245,7 @@ public final class Plot {
 	    pv.style_set(style);
 	}
     }
-    // Update style on all plotvectors
+    // Update linewidth on all plotvectors
     public void 
     linewidth_set(float w) {
 	PlotVector pv;
@@ -251,9 +284,18 @@ public final class Plot {
 	nrPlots++;
     } // add
 	
-    public void 
+    public void // XXX
     xaxis(String label, double scale) {
 	xlabel = label;
+	xscale = scale;
+    }
+    public void // XXX
+    xlabel_set(String label) {
+	xlabel = label;
+    }
+
+    public void 
+    xscale_set(double scale) {
 	xscale = scale;
     }
 
@@ -269,6 +311,10 @@ public final class Plot {
     public void 
     xmax_add(double xm) {
 	xmax += xm;
+    }
+    public void 
+    xmax_set(double xm) {
+	xmax = xm;
     }
 
     /* Multiply xscale value, ie how many x-values per unit */
@@ -337,6 +383,9 @@ public final class Plot {
 		xmax1 = Math.max(xmax1, pv.vec.get(size-1).x);
 	    }
 	}
+	// Here, [xmin1,xmax1] is complete y1 x-interval of all visible
+	// series (assuming monotonically increasing)
+
 	// Loop 1b: Same for y2 plots
 	for (int i=0; i<plots.size(); i++){
 	    pv = plots.get(i);
@@ -420,10 +469,15 @@ public final class Plot {
 	}
 
 	// Compute the x and y axis: where labels should be,...
-	Autoscale ax = new Autoscale(xmin, xmax);
-	Autoscale ay1 = new Autoscale(y1min, y1max);
-	Autoscale ay2 = new Autoscale(y2min, y2max);
-	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
+	Autoscale ax = new Autoscale(xmin, xmax, gridx, "time");
+	Autoscale ay1 = new Autoscale(y1min, y1max, gridy, "ten");
+	Autoscale ay2 = new Autoscale(y2min, y2max, gridy, "ten");
+
+	/* pix is the number of pixels used for the displayed points 
+	   by computing the number of points in this interval,
+	   we can compute the numbers of points/pixel which is aggregation level
+        */
+	double pix = get_pw()*(xmax-xmin)/(ax.high-ax.low);
 	double aggF = 0.0; 
 
 	// Loop 3: compute level of aggregation in x-axis
@@ -498,15 +552,17 @@ public final class Plot {
 	    xmin = xmax - xws;
 	}
 
-	Autoscale ax = new Autoscale(xmin, xmax);
-	Autoscale ay1 = new Autoscale(y1min, y1max);
-	Autoscale ay2 = new Autoscale(y1min, y1max);
+	Autoscale ax = new Autoscale(xmin, xmax, gridx, "time");
+	Autoscale ay1 = new Autoscale(y1min, y1max, gridy, "ten");
+	Autoscale ay2 = new Autoscale(y1min, y1max, gridy, "ten"); // XXX y2?
 	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
 	double aggF = 0.0; 
 
 	// Loop 3: compute level of aggregation in x-axis
 	for (int i=0; i<plots.size(); i++){
 	    pv = plots.get(i);
+	    if (pv.where == 0) 
+		continue;
 	    if (pv.vec.size() > 0){
 		int nr = points_in_interval(pv.vec, xmin, xmax);
 		aggF = Math.max(aggF, nr/pix);
@@ -558,17 +614,22 @@ public final class Plot {
 			paint);
     } // draw_plot_label
 	
+    /*
+     * draw_grid
+     * Draw the surrounding rectangle, the labels of the ticks and the dashed lines
+     */
     private boolean 
     draw_grid(Autoscale ax, Autoscale ay1, Autoscale ay2){
 	    final Paint paint = new Paint();
+	    Time t, t1;
+	    String s;
 	    paint.setAntiAlias(true);
 	    paint.setTextSize(fontsize);
 	    paint.setStyle(Paint.Style.FILL); 
 	    paint.setColor(Color.BLACK);  
-	    int ax1 = ax.ticks-1;
-	    int ay11 = ay1.ticks-1;
-	    int ay21 = ay2.ticks-1;
-
+	    int ax1  = ax.nr;
+	    int ay11 = ay1.nr;
+	    int ay21 = ay2.nr;
 	    canvas.clipRect(x, y, x+w, y+h, Region.Op.REPLACE); // clip it.
 	    // Fill the canvas with white
 	    canvas.drawRect(x, y, x + w, y + h, paint);
@@ -577,12 +638,25 @@ public final class Plot {
 	    paint.setColor(Color.WHITE);
 	    paint.setStyle(Paint.Style.STROKE); 
 	    canvas.drawRect(px, py, px + pw, py + ph, paint);
-	    // Write text
+	    // Write x axis text and dates
 	    paint.setTypeface(Typeface.SANS_SERIF ); 
 	    paint.setTextSize(fontsize);
 	    paint.setColor(Color.WHITE);
 	    // axis label text
 	    canvas.drawText(xlabel, px+pw/2-fontsize*2, y+h-2, paint);
+	    t = new Time();
+	    t.set((long)(ax.low*1000.0));  // milliseconds
+	    s = printdate(t);
+	    canvas.drawText(s, px, this.y+h-2, paint); // leftalign
+	    t1 = new Time();
+	    t1.set((long)(ax.high*1000.0));
+	    if (t.year != t1.year || t.yearDay != t1.yearDay){
+		// right align
+		paint.setTextAlign(Paint.Align.RIGHT);
+		s = printdate(t1);
+		canvas.drawText(s, px+pw, this.y+h-2, paint); // leftalign
+	    }
+
 	    // y1 axis
 	    canvas.translate(x+fontsize, y+ph/2);
 	    canvas.rotate(-90, 0, 0);
@@ -597,57 +671,59 @@ public final class Plot {
 	    canvas.translate(-px-pw-fontsize-2, -y-ph/2);
 	    // text along x-axis
 	    paint.setColor(Color.WHITE);
-	    boolean subseconds = (ax.high-ax.low)<4.0;
-	    subseconds = false; // XXX
 	    if (ax1>0)
-		for(int i=0; i < ax.ticks; i++) { 
+		for(int i=0; i < ax1+1; i++) { 
 		    int x1 = px + (i * pw/ax1); //left
-		    if (i == ax1) // right
-			x1 -= fontsize;
-		    else
-			if (i != 0) // normal case
-			    x1 -= fontsize/2;
-		    double x = ax.low+i*ax.spacing*xscale;
-		    Time t = new Time(); //ms
+		    double x = ax.low+i*ax.spacing;
+
+		    t = new Time(); //ms
 		    t.set((long)(x*1000.0));
 		    // String s = t.format3339(true); // iso
-		    String s;
-		    if (i==0){
-			if (subseconds)
-			    s = String.format("%d:%d:%d.%d", t.hour, t.minute, t.second, (int)(x1%1.0));
-			else
-			    s = String.format("%d:%d:%d", t.hour, t.minute, t.second);
-		    }
-		    else{
-			if (subseconds)
-			    s = String.format("%d.%ds", t.second, (x1%1.0));
-			else
-			    s = String.format("%d:%d", t.minute, t.second);
-		    }
-		    canvas.drawText(s, x1, py+ph+fontsize+2, paint);
+		    if (i==0)
+			paint.setTextAlign(Paint.Align.LEFT);
+		    else if (i==ax.nr)
+			paint.setTextAlign(Paint.Align.RIGHT);
+		    else
+			paint.setTextAlign(Paint.Align.CENTER);
+		    /*
+		     * ad-hoc algorithm on which dates to print:
+		     * |---|---|---..........--|
+		     * Alt1:
+		     * dont print first or last
+		     * if too many grid lines, only print 1,3,5,...
+		     * Alt2:
+		     * print first (0) and last (ax1)
+		     * dont print 1 and ax-1
+		     * if too many grid lines, only print 2,4,6,...
+		     */
+		    if (i!=1 && i!=ax1-1 || ax.nr == gridx)
+			if (i%2==0 || i==ax1 || ax.nr < gridx*2){
+			    s = printtime(t);
+			    canvas.drawText(s, x1, py+ph+fontsize+2, paint);
+			}
 		}
 	    // text along y-axis
 	    if (ay11>0)
-		for(int i=0; i < ay1.ticks; i++) { 
+		for(int i=0; i < ay1.nr+1; i++) { 
 		    int y1 = py + (i * ph/ay11); //lower
 		    if (i == 0) //upper
 			y1 += fontsize;
 		    else
 			if (i != ay11) // normal case
 			    y1 += fontsize/2;
-		    String s = String.format("%.2f", (ay1.high-i*ay1.spacing)*y1scale);
+		    s = String.format("%.2f", (ay1.high-i*ay1.spacing)*y1scale);
 		    canvas.drawText(s, fontsize+2, y1, paint);
 		}
 	    // text along y2-axis
 	    if (ay21>0)
-		for(int i=0; i < ay2.ticks; i++) { 
+		for(int i=0; i < ay2.nr+1; i++) { 
 		    int y2 = py + (i * ph/ay21); //lower
 		    if (i == 0) //upper
 			y2 += fontsize;
 		    else
 			if (i != ay21) // normal case
 			    y2 += fontsize/2;
-		    String s = String.format("%.2f", (ay2.high-i*ay2.spacing)*y2scale);
+		    s = String.format("%.2f", (ay2.high-i*ay2.spacing)*y2scale);
 		    canvas.drawText(s, px+pw+2, y2, paint);
 		}
 	    // Draw small lines at end
@@ -685,7 +761,7 @@ public final class Plot {
 				px + pw, 
 				py + (i * ph /ay11), 
 				paint);
-	    for(int i=1; i < ax.ticks-1; i++)  
+	    for(int i=1; i < ax.nr; i++)  
 		canvas.drawLine(px + (i * pw /ax1), 
 				py, 
 				px + (i * pw /ax1), 
@@ -719,15 +795,15 @@ public final class Plot {
 	paint.setStrokeWidth(width);
 	try {
 	    canvas.clipRect(px, py, px+pw, py+ph, Region.Op.REPLACE); // clip it.
-	    for (int i = 0 ; i< vec.size(); i+=agg)	{
-		if (agg>1){
+	    for (int i = 0 ; i< vec.size()-agg+1; i+=agg)	{
+		if (agg>1){	// some odd agg points at end may be skipped
 		    pt_avg.x = vec.get(i).x;
 		    pt_avg.y = 0.0;
 		    for (int j=i; j<i+agg; j++){
 			double y3 = vec.get(j).y;
-			if (Double.isNaN(y3)){
-			    pt_avg.y = y3;
-			}
+//			if (Double.isNaN(y3)){
+//			    pt_avg.y = y3;
+//			}
 			pt_avg.y += y3;
 
 		    }
@@ -772,64 +848,119 @@ public final class Plot {
 
 /*
  * Autoscale
+ *
+ * Given an original interval [minval, maxval] and a delta value(d), a least number
+ * of sub-intervals (nr_min) and an algorithm option (time/ten), compute
+ * a new interval [low,high], composed of 'nr' sub-intervals, each sub-interval being
+ * 'spacing' wide.
+ * 
+ *    minval                               maxval
+ *     |------------------------------------|
+ *   |-----|-----|-----|-----|-----|-----|-----|
+ * low s     s     s     s     s     s     s  high
+ *      'nr' is the number of sub-intervals: (s)
  */
 final class Autoscale {
-	private static double PENALTY = 0.02;
-	public double low, high, spacing;
-	public int ticks;
+    public double low; 
+    public double high;
+    public int    nr;
+    public double spacing;
 
-	Autoscale(double min, double max){
-		double ulow[] = new double[12];
-		double uhigh[] = new double[12];
-		double uticks[] = new double[12];
-
-		scales(min, max, ulow, uhigh, uticks);
-
-		double udelta = max - min;
-		double ufit[] = new double[12];
-		double fit[] = new double[12];
-		int k = 0;
-		for (int i=0; i<=11; i++) {
-			ufit[i] = ((uhigh[i]-ulow[i])-udelta)/(uhigh[i]-ulow[i]);
-			fit[i] = 2*ufit[i] + PENALTY * Math.pow( ((uticks[i]-6.0)>1.0)?(uticks[i]-6.0):1.0 ,2.0);
-			if (i > 0) {
-				if (fit[i] < fit[k]) {
-					k = i;
-				}
-			}
-		}
-		low = ulow[k];
-		high = uhigh[k];
-		ticks = (int)uticks[k];
-		spacing = (high-low)/(ticks-1.0);
+    Autoscale(double minval, double maxval, int nr_min, String option){
+	if (minval > maxval)
+	    return;
+	if (minval == maxval) { /* this means xmin = xmax: stipulate that 1 is the scale */
+	    minval -= 0.5;
+	    maxval += 0.5;
 	}
-	private void 
-	scales(double xmin, double xmax, double low[], double high[], double ticks[]){
-	    double bestDelta[] = {0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0};
-		int i;
-		double xdelta = xmax-xmin;
-		double delta[] = new double[12];
+	if (option == "time")
+	    this.autotime(minval, maxval, nr_min);
+	else
+	    this.autoten(minval, maxval, nr_min);
+	this.spacing = (this.high-this.low)/this.nr;
+    }
 
-		if (xdelta == 0) {
-		    for (i=0; i<=11; i++) {
-			xdelta=1;
-			delta[i] = Math.pow(10,Math.round(Math.log10(xdelta)-1)) * bestDelta[i];
-			high[i] = delta[i] * Math.ceil((xmin+0.5)/delta[i]);
-			low[i] = delta[i] * Math.floor((xmin-0.5)/delta[i]);
-			ticks[i] = Math.round((high[i]-low[i])/delta[i]) + 1;
-//			low[i] = xmin-0.5;
-//			high[i] = xmax+0.5;
-//			ticks[i] = 3;
-			}
-			return;
-		}
+    /* 
+     * ac_try
+     * Given an original interval [min, max] and a delta value(d), compute an
+     * new adjusted interval [lo, hi] as follows:
+     * lo - the closest lower value vs the orig interval which aligns to delta
+     * hi - the closest higher value vs the orig interval which aligns to delta
+     * nr - the number of such deltas that fit into this new interval:
+     * See figure for explanation of lo, hi, and nr:
+     *    min                                  max
+     *     |------------------------------------|
+     *  |-----|-----|-----|-----|-----|-----|-----|
+     * lo  d     d     d     d     d     d     d  hi
+     *       'nr' is the number of sub-intervals: (d)
+     */
+    private void
+    ac_try(double  d,           /* IN delta/step/increment */
+	   double  min,         /* IN interval */
+	   double  max,         /* IN interval */
+	   int     align){      /* IN align time : may be be timezone */
+	this.low  = d*(Math.floor((min-align)/d)) + align; /* low */
+	this.high = d*(Math.ceil((max-align)/d))  + align; /* high */
+	this.nr   = (int)Math.round((this.high-this.low)/d);          /* nr of intervals */
+    }
+    /*
+     * autoten
+     * We assume a 10-centric world and that we chop up an interval [min, max] in 'at least' nr_min
+     * subintervals that look 'nice' in a 10-based system.
+     * 'at least nr_min' means as large number as possible but not exceeding nr_min
+     * Looking 'nice' means that the sub-intervals start on the form 1, 2 or 5.
+     * For example, an interval [5,95] with at least 5 sub-intervals would give:
+     *    0-20, 20-40, 40-60, 60-80, 80-100
+     */
+    private void
+    autoten(double min, double max, int nr_min){ 
+	double s;             /* spacing - 1st approximation*/
+	double si;            /* spacing - iterative */
+	double delta; 
+	double fv[] = new double[] {10, 5, 2, 1}; /* multiplication factors */
+	boolean found = false;
 
-		for (i=0; i<=11; i++) {
-			delta[i] = Math.pow(10,Math.round(Math.log10(xdelta)-1)) * bestDelta[i];
-			high[i] = delta[i] * Math.ceil(xmax/delta[i]);
-			low[i] = delta[i] * Math.floor(xmin/delta[i]);
-			ticks[i] = Math.round((high[i]-low[i])/delta[i]) + 1;
-		}
-
+	delta = max - min;    
+	s = delta/nr_min;
+	/* find highest spacing that is lower than d */
+	si = Math.pow(10, Math.floor(Math.log10(s))); /* si is 1, 10, 100, 1000,... */
+	for (int i=0; i < fv.length; i++){
+	    ac_try(fv[i]*si, min, max, 0); /* this.nr as side-effect */
+	    if (this.nr >= nr_min){ /* good enough */
+		found = true;
+		break;
+	    }
 	}
-}
+	if (found)
+	    return;
+	/* No solution, shouldnt happen */
+	return;
+    }
+
+    /*
+     * autotime
+     * We assume a world of unix-time where the unit is seconds (eg from 1970-01-01).
+     * We chop up an interval [min, max] 
+     * (as large number as possible but not exceeding nr_min) subintervals 
+     */
+    private void
+    autotime(double min, double max, int nr_min){
+	int      nr;      /* the computed nr of sub-intervals */
+	double   tv[] = new double[] {365*24*3600, 30*24*3600, 7*24*3600, 24*3600, 6*3600, 60*60, 20*60, 5*60, 60, 20, 5, 1};
+	boolean found = false;
+	TimeZone tz = TimeZone.getDefault();
+	int offset = -tz.getOffset((int)(min*1000))/1000;
+	
+	for (int i=0; i < tv.length; i++){
+	    ac_try(tv[i], min, max, offset); // XXX: timezone /* this.nr as side-effect */
+	    if (this.nr >= nr_min){ /* good enough */
+		found = true;
+		break;
+	    }
+	}
+	if (found)
+	    return;
+	/* for sub-seconds, use power of ten */
+	autoten(min, max, nr_min);
+    }
+} /* Autoscale */

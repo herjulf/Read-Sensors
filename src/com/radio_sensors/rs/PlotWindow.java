@@ -191,13 +191,12 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
 	message(Client.client.mHandler, Client.REPLAY, null);
-	plot.xaxis("Time[s]", 1.0);  // x-axis is current time
+	plot.xaxis("Time", 1.0);  // x-axis is current time
     }
 
     // Update existing plot with global values
     private void update_plot(){
 	Display display = getWindowManager().getDefaultDisplay(); 
-	plot.xwin_set(get_plot_window());
 	plot.fontsize_set(get_plot_fontsize());
 	plot.xwin_set(get_plot_window());
 	// Go thru all plotvectors and set style
