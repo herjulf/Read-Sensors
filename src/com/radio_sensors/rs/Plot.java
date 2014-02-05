@@ -22,6 +22,7 @@ import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.TimeZone;
 import java.util.Random;
+import java.text.DecimalFormat;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -145,13 +146,17 @@ public final class Plot {
 
     private Canvas canvas;
     private ArrayList <PlotVector> plots; // ArrayList of plots 
-    private int x,y,w,h; // bitmap x,y,width height
-    private int px,py,pw,ph; // plotarea x,y,width height
+    private int x, y, w, h; // bitmap x,y,width height
+    private int px, py, pw, ph; // plotarea x,y,width height
+    private int leftmargin, rightmargin; 
+    private int topmargin, bottommargin; 
     private Bitmap bitmap;
     private double xmin, xmax;
     private double xwin = XWINDOW;       // x window size
 	
     public boolean liveUpdate = true; // Scroll x-axis as new values arrive
+
+    private boolean textexternal = true; // Text external vs inside plot-area
 
     private int fontsize = FONTSIZE;
     private int nrPlots = 0;	
@@ -188,17 +193,9 @@ public final class Plot {
     public void fontsize_set(int sz){
 	fontsize = sz;
     }
-    private int leftmargin(){
-	return fontsize;
-    }
-    private int rightmargin(){
-	return fontsize;
-    }
-    private int topmargin(){
-	return 4;
-    }
-    private int bottommargin(){
-	return 2*(fontsize + 2);
+
+    private String printyear(Time t){
+	return String.format("%d", t.year);
     }
 
     private String printdate(Time t){
@@ -208,24 +205,56 @@ public final class Plot {
     private String printtime(Time t){
 	return String.format("%02d:%02d:%02d", t.hour, t.minute, t.second);
     }
-
+    /*
+     * A new/changed display needs to get new x/y/w/h values
+     */
     public void newDisplay(Display display){
 	// bitmap: x,y,w,h
 	x = 0;
 	y = 0;
 	w = display.getWidth();
 	h = display.getHeight();
+	// See also compute_margins
 	// plotarea: px,py,pw,ph
-	px = x + leftmargin();
-	py = y + topmargin();
-	pw = w - leftmargin() - rightmargin();
-	ph = h - bottommargin() - topmargin();
 	bitmap = Bitmap.createBitmap(w, h, Config.ARGB_8888); 
 	canvas.setBitmap(bitmap);
 	/* Automatically compute number of min grid lines in x & y directions */
-	gridx = Math.max(GRIDNR, Math.round(w/(8*fontsize)));
+	gridx = Math.max(GRIDNR, Math.min(5, Math.round(w/(8*fontsize))));
 	gridy = Math.max(GRIDNR, Math.round(h/(8*fontsize)));
     }
+    /*
+     * When scales are known, margins and plot area can be computed
+     */
+    private void computeMargins(double y1min, double y1max, double y2min, double y2max){
+	int y1, y2;
+
+	this.topmargin = 4;
+	if (this.textexternal){
+	    final Paint paint = new Paint();
+	    paint.setTextSize(fontsize);
+	    DecimalFormat format = new DecimalFormat("0.#######");
+	    String s1 = format.format(y1min);
+	    String s2 = format.format(y1max);
+	    float w1 = paint.measureText(s1);
+	    float w2 = paint.measureText(s2);
+	    this.leftmargin = Math.max((int)w1, (int)w2);
+	    this.leftmargin = Math.max(this.fontsize, this.leftmargin);
+	    this.leftmargin += this.fontsize/2;
+		
+	    this.rightmargin = (int)Math.round(this.fontsize*(1+Math.floor(Math.log10(y2max))));
+	    this.bottommargin = (int)Math.round(this.fontsize*2.2);
+	}
+	else{
+	    this.leftmargin = 4;
+	    this.rightmargin = 4;
+	    this.bottommargin = (int)Math.round(this.fontsize*2.2);
+	}
+	this.px = this.x + this.leftmargin;
+	this.py = this.y + this.topmargin;
+	this.pw = this.w - this.leftmargin - this.rightmargin;
+	this.ph = this.h - this.bottommargin - this.topmargin;
+    }
+
 
     private int colornr = 0;
     public int nextColor(){
@@ -262,9 +291,6 @@ public final class Plot {
 	xscale = 1.0;
     }
 
-    public double get_pw(){ // plot area width
-	return pw;
-    }
     public void 
     init(ImageView image) {
 
@@ -467,17 +493,20 @@ public final class Plot {
 	    y2min = 0;
 	    y2max = 1;
 	}
-
 	// Compute the x and y axis: where labels should be,...
 	Autoscale ax = new Autoscale(xmin, xmax, gridx, "time");
 	Autoscale ay1 = new Autoscale(y1min, y1max, gridy, "ten");
-	Autoscale ay2 = new Autoscale(y2min, y2max, gridy, "ten");
+	Autoscale ay2 = null;
+	if (y2vals)
+	    ay2 = new Autoscale(y2min, y2max, gridy, "ten");
+
+	computeMargins(ay1.low, ay1.high, ay2==null?0:ay2.low, ay2==null?0:ay2.high);
 
 	/* pix is the number of pixels used for the displayed points 
 	   by computing the number of points in this interval,
 	   we can compute the numbers of points/pixel which is aggregation level
         */
-	double pix = get_pw()*(xmax-xmin)/(ax.high-ax.low);
+	double pix = this.pw*(xmax-xmin)/(ax.high-ax.low);
 	double aggF = 0.0; 
 
 	// Loop 3: compute level of aggregation in x-axis
@@ -500,6 +529,7 @@ public final class Plot {
 	double xmin1 = Double.POSITIVE_INFINITY; // Tentative x-interval min
 	double xmax1 = Double.NEGATIVE_INFINITY;
 	boolean y1vals = false;
+	boolean y2vals = false;
 
 	// Clear bitmap
 	image.setImageBitmap(bitmap); 
@@ -554,8 +584,13 @@ public final class Plot {
 
 	Autoscale ax = new Autoscale(xmin, xmax, gridx, "time");
 	Autoscale ay1 = new Autoscale(y1min, y1max, gridy, "ten");
-	Autoscale ay2 = new Autoscale(y1min, y1max, gridy, "ten"); // XXX y2?
-	double pix = get_pw()*(xmax1-xmin1)/(ax.high-ax.low);
+	Autoscale ay2 = null;
+	if (y2vals)
+	    ay2 = new Autoscale(y1min, y1max, gridy, "ten"); // XXX y2?
+
+	computeMargins(ay1.low, ay1.high, ay2==null?0:ay2.low, ay2==null?0:ay2.high);
+
+	double pix = this.pw*(xmax1-xmin1)/(ax.high-ax.low);
 	double aggF = 0.0; 
 
 	// Loop 3: compute level of aggregation in x-axis
@@ -602,9 +637,9 @@ public final class Plot {
 	paint.setStyle(Paint.Style.STROKE);
 	paint.setColor(Color.WHITE);
 	paint.setTextSize(fontsize);
-	float x = (float)(px+0.6*pw);
+	float x = (float)(this.px+0.6*this.pw);
 	float x1 = x + title.length()*fontsize*(float)0.8;
-	float y = py+(i+1)*2*fontsize;
+	float y = this.py+(i+1)*2*fontsize;
 	canvas.drawText(title, x, y, paint);
 	paint.setColor(color);
 	canvas.drawLine(x1,
@@ -614,6 +649,91 @@ public final class Plot {
 			paint);
     } // draw_plot_label
 	
+    private void
+    draw_grid_x0(Time t, Autoscale ax, String mode, Paint paint){
+	String s;
+	Time t1;
+	if (mode.equals("y"))
+	    s = "";
+	else
+	if (mode.equals("d"))
+	    s = "";
+	else
+	    s = printdate(t);
+	canvas.drawText(s, this.x, this.y+this.h-2, paint); // leftalign
+	t1 = new Time();
+	t1.set((long)(ax.high*1000.0));
+	if (t.year != t1.year || t.yearDay != t1.yearDay){
+	    // right align
+	    paint.setTextAlign(Paint.Align.RIGHT);
+	    if (mode.equals("y"))
+		s = "";
+	    else
+		if (mode.equals("d"))
+		    s = "";
+		else
+		    s = printdate(t);
+	    canvas.drawText(s, this.x+this.w, this.y+this.h-2, paint); // leftalign
+	}
+    }
+
+    /*
+     * ad-hoc algorithm on which dates to print:
+     * |---|---|---..........--|
+     * Alt1:
+     * dont print first or last
+     * if too many grid lines, only print 1,3,5,...
+     * Alt2:
+     * print first (0) and last (ax1)
+     * dont print 1 and ax-1
+     * if too many grid lines, only print 2,4,6,...
+     * return new pos
+     */
+    private int
+    draw_grid_x(Time t, Autoscale ax, int i, int pos, String mode, Paint paint){
+	String s;
+	int    x1;
+	int    w;
+	boolean skip = false;
+
+	if (mode.equals("y"))
+	    s = printyear(t);
+	else
+	    if (mode.equals("d"))
+		s = printdate(t);
+	    else
+		if (mode.equals("s"))
+		    s = printtime(t);
+		else
+		    s = printtime(t);
+	w = (int)paint.measureText(s);
+	if (i==0){
+	    x1 = this.x;
+	    paint.setTextAlign(Paint.Align.LEFT);
+	    pos = x1 + w;
+	}
+	else if (i==ax.nr){
+	    x1 = this.x+this.w;
+	    paint.setTextAlign(Paint.Align.RIGHT);
+	    if (x1-w-fontsize < pos)
+		skip = true;
+	    else
+		pos = x1;
+	}
+	else{
+	    x1 = this.px + (i * this.pw/ax.nr);
+	    paint.setTextAlign(Paint.Align.CENTER);
+	    if (x1-w/2-fontsize < pos)
+		skip = true;
+	    else
+		pos = x1+w/2;
+	}
+	if (!skip)
+	    canvas.drawText(s, x1, this.py+this.ph+this.fontsize+2, paint);
+      done:
+	return pos;
+    }
+
     /*
      * draw_grid
      * Draw the surrounding rectangle, the labels of the ticks and the dashed lines
@@ -621,151 +741,136 @@ public final class Plot {
     private boolean 
     draw_grid(Autoscale ax, Autoscale ay1, Autoscale ay2){
 	    final Paint paint = new Paint();
-	    Time t, t1;
+	    Time t;
 	    String s;
+	    int ax1  = ax.nr;
+	    int ay11 = ay1.nr;
+	    String mode = ax.getmode();
+	    int pos;
+
 	    paint.setAntiAlias(true);
 	    paint.setTextSize(fontsize);
 	    paint.setStyle(Paint.Style.FILL); 
 	    paint.setColor(Color.BLACK);  
-	    int ax1  = ax.nr;
-	    int ay11 = ay1.nr;
-	    int ay21 = ay2.nr;
+
 	    canvas.clipRect(x, y, x+w, y+h, Region.Op.REPLACE); // clip it.
 	    // Fill the canvas with white
 	    canvas.drawRect(x, y, x + w, y + h, paint);
 
-	    // Draw black plot box
+	    // Draw white plot rectangle
 	    paint.setColor(Color.WHITE);
 	    paint.setStyle(Paint.Style.STROKE); 
-	    canvas.drawRect(px, py, px + pw, py + ph, paint);
+	    canvas.drawRect(this.px, this.py, this.px + this.pw, this.py + this.ph, paint);
 	    // Write x axis text and dates
 	    paint.setTypeface(Typeface.SANS_SERIF ); 
 	    paint.setTextSize(fontsize);
 	    paint.setColor(Color.WHITE);
 	    // axis label text
-	    canvas.drawText(xlabel, px+pw/2-fontsize*2, y+h-2, paint);
+	    canvas.drawText(xlabel, this.px+this.pw/2-fontsize*2, y+h-2, paint);
 	    t = new Time();
 	    t.set((long)(ax.low*1000.0));  // milliseconds
-	    s = printdate(t);
-	    canvas.drawText(s, px, this.y+h-2, paint); // leftalign
-	    t1 = new Time();
-	    t1.set((long)(ax.high*1000.0));
-	    if (t.year != t1.year || t.yearDay != t1.yearDay){
-		// right align
-		paint.setTextAlign(Paint.Align.RIGHT);
-		s = printdate(t1);
-		canvas.drawText(s, px+pw, this.y+h-2, paint); // leftalign
-	    }
+	    draw_grid_x0(t, ax, mode, paint);
 
 	    // y1 axis
-	    canvas.translate(x+fontsize, y+ph/2);
+	    canvas.translate(x+fontsize, y+this.ph/2);
 	    canvas.rotate(-90, 0, 0);
 	    canvas.drawText(y1label, 0, 0, paint);
 	    canvas.rotate(90, 0, 0);
-	    canvas.translate(-x-fontsize, -y-ph/2);
+	    canvas.translate(-x-fontsize, -y-this.ph/2);
 	    // y2 axis
-	    canvas.translate(px+pw+fontsize+2, y+ph/2);
+	    canvas.translate(this.px+this.pw+fontsize+2, y+this.ph/2);
 	    canvas.rotate(90, 0, 0);
 	    canvas.drawText(y2label, 0, 0, paint);
 	    canvas.rotate(-90, 0, 0);
-	    canvas.translate(-px-pw-fontsize-2, -y-ph/2);
+	    canvas.translate(-this.px-this.pw-fontsize-2, -y-this.ph/2);
 	    // text along x-axis
 	    paint.setColor(Color.WHITE);
-	    if (ax1>0)
+	    if (ax1>0){
+		pos = x; /* track position to avoid overwriting */
 		for(int i=0; i < ax1+1; i++) { 
-		    int x1 = px + (i * pw/ax1); //left
 		    double x = ax.low+i*ax.spacing;
 
 		    t = new Time(); //ms
 		    t.set((long)(x*1000.0));
 		    // String s = t.format3339(true); // iso
-		    if (i==0)
-			paint.setTextAlign(Paint.Align.LEFT);
-		    else if (i==ax.nr)
-			paint.setTextAlign(Paint.Align.RIGHT);
-		    else
-			paint.setTextAlign(Paint.Align.CENTER);
-		    /*
-		     * ad-hoc algorithm on which dates to print:
-		     * |---|---|---..........--|
-		     * Alt1:
-		     * dont print first or last
-		     * if too many grid lines, only print 1,3,5,...
-		     * Alt2:
-		     * print first (0) and last (ax1)
-		     * dont print 1 and ax-1
-		     * if too many grid lines, only print 2,4,6,...
-		     */
-		    if (i!=1 && i!=ax1-1 || ax.nr == gridx)
-			if (i%2==0 || i==ax1 || ax.nr < gridx*2){
-			    s = printtime(t);
-			    canvas.drawText(s, x1, py+ph+fontsize+2, paint);
-			}
+		    pos = draw_grid_x(t, ax, i, pos, mode, paint);
 		}
+	    }
 	    // text along y-axis
+
+	    if (textexternal)
+		paint.setTextAlign(Paint.Align.RIGHT);
+	    else
+		paint.setTextAlign(Paint.Align.LEFT);
 	    if (ay11>0)
 		for(int i=0; i < ay1.nr+1; i++) { 
-		    int y1 = py + (i * ph/ay11); //lower
+		    int y1 = this.py + (i * this.ph/ay11); //lower
 		    if (i == 0) //upper
 			y1 += fontsize;
 		    else
 			if (i != ay11) // normal case
 			    y1 += fontsize/2;
-		    s = String.format("%.2f", (ay1.high-i*ay1.spacing)*y1scale);
-		    canvas.drawText(s, fontsize+2, y1, paint);
+		    DecimalFormat format = new DecimalFormat("0.#######");
+		    s = format.format((ay1.high-i*ay1.spacing)*y1scale);
+		    if (textexternal)
+			canvas.drawText(s, px-4, y1, paint);
+		    else
+			canvas.drawText(s, x+4, y1, paint);
 		}
 	    // text along y2-axis
-	    if (ay21>0)
+	    if (ay2 != null){
+		int ay21 = ay2.nr;
 		for(int i=0; i < ay2.nr+1; i++) { 
-		    int y2 = py + (i * ph/ay21); //lower
+		    int y2 = this.py + (i * this.ph/ay21); //lower
 		    if (i == 0) //upper
 			y2 += fontsize;
 		    else
 			if (i != ay21) // normal case
 			    y2 += fontsize/2;
 		    s = String.format("%.2f", (ay2.high-i*ay2.spacing)*y2scale);
-		    canvas.drawText(s, px+pw+2, y2, paint);
+		    canvas.drawText(s, this.px+this.pw+2, y2, paint);
 		}
+	    }
 	    // Draw small lines at end
 	    paint.setColor(Color.BLACK);
 	    for(int i=1; i < ax1 ; i++) { 
-		canvas.drawLine(px + (i * pw /ax1), 
-				py,
-				px+ (i * pw/ax1),
-				py + TICKLEN,
+		canvas.drawLine(this.px + (i * this.pw /ax1), 
+				this.py,
+				this.px+ (i * this.pw/ax1),
+				this.py + TICKLEN,
 				paint);
-		canvas.drawLine(px + (i * pw/ax1), 
-				py+ph-TICKLEN,
-				px+ (i * pw/ax1),
-				py + ph,
+		canvas.drawLine(this.px + (i * this.pw/ax1), 
+				this.py+this.ph-TICKLEN,
+				this.px+ (i * this.pw/ax1),
+				this.py + this.ph,
 				paint);
 	    }
 	    for(int i=1; i < ay11; i++) {
-		canvas.drawLine(px, 
-				py + (i * ph/ay11), 
-				px+TICKLEN, 
-				py + (i * ph/ay11), 
+		canvas.drawLine(this.px, 
+				this.py + (i * this.ph/ay11), 
+				this.px+TICKLEN, 
+				this.py + (i * this.ph/ay11), 
 				paint);
-		canvas.drawLine(px+pw-TICKLEN, 
-				py + (i * ph/ay11), 
-				px+pw, 
-				py + (i * ph/ay11), 
+		canvas.drawLine(this.px+this.pw-TICKLEN, 
+				this.py + (i * this.ph/ay11), 
+				this.px+this.pw, 
+				this.py + (i * this.ph/ay11), 
 				paint);
 	    }
 	    // Draw the grid with white dashed lines
 	    paint.setColor(Color.WHITE);
 	    paint.setPathEffect( new DashPathEffect(new float[] { 2, 8 }, 0));
 	    for(int i=1; i < ay11; i++)  
-		canvas.drawLine(px, 
-				py + (i * ph /ay11), 
-				px + pw, 
-				py + (i * ph /ay11), 
+		canvas.drawLine(this.px, 
+				this.py + (i * this.ph /ay11), 
+				this.px + this.pw, 
+				this.py + (i * this.ph /ay11), 
 				paint);
 	    for(int i=1; i < ax.nr; i++)  
-		canvas.drawLine(px + (i * pw /ax1), 
-				py, 
-				px + (i * pw /ax1), 
-				py + ph, 
+		canvas.drawLine(this.px + (i * this.pw /ax1), 
+				this.py, 
+				this.px + (i * this.pw /ax1), 
+				this.py + this.ph, 
 				paint);
 	    return true;
 	}  // draw_grid
@@ -794,7 +899,7 @@ public final class Plot {
 	paint.setColor(color);
 	paint.setStrokeWidth(width);
 	try {
-	    canvas.clipRect(px, py, px+pw, py+ph, Region.Op.REPLACE); // clip it.
+	    canvas.clipRect(this.px, this.py, this.px+this.pw, this.py+this.ph, Region.Op.REPLACE); // clip it.
 	    for (int i = 0 ; i< vec.size()-agg+1; i+=agg)	{
 		if (agg>1){	// some odd agg points at end may be skipped
 		    pt_avg.x = vec.get(i).x;
@@ -817,7 +922,7 @@ public final class Plot {
 		    skip = true; // Make a break in a line.
 		    continue;
 		}
-		pt = ptv.pt2screen(px, py, pw, ph, 
+		pt = ptv.pt2screen(this.px, this.py, this.pw, this.ph, 
 				   ax.low, ax.high, ay.low, ay.high);
 		if (style.contains(POINTS)){
 		    // canvas.drawRect(pt.x-1,	pt.y-1,	pt.x+1, pt.y +1, paint);
@@ -826,7 +931,7 @@ public final class Plot {
 		}
 				
 		if (style.contains(BARS))
-		    canvas.drawLine(pt.x, py+ph, 
+		    canvas.drawLine(pt.x, this.py+this.ph, 
 				    pt.x, pt.y, 
 				    paint);
 		if (i > 0){
@@ -938,6 +1043,31 @@ final class Autoscale {
     }
 
     /*
+     * gettimemode
+     * This is an 'ad-hoc' function that returns a 'mode' depending on how the x-axis
+     * steps in seconds are. This can be used by the plotter to show more or less
+     * information about time. For example, if every tick is 10 years, the mode is 'y' and
+     * only years may be shown, there seems little use to show seconds, for example.
+     * There modes are:
+     * y: yyyy
+     * d: yyyy-mm-dd
+     * s: yyyy-mm-dd hh:mm:ss
+     * f: yyyy-mm-dd hh:mm:ss.ff
+     * Only applicable when initiated with option == "time"
+     */
+    public String
+    getmode(){
+	double s = this.spacing;
+	if (s < 1)
+	    return "f";
+	if (s < 24*60*60)
+	    return "s";
+	if (s < 364*24*60*60)
+	    return "d";
+	return "y";
+    }
+
+    /*
      * autotime
      * We assume a world of unix-time where the unit is seconds (eg from 1970-01-01).
      * We chop up an interval [min, max] 
@@ -946,7 +1076,7 @@ final class Autoscale {
     private void
     autotime(double min, double max, int nr_min){
 	int      nr;      /* the computed nr of sub-intervals */
-	double   tv[] = new double[] {365*24*3600, 30*24*3600, 7*24*3600, 24*3600, 6*3600, 60*60, 20*60, 5*60, 60, 20, 5, 1};
+	double   tv[] = new double[] {10*365*24*3600, 365*24*3600, 3*30*24*3600, 30*24*3600, 7*24*3600, 24*3600, 6*3600, 60*60, 20*60, 5*60, 60, 20, 5, 1};
 	boolean found = false;
 	TimeZone tz = TimeZone.getDefault();
 	int offset = -tz.getOffset((int)(min*1000))/1000;

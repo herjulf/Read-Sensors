@@ -191,7 +191,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	Display display = getWindowManager().getDefaultDisplay(); 
 	plot = new Plot(R.id.img, display);
 	message(Client.client.mHandler, Client.REPLAY, null);
-	plot.xaxis("Time", 1.0);  // x-axis is current time
+	plot.xaxis("", 1.0);  // x-axis is current time
     }
 
     // Update existing plot with global values
@@ -246,7 +246,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 //	String user_tag = get_user_tag();
 
 	if (tag.equals("All"))
-	    plot.y1label("Misc");
+	    ;//	    plot.y1label("Misc");
 	for(int i=0; i < idv.size() ; i++){
  	    sobj = idv.get(i); // Sensor id objects 
 	    // sensor-id selection:
@@ -261,7 +261,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 
 //			||(tag.equals("User-defined") && user_tag!= null && tobj.tag.equals(user_tag)))
 			    if (tag != "All" && tobj.label != null){
-				plot.y1label(tobj.label);
+				//plot.y1label(tobj.label);
 			    }
 			    tobj.pv.setWhere(1); // show plotvector
 		    }
@@ -491,7 +491,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	    
 	    if (tag.equals("UT") || tag.equals("TZ") || 
 		tag.equals("ID") || tag.equals("E64") ||
-		tag.equals("UP"))
+		tag.equals("UP") || tag.equals("TXT"))
 		;
 	    else{
 		try{
