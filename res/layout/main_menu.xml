@@ -3,9 +3,9 @@
 	<item android:id="@+id/about" android:icon="@drawable/ic_launcher"
 		android:title="About" />
 	<item android:id="@+id/conf" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Config" />
+		android:title="USB Config" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Settings" />
+		android:title="Plot Settings" />
 	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Plot" />
 
