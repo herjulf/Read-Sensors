@@ -79,7 +79,7 @@ final class Pt{
 // A single plot instance. Eg a function.
 // Contains info about each individual plot.
 final class PlotVector {
-    public static final float LINEWIDTH = (float)1.0;
+    public static final float LINEWIDTH = (float)2.0;
     public String title; // title for plot
     public int where;        // y1(=1) or y2 (=2)-axis or not-active (0)
     public ArrayList <Pt> vec;
@@ -134,7 +134,7 @@ final class PlotVector {
 public final class Plot {
     private static final int TICKLEN = 6; // how long solid ticks
     private static final int CROSSHAIR = 5; // how large point crosshair
-    public static final int FONTSIZE = 20; // default font size
+    public static final int FONTSIZE = 25; // default font size
 
     public static final int GRIDNR = 3;    // min nr of grid lines
 
@@ -220,8 +220,9 @@ public final class Plot {
 	canvas.setBitmap(bitmap);
 	/* Automatically compute number of min grid lines in x & y directions */
 	gridx = Math.max(GRIDNR, Math.min(5, Math.round(w/(8*fontsize))));
-	gridy = Math.max(GRIDNR, Math.round(h/(8*fontsize)));
+	gridy = Math.max(GRIDNR, Math.min(5, Math.round(h/(8*fontsize))));
     }
+
     /*
      * When scales are known, margins and plot area can be computed
      */

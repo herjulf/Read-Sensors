@@ -464,9 +464,14 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	    if (tag.equals("TZ")){ // Time Zone (String)
 	    }
 	    else if (tag.equals("ID")){ // Unique 64 bit ID (S)
-		id = val;
+		if (id==null)
+		    id = val;
 	    }
 	    else if (tag.equals("E64")){ // EUI-64 Unique 64 bit ID (S)
+		if (id==null)
+		    id = val;
+	    }
+	    else if (tag.equals("TXT")){ // Symbolic name
 		id = val;
 	    }
 	}
@@ -494,14 +499,17 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		tag.equals("UP") || tag.equals("TXT"))
 		;
 	    else{
+		boolean skip = false;
+		y = 0.0;
 		try{
 		    y = Double.parseDouble(val);
 		}
 		catch (NumberFormatException e){
 		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
-		    return 0;
+		    skip = true;
 		}
-		add_sample(id, tag, time, y, tag); // use tag as y-axis label
+		if (!skip)
+		    add_sample(id, tag, time, y, tag); // use tag as y-axis label
 	    }
 	}
 	return 0;
