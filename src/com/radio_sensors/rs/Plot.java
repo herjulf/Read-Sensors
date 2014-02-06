@@ -158,6 +158,9 @@ public final class Plot {
 
     private boolean textexternal = true; // Text external vs inside plot-area
 
+    private int textcolor = Color.WHITE;
+    private int bgcolor = Color.BLACK;
+
     private int fontsize = FONTSIZE;
     private int nrPlots = 0;	
     private String xlabel = "";  // text to print on x-axis
@@ -636,7 +639,7 @@ public final class Plot {
     draw_plot_label(int i, String title, int color){
 	final Paint paint = new Paint();
 	paint.setStyle(Paint.Style.STROKE);
-	paint.setColor(Color.WHITE);
+	paint.setColor(this.textcolor);
 	paint.setTextSize(fontsize);
 	float x = (float)(this.px+0.6*this.pw);
 	float x1 = x + title.length()*fontsize*(float)0.8;
@@ -752,20 +755,19 @@ public final class Plot {
 	    paint.setAntiAlias(true);
 	    paint.setTextSize(fontsize);
 	    paint.setStyle(Paint.Style.FILL); 
-	    paint.setColor(Color.BLACK);  
-
+	    paint.setColor(this.bgcolor);  
 	    canvas.clipRect(x, y, x+w, y+h, Region.Op.REPLACE); // clip it.
-	    // Fill the canvas with white
+	    // Fill the canvas with a color
 	    canvas.drawRect(x, y, x + w, y + h, paint);
 
 	    // Draw white plot rectangle
-	    paint.setColor(Color.WHITE);
+	    paint.setColor(this.textcolor);
 	    paint.setStyle(Paint.Style.STROKE); 
 	    canvas.drawRect(this.px, this.py, this.px + this.pw, this.py + this.ph, paint);
 	    // Write x axis text and dates
 	    paint.setTypeface(Typeface.SANS_SERIF ); 
 	    paint.setTextSize(fontsize);
-	    paint.setColor(Color.WHITE);
+	    paint.setColor(this.textcolor);
 	    // axis label text
 	    canvas.drawText(xlabel, this.px+this.pw/2-fontsize*2, y+h-2, paint);
 	    t = new Time();
@@ -785,7 +787,7 @@ public final class Plot {
 	    canvas.rotate(-90, 0, 0);
 	    canvas.translate(-this.px-this.pw-fontsize-2, -y-this.ph/2);
 	    // text along x-axis
-	    paint.setColor(Color.WHITE);
+	    paint.setColor(this.textcolor);
 	    if (ax1>0){
 		pos = x; /* track position to avoid overwriting */
 		for(int i=0; i < ax1+1; i++) { 
@@ -798,10 +800,9 @@ public final class Plot {
 		}
 	    }
 	    // text along y-axis
-
-	    if (textexternal)
+	    if (textexternal) // outside plot area
 		paint.setTextAlign(Paint.Align.RIGHT);
-	    else
+	    else              // inside plot area
 		paint.setTextAlign(Paint.Align.LEFT);
 	    if (ay11>0)
 		for(int i=0; i < ay1.nr+1; i++) { 
@@ -833,7 +834,7 @@ public final class Plot {
 		}
 	    }
 	    // Draw small lines at end
-	    paint.setColor(Color.BLACK);
+	    paint.setColor(this.textcolor);
 	    for(int i=1; i < ax1 ; i++) { 
 		canvas.drawLine(this.px + (i * this.pw /ax1), 
 				this.py,
@@ -859,7 +860,7 @@ public final class Plot {
 				paint);
 	    }
 	    // Draw the grid with white dashed lines
-	    paint.setColor(Color.WHITE);
+	    paint.setColor(this.textcolor);
 	    paint.setPathEffect( new DashPathEffect(new float[] { 2, 8 }, 0));
 	    for(int i=1; i < ay11; i++)  
 		canvas.drawLine(this.px, 

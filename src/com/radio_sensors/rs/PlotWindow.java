@@ -434,6 +434,7 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	String   tag, val;
 	Long     time=null; /* Time == x-coordinate */
 	String   id = null;
+	String   name = null;
 	Double   y;
 
 	Log.d("RStrace", "report="+s);
@@ -463,17 +464,12 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	    val = sv2[1];
 	    if (tag.equals("TZ")){ // Time Zone (String)
 	    }
-	    else if (tag.equals("ID")){ // Unique 64 bit ID (S)
-		if (id==null)
-		    id = val;
-	    }
-	    else if (tag.equals("E64")){ // EUI-64 Unique 64 bit ID (S)
-		if (id==null)
-		    id = val;
-	    }
-	    else if (tag.equals("TXT")){ // Symbolic name
+	    else if (tag.equals("ID")) // Unique 64 bit ID (S)
 		id = val;
-	    }
+	    else if (tag.equals("E64")) // EUI-64 Unique 64 bit ID (S)
+		id = val;
+	    else if (tag.equals("TXT")) // Symbolic name
+		name = val;
 	}
 	if (id == null || time == null){
 	    Log.e("RStrace", "Sensd report does not contain id or time");
@@ -508,8 +504,15 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 		    Log.e("RStrace", "Illegal number format:"+tag+"="+val);
 		    skip = true;
 		}
-		if (!skip)
-		    add_sample(id, tag, time, y, tag); // use tag as y-axis label
+		/* Check if parse error (eg unknown tag that is not a number) */
+		if (!skip){
+		    String id1;
+		    if (name != null)
+			id1 = name + " (" + id + ")";
+		    else
+			id1 = id;
+		    add_sample(id1, tag, time, y, tag); // use tag as y-axis label
+		}
 	    }
 	}
 	return 0;
