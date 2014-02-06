@@ -70,6 +70,7 @@ public class ConfWindow extends RSActivity {
     private int chan;
     private int tx_pwr;
     private String firmware;
+    private String txt;
     private String id;
     private String i2c;
     private String eui64;
@@ -143,6 +144,9 @@ public class ConfWindow extends RSActivity {
     }
     private void set_eui64(String s){
 	eui64 = s;
+    }
+    private void set_txt(String s){
+	txt = s;
     }
     private void set_firmware(String s){
 	firmware = s;
@@ -363,6 +367,7 @@ public class ConfWindow extends RSActivity {
 	set_tx_pwr(parse_int(l3, "tx_pwr")); 
 	set_chan(parse_int(l3, "chan")); 
 	set_eui64(parse_string(l3, "eui64")); 
+	set_txt(parse_string(l3, "txt")); 
 	set_firmware(parse_string(l3, "firmware")); 
 	set_uptime(parse_string(l3, "uptime")); 
 	set_RIME_addr(parse_string(l3, "RIME_addr")); 
@@ -384,6 +389,7 @@ public class ConfWindow extends RSActivity {
 	set_temp_extern(parse_double(l3, "temp_extern")); 
 
 	setTextVal(R.id.eui64, "0x" + eui64);
+	setTextVal(R.id.txt, txt);
 	setTextVal(R.id.firmware, firmware);
 	setTextVal(R.id.report_mask, "0x" + Integer.toHexString(report_mask) );
 	setIntVal(R.id.report_interval, report_interval);
