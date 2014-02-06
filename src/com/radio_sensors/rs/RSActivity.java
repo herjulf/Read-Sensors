@@ -67,7 +67,7 @@ abstract class RSActivity extends Activity{
     final private static int    PREF_MAX_SAMPLES = 100;
     final private static int    PREF_PLOT_WINDOW = Plot.XWINDOW; // seconds
     final private static int    PREF_PLOT_STYLE = Plot.LINES; 
-    final private static int    PREF_PLOT_FONTSIZE = 20; 
+    final private static int    PREF_PLOT_FONTSIZE = 25; 
     final private static float  PREF_PLOT_LINEWIDTH = PlotVector.LINEWIDTH; 
 
     protected RSActivity main; // This is the main activity (Client)
