@@ -54,7 +54,11 @@ function debug_over_ip()
     adb logcat
 }
 
-
+function screenshot()
+{
+    adb shell screencap -p /sdcard/screen.png
+    adb pull /sdcard/screen.png
+}
 
 remove
 run
