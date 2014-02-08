@@ -148,6 +148,9 @@ public class ConfWindow extends RSActivity {
     private void set_txt(String s){
 	txt = s;
     }
+    private String get_txt(){
+	return txt;
+    }
     private void set_firmware(String s){
 	firmware = s;
     }
@@ -204,7 +207,7 @@ public class ConfWindow extends RSActivity {
     protected void onPause(){
 	super.onPause();
 	Log.d("RStrace", "ConfWindow onPause");
-	gui2running(); // commit values to running
+	gui2sensor(); // commit values to sensor
     }
 
     protected void onStop(){  
@@ -229,6 +232,11 @@ public class ConfWindow extends RSActivity {
 	// Handle item selection
 	switch (item.getItemId()) {
 
+	case R.id.save:
+	if(Client.client.usbthread != null)
+	    gui2sensor(); // commit values to sensor
+	return true;
+
 	case R.id.command:
 	if(Client.client.usbthread != null)
 	    enter_cmd();
@@ -236,6 +244,7 @@ public class ConfWindow extends RSActivity {
 
 	case R.id.refresh:
 	if(Client.client.usbthread != null)
+	    // gui2sensor(); // commit values to sensor
 	    send_cmd("ss\r");
 	return true;
 
@@ -299,10 +308,10 @@ public class ConfWindow extends RSActivity {
 		    USB.connect();
 
 		USB.write(cmd.getBytes());
-		Log.d("USB", "send cmd");		
+		Log.d("RStrace USB", "send cmd " + cmd);		
 	    }
 	    catch  (IOException e) {
-		Log.e("USB", "Error reading device: " + e.getMessage(), e);
+		Log.e("RStrace USB", "Error reading device: " + e.getMessage(), e);
 	    }
     }
 
@@ -313,11 +322,19 @@ public class ConfWindow extends RSActivity {
 	//for (int i = 0; i < t.length; i++)
 	//	Toast.makeText(Client.client, HexDump.dumpHexString(t[i].getBytes()), Toast.LENGTH_SHORT).show();
 
+	Log.d("RStrace USB", "parse cmd " + l0);		
+
 	if ( t[0].equals("ss") )
 	     parse_ss(l0);
 	
-	else
-	    Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
+	else if ( "ri".equals(t[0].substring(0,2) ))
+	     parse_ri(l0);
+
+	else if ( "chan".equals(t[0].substring(0,4) ))
+	     parse_chan(l0);
+
+	else if ( "txpw".equals(t[0].substring(0,4) ))
+	     parse_chan(l0);
     }
 
     // Read values from running -> GUI
@@ -351,6 +368,32 @@ public class ConfWindow extends RSActivity {
 	alert.show();
     }
 
+    private void parse_ri(String l0)
+    {
+	String l1 ="";
+	String l2 ="";
+	String l3 ="";
+
+	l1 = l0.replace("\n", " ");
+	l2 = l1.replace("\r", " ");
+	l3 = l2.replace("=", " ");	
+	//Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
+	Toast.makeText(Client.client, HexDump.dumpHexString(l0.getBytes()), Toast.LENGTH_SHORT).show();
+    }
+
+    private void parse_chan(String l0)
+    {
+	String l1 ="";
+	String l2 ="";
+	String l3 ="";
+
+	l1 = l0.replace("\n", " ");
+	l2 = l1.replace("\r", " ");
+	l3 = l2.replace("=", " ");	
+	//Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
+	Toast.makeText(Client.client, HexDump.dumpHexString(l0.getBytes()), Toast.LENGTH_SHORT).show();
+    }
+
     private void parse_ss(String l0)
     {
 	String l1 ="";
@@ -364,7 +407,7 @@ public class ConfWindow extends RSActivity {
 	set_report_interval(parse_int(l3, "report_interval")); 
 	set_report_mask(parse_int(l3, "report_mask")); 
 	set_debug(parse_int(l3, "debug")); 
-	set_tx_pwr(parse_int(l3, "tx_pwr")); 
+	set_tx_pwr(parse_int(l3, "txpw")); 
 	set_chan(parse_int(l3, "chan")); 
 	set_eui64(parse_string(l3, "eui64")); 
 	set_txt(parse_string(l3, "txt")); 
@@ -387,6 +430,8 @@ public class ConfWindow extends RSActivity {
 	set_intr_sec_p1(parse_double(l3, "intr_sec_p1")); 
 	set_temp_board(parse_double(l3, "temp_board")); 
 	set_temp_extern(parse_double(l3, "temp_extern")); 
+
+	/* Write to .xml resource */
 
 	setTextVal(R.id.eui64, "0x" + eui64);
 	setTextVal(R.id.txt, txt);
@@ -414,36 +459,35 @@ public class ConfWindow extends RSActivity {
 	setDoubleVal(R.id.temp_extern, temp_extern);
     }
     
-    private String getTextVal(int id){
-	final EditText et = (EditText) findViewById(id);
-	return et.getText().toString();
-    }
-
-    private void setTextVal(int id, String s){
-	final EditText et = (EditText) findViewById(id);
-	et.setText(s);
-    }
-    private void setIntVal(int id, int i){
-	final EditText et = (EditText) findViewById(id);
-	et.setText(i+"");
-    }
-
-    private void setDoubleVal(int id, Double d){
-	final EditText et = (EditText) findViewById(id);
-
-	if (d==null)
-	    et.setText(null);
-	else
-	    et.setText(d.doubleValue()+"");
-    }
-
-    // running -> GUI
-    private void running2gui(){
+    // GUI -> sensor
+    private void gui2sensor(){
 	Button bt;
-    }
-    // GUI -> running
-    private void gui2running(){
-	Button bt;
+	Integer i;
+	String s;
+
+	s = getTextVal(R.id.txt);
+	if(get_txt() !=  s) {
+	    String cmd = "txt " + s + "\r";
+	    send_cmd(cmd);
+	}
+
+	i = getIntVal(R.id.report_interval);
+	if(get_report_interval() !=  i) {
+	    String cmd = "ri " + i + "\r";
+	    send_cmd(cmd);
+	}
+
+	i = getIntVal(R.id.chan);
+	if(i >= 11 && i <=26 && get_chan() !=  i) {
+	    String cmd = "chan " + i + "\r";
+	    send_cmd(cmd);
+	}
+
+	i = getIntVal(R.id.tx_pwr);
+	if(get_tx_pwr() !=  i) {
+	    String cmd = "txpw " + i + "\r";
+	    send_cmd(cmd);
+	}
     }
 
     private final Handler mHandler = new Handler() {
@@ -464,4 +508,71 @@ public class ConfWindow extends RSActivity {
 		}
 	    }
 	};
+
+    // get and set methods for GUI
+    private String getTextVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return et.getText().toString();
+    }
+    private void setTextVal(int id, String s){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(s);
+    }
+    private int getIntVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return Integer.parseInt(et.getText().toString());
+    }
+    private void setIntVal(int id, int i){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(i+"");
+    }
+    private Double getDoubleVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	if (et.getText()==null || et.getText().toString().equals(""))
+	    return null;
+	else{
+	    try {
+		Double d = new Double(et.getText().toString());
+		return d;
+	    }
+	    catch (Exception e1) {
+		String str = e1.getMessage();
+		Toast.makeText(this, "Error when parsing floar:"+str, Toast.LENGTH_SHORT).show();
+		return null;
+	    }
+	}
+    }
+    private void setDoubleVal(int id, Double d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.doubleValue()+"");
+    }
+    private Float getFloatVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	if (et.getText()==null || et.getText().toString().equals(""))
+	    return null;
+	else{
+	    try {
+		Float d = new Float(et.getText().toString());
+		return d;
+	    }
+	    catch (Exception e1) {
+		String str = e1.getMessage();
+		Toast.makeText(this, "Error when parsing floar:"+str, Toast.LENGTH_SHORT).show();
+		return null;
+	    }
+	}
+    }
+
+    private void setFloatVal(int id, Float d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.floatValue()+"");
+    }
 }

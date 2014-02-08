@@ -26,10 +26,29 @@
 	<EditText
 	    android:id="@+id/txt"
 	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="1"
+	    android:text="-1" 
+	    android:layout_span="2"
+	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
+	    android:id="@+id/eui64_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="EUI64 ID: " />
+
+	<EditText
+	    android:id="@+id/eui64"
+	    android:layout_width="0dip"
 	    android:layout_height="wrap_content" 
 	    android:text="-1"
+	    android:numeric="decimal"
 	    android:layout_column="1"
-	    android:layout_span="2"
+	    android:layout_span="2" 
 	    android:clickable="false" 
 	    android:cursorVisible="false" 
 	    android:focusable="false" 
@@ -71,7 +90,12 @@
 	    android:digits="0123456789ABCDEF"
 	    android:inputType="textCapCharacters"
 	    android:layout_column="1"
-	    android:layout_span="2" />
+	    android:layout_span="2" 
+	    android:clickable="false" 
+	    android:cursorVisible="false" 
+	    android:focusable="false" 
+	    android:focusableInTouchMode="false" 
+	    />
       </TableRow>
 
       <TableRow>
@@ -90,31 +114,13 @@
 	    android:text="-1" 
 	    android:numeric="decimal"
 	    android:layout_span="2"
-	    />
-      </TableRow>
-
-      <TableRow>
-	<TextView
-	    android:id="@+id/eui64_txt"
-	    android:layout_width="0dip"
-	    android:layout_height="wrap_content"
-	    android:layout_column="0"
-	    android:text="EUI64 ID: " />
-
-	<EditText
-	    android:id="@+id/eui64"
-	    android:layout_width="0dip"
-	    android:layout_height="wrap_content" 
-	    android:text="-1"
-	    android:numeric="decimal"
-	    android:layout_column="1"
-	    android:layout_span="2" 
 	    android:clickable="false" 
 	    android:cursorVisible="false" 
 	    android:focusable="false" 
 	    android:focusableInTouchMode="false" 
 	    />
       </TableRow>
+
 
       <TableRow>
 	<TextView
@@ -157,7 +163,6 @@
 	    android:layout_span="2"
 	    />
       </TableRow>
-
 
       <TableRow>
 	<TextView
