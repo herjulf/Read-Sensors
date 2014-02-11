@@ -77,8 +77,8 @@ class ConnectUSB extends RSActivity implements Runnable {
     public static Handler confh = null; // ConfWindow handler
 
     ConnectUSB(Handler h){ 
-	connect();
 	mainHandler = h;
+	connect();
     }
 
     public boolean connect() {
@@ -101,6 +101,7 @@ class ConnectUSB extends RSActivity implements Runnable {
 		driver = null;
 		return false;
 	    }
+	    message(mainHandler, Client.STATUS_USB, new Integer(1));
 	    return true;
 	}
 	return false;
@@ -170,6 +171,8 @@ class ConnectUSB extends RSActivity implements Runnable {
 		}
 	    }
 	    catch  (IOException e) {
+		done = true;
+		kill();
 		Log.e("USB", "Error reading device: " + e.getMessage(), e);
 	    }
 	}	    
@@ -178,6 +181,7 @@ class ConnectUSB extends RSActivity implements Runnable {
     // Method that closes the socket if open. This is to interrupt the thread
     // waiting in a blocking read
     public void kill(){
+	message(mainHandler, Client.STATUS_USB, new Integer(0));
 	if (driver != null){
 	    try {
 		driver.close();
@@ -187,6 +191,5 @@ class ConnectUSB extends RSActivity implements Runnable {
 	    }
 	}
 	killed = true;
-	//message(mainHandler, Client.STATUS_USB, new Integer(0));
     }
 }
