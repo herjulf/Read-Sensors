@@ -208,6 +208,25 @@ public class Client extends RSActivity {
 	return true;
     }	
 
+    /*
+      Called every time right before the option menu is shown.
+      use this method to efficiently enable/disable items or 
+      otherwise dynamically modify the contents. 
+    */
+
+    @Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+
+	MenuItem item = menu.findItem(R.id.conf);
+
+	if(usbthread != null) 
+	    item.setEnabled(true);
+	else 
+	    item.setEnabled(false);
+
+	return true;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 	// Handle item selection
