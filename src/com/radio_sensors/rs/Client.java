@@ -145,7 +145,6 @@ public class Client extends RSActivity {
 	}
 
 	if(usbthread != null) {
-	  Toast.makeText(this, "USB Disconnecting...", Toast.LENGTH_SHORT).show();
 	  disconnect();
 	  return;
 	}
@@ -155,7 +154,6 @@ public class Client extends RSActivity {
 	if (android.os.Build.VERSION.SDK_INT >= 12) {
 	    // only for gingerbread and newer versions
 	    if(connect_usb() == true) {
-		Toast.makeText(this, "USB connecting", Toast.LENGTH_SHORT).show();
 		return;
 	    }
 	}
@@ -354,10 +352,12 @@ public class Client extends RSActivity {
 			    }
 			    usbthread = null;
 			    buttonConnect.setText("Connect USB");			    
-			    Toast.makeText(Client.client, "USB Disconnected", Toast.LENGTH_SHORT).show();		    
+			    Toast.makeText(Client.client, "USB Disconnected", Toast.LENGTH_SHORT).show();
 			}
-			else if (stat.equals(1))
-			    buttonConnect.setText("Disconnect USB");			    
+			else if (stat.equals(1)) {
+			    buttonConnect.setText("Disconnect USB");
+			    Toast.makeText(Client.client, "USB Connected", Toast.LENGTH_SHORT).show();
+			}
 		    }
 		    break;
 		case Client.TIMER: // Periodic timer 
