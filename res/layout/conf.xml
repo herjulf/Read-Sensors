@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <ScrollView
-    android:id="@+id/ScrollView01"
+    android:id="@+id/ScrollView02"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent" android:layout_height="fill_parent">
   <LinearLayout
@@ -145,24 +145,25 @@
 	    />
       </TableRow>
 
+
       <TableRow>
 	<TextView
 	    android:id="@+id/chan_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
-	    android:layout_span="1" 
-	    android:text="Channel: " />
-	<EditText
+	    android:text="Radio Channel: " />
+	<Button
 	    android:id="@+id/chan"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="1"
-	    android:text="-1" 
-	    android:numeric="decimal"
 	    android:layout_span="2"
-	    />
+	    android:onClick="onClickChan" >
+	</Button>
       </TableRow>
+
+
 
       <TableRow>
 	<TextView

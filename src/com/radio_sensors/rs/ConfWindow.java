@@ -67,7 +67,7 @@ public class ConfWindow extends RSActivity {
     private int report_interval;  
     private int report_mask;  
     private String pan;
-    private int chan;
+    private int chan, conf_chan;
     private int tx_pwr;
     private String firmware;
     private String txt;
@@ -96,20 +96,56 @@ public class ConfWindow extends RSActivity {
     private double temp_board;
     private double temp_extern;
 
-    private String[] sensor_items;
+    private String[] radio_chans;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	Log.d("RStrace", "ConfWindow onCreate");
-	//main = Client.client; // Ugh, use a public static just to pass the instance.
+	main = Client.client; // Ugh, use a public static just to pass the instance.
 	ConnectUSB.confh = mHandler;
 	setContentView(R.layout.conf);
 	setTitle("Sensor Configuration");
 
 	if(Client.client.usbthread != null)
 	    send_cmd("ss\r");
+    }
+
+    /*
+     * onClickChan
+     * Called when 'chan' button is clicked in pref.xml
+     * Build a dialogue menu of radio chans and select one
+     */
+    public void onClickChan(View view) {
+	AlertDialog.Builder dia = new AlertDialog.Builder(this);
+	dia.setTitle("Select Radio Channel");
+	radio_chans = new String[16];
+
+	int i;
+	for( i = 0; i < 4; i++)
+	    radio_chans[i] = String.valueOf(i + 11);
+	
+	radio_chans[i++] = "15 WiFi free";
+
+	for(  ; i < 14; i++)
+	    radio_chans[i] = String.valueOf(i + 11);
+
+	radio_chans[i++] = "25 WiFi(US) free";
+	radio_chans[i++] = "26 default WiFi(US) free";
+
+	dia.setItems(radio_chans, new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+		    Resources res = getResources();
+		    final Button bt = (Button) findViewById(R.id.chan);
+		    bt.setText(radio_chans[which]);
+		    String[] s = radio_chans[which].split(" ");
+		    conf_chan = Integer.parseInt(s[0]);
+		}
+	    });
+	dia.setInverseBackgroundForced(true);
+	dia.create();
+	dia.show();
     }
 
     private int get_report_interval(){
@@ -409,6 +445,7 @@ public class ConfWindow extends RSActivity {
 	set_debug(parse_int(l3, "debug")); 
 	set_tx_pwr(parse_int(l3, "txpw")); 
 	set_chan(parse_int(l3, "chan")); 
+	conf_chan = chan;
 	set_eui64(parse_string(l3, "eui64")); 
 	set_txt(parse_string(l3, "txt")); 
 	set_firmware(parse_string(l3, "firmware")); 
@@ -440,9 +477,12 @@ public class ConfWindow extends RSActivity {
 	setIntVal(R.id.report_interval, report_interval);
 	setIntVal(R.id.debug, debug);
 	setIntVal(R.id.tx_pwr, tx_pwr);
-	setIntVal(R.id.chan, chan);
-	setTextVal(R.id.uptime, uptime);
 
+	Button bt = (Button) findViewById(R.id.chan);
+	String s1 = "";
+	bt.setText(s1.valueOf(chan));
+
+	setTextVal(R.id.uptime, uptime);
 	setTextVal(R.id.RIME_addr, RIME_addr);
 
 	setDoubleVal(R.id.v_mcu, v_mcu);
@@ -466,7 +506,7 @@ public class ConfWindow extends RSActivity {
 	String s;
 
 	s = getTextVal(R.id.txt);
-	if(get_txt() !=  s) {
+	if(! s.equals(get_txt())) {
 	    String cmd = "txt " + s + "\r";
 	    send_cmd(cmd);
 	}
@@ -477,9 +517,8 @@ public class ConfWindow extends RSActivity {
 	    send_cmd(cmd);
 	}
 
-	i = getIntVal(R.id.chan);
-	if(i >= 11 && i <=26 && get_chan() !=  i) {
-	    String cmd = "chan " + i + "\r";
+	if(conf_chan != chan && conf_chan >= 11 && conf_chan <=26) {
+	    String cmd = "chan " + conf_chan + "\r";
 	    send_cmd(cmd);
 	}
 
