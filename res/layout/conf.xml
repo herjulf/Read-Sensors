@@ -77,24 +77,18 @@
 
       <TableRow>
 	<TextView
-	    android:id="@+id/report_mask_txt"
+	    android:id="@+id/report_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
-	    android:text="Report Mask: " />
+	    android:text="Report : " />
 	<EditText
-	    android:id="@+id/report_mask"
+	    android:id="@+id/report"
 	    android:layout_width="0dip"
-	    android:layout_height="wrap_content" 
-	    android:text="-1" 
-	    android:digits="0123456789ABCDEF"
-	    android:inputType="textCapCharacters"
+	    android:layout_height="wrap_content"
 	    android:layout_column="1"
-	    android:layout_span="2" 
-	    android:clickable="false" 
-	    android:cursorVisible="false" 
-	    android:focusable="false" 
-	    android:focusableInTouchMode="false" 
+	    android:text="-1" 
+	    android:layout_span="2"
 	    />
       </TableRow>
 
@@ -105,19 +99,14 @@
 	    android:layout_height="wrap_content"
 	    android:layout_column="0"
 	    android:layout_span="1" 
-	    android:text="Debug Mask: " />
+	    android:text="Debug : " />
 	<EditText
 	    android:id="@+id/debug"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
 	    android:layout_column="1"
 	    android:text="-1" 
-	    android:numeric="decimal"
 	    android:layout_span="2"
-	    android:clickable="false" 
-	    android:cursorVisible="false" 
-	    android:focusable="false" 
-	    android:focusableInTouchMode="false" 
 	    />
       </TableRow>
 

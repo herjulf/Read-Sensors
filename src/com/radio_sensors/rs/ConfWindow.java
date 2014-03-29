@@ -65,7 +65,7 @@ public class ConfWindow extends RSActivity {
     ConnectUSB USB;  
 
     private int report_interval;  
-    private int report_mask;  
+    private String report;  
     private String pan;
     private int chan, conf_chan;
     private int tx_pwr;
@@ -91,7 +91,7 @@ public class ConfWindow extends RSActivity {
     private double intr_sec_p1;
     private String log_mode;
     private boolean hum_pwr;
-    private int debug;
+    private String debug;
     private String pwrs;
     private double temp_board;
     private double temp_extern;
@@ -154,17 +154,17 @@ public class ConfWindow extends RSActivity {
     private void set_report_interval(int i){
 	report_interval = i;
     }
-    private int get_report_mask(){
-	return report_mask;
+    private void set_report(String s){
+	report = s;
     }
-    private void set_report_mask(int i){
-	report_mask = i;
+    private String get_report(){
+	return report;
     }
-    private int get_debug(){
+    private void set_debug(String s){
+	debug = s;
+    }
+    private String get_debug(){
 	return debug;
-    }
-    private void set_debug(int i){
-	debug = i;
     }
     private int get_tx_pwr(){
 	return tx_pwr;
@@ -289,6 +289,21 @@ public class ConfWindow extends RSActivity {
 	}
     }
 
+    public String parse_string_list(String ss, String tag) 
+    {
+	String[] s = ss.split(" ");
+	String s1 = "";
+
+	for (int i = 0; i < s.length; i++)  
+	    {  
+		s1 = s[i];  
+		Log.d("RStrace s1", "s1 " + s1);		
+		if(s1.equals(tag)) 
+		    return s[i+1];
+	    }
+	return "";
+    }
+
     public String parse_string(String ss, String tag) 
     {
 	String[] s = ss.split(" ");
@@ -297,7 +312,8 @@ public class ConfWindow extends RSActivity {
 	for (int i = 0; i < s.length; i++)  
 	    {  
 		s1 = s[i];  
-		if(s1.indexOf(tag) == 0) 
+		if(s1.equals(tag)) 
+		    //if(s1.indexOf(tag) == 0) 
 		    return s[i+1];
 	    }
 	return "";
@@ -427,7 +443,7 @@ public class ConfWindow extends RSActivity {
 	l2 = l1.replace("\r", " ");
 	l3 = l2.replace("=", " ");	
 	//Toast.makeText(Client.client, HexDump.dumpHexString(t[0].getBytes()), Toast.LENGTH_SHORT).show();
-	Toast.makeText(Client.client, HexDump.dumpHexString(l0.getBytes()), Toast.LENGTH_SHORT).show();
+	//Toast.makeText(Client.client, HexDump.dumpHexString(l0.getBytes()), Toast.LENGTH_SHORT).show();
     }
 
     private void parse_ss(String l0)
@@ -441,8 +457,8 @@ public class ConfWindow extends RSActivity {
 	l3 = l2.replace("=", " ");	
 	
 	set_report_interval(parse_int(l3, "report_interval")); 
-	set_report_mask(parse_int(l3, "report_mask")); 
-	set_debug(parse_int(l3, "debug")); 
+	set_report(parse_string(l3, "report")); 
+	set_debug(parse_string(l3, "debug")); 
 	set_tx_pwr(parse_int(l3, "txpw")); 
 	set_chan(parse_int(l3, "chan")); 
 	conf_chan = chan;
@@ -452,8 +468,8 @@ public class ConfWindow extends RSActivity {
 	set_uptime(parse_string(l3, "uptime")); 
 	set_RIME_addr(parse_string(l3, "RIME_addr")); 
 
-	//Toast.makeText(Client.client, String.format("Interval=%d, Mask=0x%x", get_report_interval(), 
-	//					    get_report_mask()), Toast.LENGTH_SHORT).show();
+	//Toast.makeText(Client.client, String.format("Interval=%d, Report=%s", get_report_interval(), 
+	//					    get_report()), Toast.LENGTH_SHORT).show();
 
 	set_v_mcu(parse_double(l3, "v_mcu")); 
 	set_v_in(parse_double(l3, "v_in")); 
@@ -473,9 +489,10 @@ public class ConfWindow extends RSActivity {
 	setTextVal(R.id.eui64, "0x" + eui64);
 	setTextVal(R.id.txt, txt);
 	setTextVal(R.id.firmware, firmware);
-	setTextVal(R.id.report_mask, "0x" + Integer.toHexString(report_mask) );
+	//setTextVal(R.id.report, "0x" + Integer.toHexString(report) );
+	setTextVal(R.id.report, report);
 	setIntVal(R.id.report_interval, report_interval);
-	setIntVal(R.id.debug, debug);
+	setTextVal(R.id.debug, debug);
 	setIntVal(R.id.tx_pwr, tx_pwr);
 
 	Button bt = (Button) findViewById(R.id.chan);
@@ -514,6 +531,18 @@ public class ConfWindow extends RSActivity {
 	i = getIntVal(R.id.report_interval);
 	if(get_report_interval() !=  i) {
 	    String cmd = "ri " + i + "\r";
+	    send_cmd(cmd);
+	}
+
+	s = getTextVal(R.id.report);
+	if(! s.equals(get_report())) {
+	    String cmd = "re " + s + "\r";
+	    send_cmd(cmd);
+	}
+
+	s = getTextVal(R.id.debug);
+	if(! s.equals(get_debug())) {
+	    String cmd = "de " + s + "\r";
 	    send_cmd(cmd);
 	}
 
