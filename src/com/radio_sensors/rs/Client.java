@@ -92,6 +92,7 @@ public class Client extends RSActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
+	Log.d("RStrace", "Main onCreate");
 	client = this; 
 	main = this;
 
