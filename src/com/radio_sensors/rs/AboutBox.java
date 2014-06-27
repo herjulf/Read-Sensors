@@ -67,7 +67,7 @@ import android.text.util.Linkify;
 import android.util.Log;
 
 public class AboutBox {
-    static String VersionNumber = " 0.8  2014-05-02";
+    static String VersionNumber = " 0.8  2014-06-27";
     public static void Show(Activity callingActivity) {
         //Use a Spannable to allow for links highlighting
         SpannableString aboutText = new SpannableString("Version " + VersionNumber + 
