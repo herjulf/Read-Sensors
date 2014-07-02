@@ -65,14 +65,17 @@ import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;    
 import android.text.util.Linkify;
 import android.util.Log;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.Context;
+import android.content.Intent;
 
 public class AboutBox {
-    static String VersionNumber = " 0.8  2014-06-27";
     public static void Show(Activity callingActivity) {
-        //Use a Spannable to allow for links highlighting
-        SpannableString aboutText = new SpannableString("Version " + VersionNumber + 
-	 System.getProperty ("line.separator") +
-	 callingActivity.getString(R.string.about));
+	Context context = callingActivity.getApplicationContext(); // or activity.getApplicationContext()
+	PackageManager packageManager = context.getPackageManager();
+	String packageName = context.getPackageName();
+
         //Generate views to pass to AlertDialog.Builder and to set the text
         View about;
         TextView tvAbout;
@@ -86,6 +89,19 @@ public class AboutBox {
             //Inflater can throw exception, unlikely but default to TextView if it occurs
             about = tvAbout = new TextView(callingActivity);
         }
+
+	String myVersionName = "not available"; // initialize String
+	try {
+	    myVersionName = packageManager.getPackageInfo(packageName, 0).versionName;
+	} catch (PackageManager.NameNotFoundException e) {
+	    e.printStackTrace();
+	}
+
+        //Use a Spannable to allow for links highlighting
+        SpannableString aboutText = new SpannableString("Version " + myVersionName +
+	 System.getProperty ("line.separator") +
+	 callingActivity.getString(R.string.about));
+
         //Set the about text 
         tvAbout.setText(aboutText);
         // Now Linkify the text
