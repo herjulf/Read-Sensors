@@ -4,14 +4,20 @@
 	<item>All</item>
 	<item>User-defined</item>
 	<item>T</item>
+	<item>T1</item>
 	<item>PS</item>
 	<item>P</item>
+	<item>P_MS5611</item>
 	<item>V_MCU</item>
 	<item>RH</item>
 	<item>V_IN</item>
 	<item>V_A1</item>
 	<item>V_A2</item>
 	<item>V_A3</item>
+	<item>V_AD1</item>
+	<item>V_AD2</item>
+	<item>V_AD3</item>
+	<item>V_AD4</item>
 	<item>GWGPS_LON</item>
 	<item>GWGPS_LAT</item>
 	<item>P0</item>
@@ -23,6 +29,11 @@
 	<item>SEQ</item>
 	<item>RSSI</item>
 	<item>DRP</item>
-	<item>RND</item>
+	<item>RND</item>	
+	<item>RH_SHT2X</item>
+	<item>T_SHT2X</item>
+	<item>AH</item>
+	<item>T_DEW</item>
+	<item>T_DEW_IDX</item>
     </string-array>
 </resources>
