@@ -8,5 +8,7 @@
 		android:title="Plot Settings" />
 	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Plot" />
+	<item android:id="@+id/screen" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Share Screen" />
 
 </menu>

@@ -4,4 +4,6 @@
 		android:title="RePlot" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Settings" />
+	<item android:id="@+id/screen" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Share Plot" />
 </menu>

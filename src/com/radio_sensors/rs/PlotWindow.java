@@ -298,6 +298,10 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	case R.id.prefs:
 	    toActivity("PrefWindow");
 	    return true;
+	case R.id.screen:
+	    View v2 = getWindow().getDecorView().getRootView();
+	    main.shareScreen(v2);
+	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}

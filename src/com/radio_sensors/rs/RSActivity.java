@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Bundle;
+import android.os.Environment;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,10 +49,20 @@ import android.view.MenuInflater;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import android.net.Uri;
 import java.util.ArrayList;
 import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
+import android.graphics.Bitmap;
+import android.graphics.BitmapShader;
+import android.graphics.Bitmap.CompressFormat; 
+import android.graphics.Canvas;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+
 
 /*
  * Shared abstract Radio-Sensor that all other activities inherit from
@@ -85,6 +96,8 @@ abstract class RSActivity extends Activity{
     private Double plot_ymin = null;  
     private Double plot_ymax = null;  
     private float plot_linewidth;  
+
+    final public static String FILE = "/RS-screen.png";
 
     protected ArrayList<String> sensor_ids = new ArrayList<String>();
     protected ArrayList<String> sensor_tags = new ArrayList<String>();
@@ -231,6 +244,36 @@ abstract class RSActivity extends Activity{
 	set_plot_style(get_pref_plot_style());
 	set_plot_fontsize(get_pref_plot_fontsize());
 	set_plot_linewidth(get_pref_plot_linewidth());
+    }
+
+    public void shareScreen(View v1)
+    {
+	v1.setDrawingCacheEnabled(true);
+	Bitmap bitmap = v1.getDrawingCache();
+	File file = new File( Environment.getExternalStorageDirectory() + FILE);
+	try 
+	    {
+		file.createNewFile();
+		FileOutputStream ostream = new FileOutputStream(file);
+		bitmap.compress(CompressFormat.PNG, 100, ostream);
+		ostream.close();
+		v1.setDrawingCacheEnabled(false);
+	    } 
+
+	catch (Exception e) 
+	    {
+		Log.e("RStrace", "Exeception:" + Log.getStackTraceString(e));
+		e.printStackTrace();
+	    }
+
+	Uri uri = Uri.fromFile(file);
+	Intent shareIntent = new Intent();
+	shareIntent.setAction(Intent.ACTION_SEND);
+	shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Screen from Read Sensors App.");
+	//shareIntent.putExtra(Intent.EXTRA_TEXT, "Add text");
+	shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+	shareIntent.setType("image/png");
+	startActivity(Intent.createChooser(shareIntent, "Share screen dump.."));
     }
 
     // Send a message to other activity

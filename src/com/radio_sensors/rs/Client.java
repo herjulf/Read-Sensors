@@ -244,6 +244,10 @@ public class Client extends RSActivity {
 	case R.id.conf:
 	    toActivity("ConfWindow");
 	    return true;
+	case R.id.screen:
+	    View v1 = getWindow().getDecorView().getRootView();
+	    main.shareScreen(v1);
+	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);
 	}
@@ -313,8 +317,6 @@ public class Client extends RSActivity {
         tv.setText(text);
         sv.smoothScrollTo(0, tv.getBottom());
     }
-
-
 
 
     // Messages comes in from socket-handler due to sensd input or error
