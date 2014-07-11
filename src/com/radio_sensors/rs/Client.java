@@ -22,6 +22,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Bundle;
+import android.os.Environment;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -52,6 +54,21 @@ import java.util.ArrayList;
 import java.lang.Thread;
 import android.util.Log;
 import android.os.Message;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import android.app.Activity;
+import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 
 
 public class Client extends RSActivity {
@@ -89,6 +106,13 @@ public class Client extends RSActivity {
     private ArrayList<String> report = new ArrayList<String>();
     private int max_samples;
 
+    final private static String TAG = "RS-" + Client.class.getName();
+    final public static String FILE = "/RS-GW.txt";
+
+    private int conf_gw;    
+    private String[] gw_alias;
+    private String gw;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
@@ -96,12 +120,21 @@ public class Client extends RSActivity {
 	client = this; 
 	main = this;
 
-	setContentView(R.layout.main);
+	gw = readFromFile();
 
+	setContentView(R.layout.main);
 	pref2running(); 	// Set global values from persistent storage
 
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setText("Connect");
+
+	Button bt = (Button) findViewById(R.id.gw_select);
+	if(gw != null)  {
+	    bt.setEnabled(true);
+	    bt.setText("Hotlist");
+	}
+	else 
+	    bt.setEnabled(false);
 
 	// Start periodic timer
 	Message message = Message.obtain();
@@ -161,6 +194,62 @@ public class Client extends RSActivity {
 	set_server_ip(et_srv.getText().toString());
 	set_server_port(Integer.parseInt(et_port.getText().toString()));
 	connect(get_server_ip(), get_server_port());
+
+	Button bt = (Button) findViewById(R.id.gw_select);
+	bt.setEnabled(false);
+
+    }
+
+    private static int countLines(String str){
+	//String[] lines = str.split("\r\n|\r|\n");
+	String[] lines = str.split("\r\n|\r|\n");
+	return  lines.length;
+    }
+
+    /*
+     * onGWSelect
+     * Called when 'chan' button is clicked in pref.xml
+     * Build a dialogue menu of radio chans and select one
+     */
+
+    public void onGWSelect(View view) {
+	AlertDialog.Builder dia = new AlertDialog.Builder(this);
+	dia.setTitle("Select Gatway");
+
+	int i;
+	int len = countLines(gw);
+	gw_alias = new String[len];
+
+	Log.e(TAG, "onGWSelect: 1");
+
+	//	int i = 0;
+	//gw_alias[i++] = "Add ";
+	//gw_alias[i++] = "Remove ";
+
+	final String[] row = gw.split("\r\n|\r|\n");
+
+	for(i = 0 ; i < len; i++) {
+	    String[] col = row[i].split("\\s");
+	    gw_alias[i] = col[0];
+	}
+
+	dia.setItems(gw_alias, new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int which) {
+		    Resources res = getResources();
+		    final Button bt = (Button) findViewById(R.id.gw_select);
+		    bt.setText(gw_alias[which]);
+		    String[] s = row[which].split("\\s");
+		    EditText et = (EditText) findViewById(R.id.server_ip);
+		    set_server_ip(s[1]);
+		    et.setText(get_server_ip());
+		    et = (EditText) findViewById(R.id.server_port);
+		    set_server_port(Integer.parseInt(s[2]));
+		    et.setText(""+get_server_port());
+		}
+	    });
+	dia.setInverseBackgroundForced(true);
+	dia.create();
+	dia.show();
     }
 
     protected void onStart(){
@@ -253,6 +342,49 @@ public class Client extends RSActivity {
 	}
     }
 
+    private void writeToFile(String data) {
+	try {
+		File myFile = new File( Environment.getExternalStorageDirectory() + FILE);
+		myFile.createNewFile();
+		FileOutputStream fOut = new FileOutputStream(myFile);
+		OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+		myOutWriter.append("KALLE KKAL\n");
+		myOutWriter.close();
+		fOut.close();
+	    } catch (Exception e) {
+            Log.e(TAG, "File write failed: " + e.toString());
+	}
+    }
+ 
+    private String readFromFile() {
+        String ret = "";
+	try {
+	    File file = new File( Environment.getExternalStorageDirectory() + FILE);
+	    FileInputStream fIn = new FileInputStream(file);
+	    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fIn));
+	    String receiveString = "";
+	    StringBuilder stringBuilder = new StringBuilder();
+            
+	    while ( (receiveString = bufferedReader.readLine()) != null ) {
+
+		stringBuilder.append(receiveString + "\n");
+	    }
+            
+	    fIn.close();
+	    ret = stringBuilder.toString();
+	}
+        catch (FileNotFoundException e) {
+	    Toast.makeText(getBaseContext(), e.getMessage(),
+			   Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "RS File not found: " + e.toString());
+	    writeToFile("Kalle 1234 TESTWSN");
+        } catch (IOException e) {
+            Log.e(TAG, "Can not read file: " + e.toString());
+        }
+ 
+        return ret;
+    }
+
     // Connect to a server: create connectsocket object, a thread and start it.
     private void connect(String srv_ip, int srv_port) {
 	if(connectthread != null){
@@ -303,6 +435,8 @@ public class Client extends RSActivity {
 		e1.printStackTrace();
 	    }
 	}
+	Button bt = (Button) findViewById(R.id.gw_select);
+	bt.setEnabled(true);
     }
 
     // Draw reports in text window. Scroll to bottom of texts.

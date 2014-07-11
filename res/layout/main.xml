@@ -6,7 +6,7 @@
     android:stretchColumns="1" 
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
- <!-- Row 1    Server -->
+ <!-- Row 1    Gateway -->
 
  <TableRow>
 
@@ -15,7 +15,7 @@
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:layout_column="0"
-      android:text="Server: " />
+      android:text="Gateway: " />
 
   <EditText
       android:id="@+id/server_ip"
@@ -46,13 +46,30 @@
  </TableRow>
 
 
- <!-- Button   -->
+ <!-- Buttons   -->
+
+ <TableRow>
+    <Button
+        android:id="@+id/gw_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+	android:layout_column="0"
+	android:layout_span="2"
+        android:onClick="onGWSelect" >
+    </Button>
+
     <Button
         android:id="@+id/server_connect"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:onClick="onClickConnect" >
+	android:layout_column="2"
+	android:layout_span="2"
+        android:onClick="onClickConnect" 
+	android:text="Hotlist" >
     </Button>
+ </TableRow>
+
+ <!-- End Buttons   -->
 
   <ScrollView 
       android:id="@+id/scroll" 
