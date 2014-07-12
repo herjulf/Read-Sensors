@@ -150,6 +150,8 @@ public class Client extends RSActivity {
 	setContentView(R.layout.main);
 	Log.d("RStrace", "Main onConfigurationChanged");
 
+	Button bt = (Button) findViewById(R.id.gw_select);
+
 	// Set edit text fields from prefs
 	EditText et = (EditText) findViewById(R.id.server_ip);
 	et.setText(get_server_ip());
@@ -160,11 +162,18 @@ public class Client extends RSActivity {
 
 	// Set connected/disconnected button text
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	if(connectthread != null)
+	if(connectthread != null) {
 	    buttonConnect.setText("Disconnect");
-	else
+	    if(gw != null)  {
+		bt.setEnabled(false);
+		bt.setText("Hotlist");
+	    }
+	}
+	else {
 	    buttonConnect.setText("Connect");
-
+	    bt.setEnabled(true);
+	    bt.setText("Hotlist");
+	}
     }
 
     // Called when 'connect/disconnect' button is clicked
@@ -197,6 +206,8 @@ public class Client extends RSActivity {
 
 	Button bt = (Button) findViewById(R.id.gw_select);
 	bt.setEnabled(false);
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	buttonConnect.setText("Waiting");
 
     }
 
@@ -435,8 +446,6 @@ public class Client extends RSActivity {
 		e1.printStackTrace();
 	    }
 	}
-	Button bt = (Button) findViewById(R.id.gw_select);
-	bt.setEnabled(true);
     }
 
     // Draw reports in text window. Scroll to bottom of texts.
@@ -477,6 +486,7 @@ public class Client extends RSActivity {
 		case Client.STATUS: // Connect status changed
 		    Integer stat = (Integer)msg.obj;
 		    Button buttonConnect = (Button) findViewById(R.id.server_connect);
+		    Button bt = (Button) findViewById(R.id.gw_select);
 
 		    Log.d("RStrace", "Client.Status="+stat);
 		    if (stat != null){
@@ -488,6 +498,7 @@ public class Client extends RSActivity {
 			    }
 			    connectthread = null;
 			    buttonConnect.setText("Connect");			    
+			    bt.setEnabled(true);
 			    Toast.makeText(Client.client, "Disconnected", Toast.LENGTH_SHORT).show();		    
 			}
 			else if (stat.equals(1))
