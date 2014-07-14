@@ -69,7 +69,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-
+import java.lang.String;
 
 public class Client extends RSActivity {
     // Messages
@@ -373,14 +373,26 @@ public class Client extends RSActivity {
 	    File file = new File( Environment.getExternalStorageDirectory() + FILE);
 	    FileInputStream fIn = new FileInputStream(file);
 	    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fIn));
-	    String receiveString = "";
+	    String str = "";
+	    String newstr = "";
 	    StringBuilder stringBuilder = new StringBuilder();
-            
-	    while ( (receiveString = bufferedReader.readLine()) != null ) {
+	    int idx, len;
+	    String ss;
 
-		stringBuilder.append(receiveString + "\n");
+	    while ( ( str = bufferedReader.readLine()) != null ) {
+		// Ignore comments
+		if (null != str && str.length() > 0 ) {
+		    idx = str.indexOf("#");
+		    if (idx == -1)
+			stringBuilder.append(str + "\n");
+		    else {
+			len = str.length();
+			ss = str.substring(0, idx);
+			if(ss.length() > 0) 
+			    stringBuilder.append(ss + "\n");
+		    }
+		}  
 	    }
-            
 	    fIn.close();
 	    ret = stringBuilder.toString();
 	}

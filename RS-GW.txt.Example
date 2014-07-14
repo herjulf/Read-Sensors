@@ -1,0 +1,13 @@
+#
+# Hotlist file for Read-Sensors App
+#  
+#  Alias  Gateway  Port
+#  
+DIT 41.93.45.12 1234               # Dar es Salaam Inst. of Tech. WSN
+RS-Devel radio-sensors.com 1235    # For developing 
+RS radio-sensors.com 1234
+RS-Proxy radio-sensors.com 1236    # Proxy. Typically WSN's behind NAT
+# 
+# Example of transfer to mobile:
+# adb push RS-GW.txt /sdcard/RS-GW.txt
+#
