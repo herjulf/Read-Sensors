@@ -359,7 +359,7 @@ public class Client extends RSActivity {
 		myFile.createNewFile();
 		FileOutputStream fOut = new FileOutputStream(myFile);
 		OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-		myOutWriter.append("KALLE KKAL\n");
+		myOutWriter.append("DEMO-WSN radio-sensors.com 1235 # WSN in Upppsala, Sweden\n");
 		myOutWriter.close();
 		fOut.close();
 	    } catch (Exception e) {
