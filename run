@@ -37,7 +37,8 @@ function sign()
 {
     ant clean release
     jarsigner -verbose -keystore RS.keystore bin/Client-release-unsigned.apk RS
-    zipalign 4 bin/Client-release-unsigned.apk Read-Sensors.apk
+    rm Read-Sensors.apk 
+    zipalign 4 bin/Client-release-unsigned.ap Read-Sensors.apk
 }
 
 function make_key()
