@@ -30,6 +30,7 @@
         android:label="@string/app_name"
 	android:theme="@android:style/Theme.Holo" >
         <activity
+	    android:windowSoftInputMode="stateHidden"
             android:name=".Client"
 	    android:configChanges="keyboardHidden|orientation|screenSize">
             android:label="@string/app_name" >
@@ -56,6 +57,7 @@
         </activity>
         <activity
             android:name=".PrefWindow"
+	    android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -64,6 +66,7 @@
 	</activity>
         <activity
             android:name=".ConfWindow"
+	    android:windowSoftInputMode="stateHidden"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
