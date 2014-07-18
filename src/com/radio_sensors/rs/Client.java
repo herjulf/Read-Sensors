@@ -225,7 +225,7 @@ public class Client extends RSActivity {
 
     public void onGWSelect(View view) {
 	AlertDialog.Builder dia = new AlertDialog.Builder(this);
-	dia.setTitle("Select Gatway");
+	dia.setTitle("Select Gateway");
 
 	int i;
 	int len = countLines(gw);
