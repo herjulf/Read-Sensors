@@ -108,6 +108,7 @@ public class Client extends RSActivity {
 
     final private static String TAG = "RS-" + Client.class.getName();
     final public static String FILE = "/RS-GW.txt";
+    final public static String DEMO_GW = "DEMO-WSN radio-sensors.com 1235 # WSN in Upppsala, Sweden\n";
 
     private int conf_gw;    
     private String[] gw_alias;
@@ -359,7 +360,7 @@ public class Client extends RSActivity {
 		myFile.createNewFile();
 		FileOutputStream fOut = new FileOutputStream(myFile);
 		OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-		myOutWriter.append("DEMO-WSN radio-sensors.com 1235 # WSN in Upppsala, Sweden\n");
+		myOutWriter.append(data);
 		myOutWriter.close();
 		fOut.close();
 	    } catch (Exception e) {
@@ -400,9 +401,10 @@ public class Client extends RSActivity {
 	    Toast.makeText(getBaseContext(), e.getMessage(),
 			   Toast.LENGTH_SHORT).show();
             Log.e(TAG, "RS File not found: " + e.toString());
-	    writeToFile("Kalle 1234 TESTWSN");
+	    ret = DEMO_GW;
+	    writeToFile(ret);
         } catch (IOException e) {
-            Log.e(TAG, "Can not read file: " + e.toString());
+            Log.e(TAG, "Can't read file: " + e.toString());
         }
  
         return ret;
