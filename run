@@ -37,8 +37,8 @@ function sign()
 {
     ant clean release
     jarsigner -verbose -keystore RS.keystore bin/Client-release-unsigned.apk RS
-    rm Read-Sensors.apk 
-    zipalign 4 bin/Client-release-unsigned.ap Read-Sensors.apk
+    rm -f Read-Sensors.apk 
+    zipalign 4 bin/Client-release-unsigned.apk Read-Sensors.apk
 }
 
 function make_key()
@@ -62,7 +62,11 @@ function screenshot()
     adb pull /sdcard/screen.png
 }
 
+
+
 remove
 run
+
+
 
 
