@@ -114,6 +114,36 @@ public class Client extends RSActivity {
     private String[] gw_alias;
     private String gw;
 
+    void set_button_text()
+    {
+	// Set connected/disconnected button text
+	Button buttonConnect = (Button) findViewById(R.id.server_connect);
+	Button bt = (Button) findViewById(R.id.gw_select);
+
+	String s1 = get_server_ip();
+	String s2 = String.valueOf(get_server_port());
+	int len = countLines(gw);
+	final String[] row = gw.split("\r\n|\r|\n");
+	bt.setText("Hotlist");
+
+	for(int i = 0 ; i < len; i++) {
+	    String[] col = row[i].split("\\s");
+	    if(col[1].equalsIgnoreCase(s1) && col[2].equals(s2))
+		bt.setText(col[0]);
+
+	}
+	if(connectthread != null) {
+	    buttonConnect.setText("Disconnect");
+	    if(gw != null)  {
+		bt.setEnabled(false);
+	    }
+	}
+	else {
+	    buttonConnect.setText("Connect");
+	    bt.setEnabled(true);
+	}
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
@@ -122,20 +152,9 @@ public class Client extends RSActivity {
 	main = this;
 
 	gw = readFromFile();
-
 	setContentView(R.layout.main);
 	pref2running(); 	// Set global values from persistent storage
-
-	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	buttonConnect.setText("Connect");
-
-	Button bt = (Button) findViewById(R.id.gw_select);
-	if(gw != null)  {
-	    bt.setEnabled(true);
-	    bt.setText("Hotlist");
-	}
-	else 
-	    bt.setEnabled(false);
+	set_button_text();
 
 	// Start periodic timer
 	Message message = Message.obtain();
@@ -151,30 +170,14 @@ public class Client extends RSActivity {
 	setContentView(R.layout.main);
 	Log.d("RStrace", "Main onConfigurationChanged");
 
-	Button bt = (Button) findViewById(R.id.gw_select);
-
 	// Set edit text fields from prefs
 	EditText et = (EditText) findViewById(R.id.server_ip);
 	et.setText(get_server_ip());
 	et = (EditText) findViewById(R.id.server_port);
 	et.setText(""+get_server_port());
 
+	set_button_text();
 	textupdate(); // Update text-sensd reports in window
-
-	// Set connected/disconnected button text
-	Button buttonConnect = (Button) findViewById(R.id.server_connect);
-	if(connectthread != null) {
-	    buttonConnect.setText("Disconnect");
-	    if(gw != null)  {
-		bt.setEnabled(false);
-		bt.setText("Hotlist");
-	    }
-	}
-	else {
-	    buttonConnect.setText("Connect");
-	    bt.setEnabled(true);
-	    bt.setText("Hotlist");
-	}
     }
 
     // Called when 'connect/disconnect' button is clicked
@@ -204,9 +207,8 @@ public class Client extends RSActivity {
 	set_server_ip(et_srv.getText().toString());
 	set_server_port(Integer.parseInt(et_port.getText().toString()));
 	connect(get_server_ip(), get_server_port());
+	set_button_text();
 
-	Button bt = (Button) findViewById(R.id.gw_select);
-	bt.setEnabled(false);
 	Button buttonConnect = (Button) findViewById(R.id.server_connect);
 	buttonConnect.setText("Waiting");
 
