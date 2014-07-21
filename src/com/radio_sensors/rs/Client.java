@@ -156,6 +156,15 @@ public class Client extends RSActivity {
 	pref2running(); 	// Set global values from persistent storage
 	set_button_text();
 
+	/* USBConnect introduced in SDK version 12 */
+	Log.d("RStrace", "SDK version="+android.os.Build.VERSION.SDK_INT);
+	if (android.os.Build.VERSION.SDK_INT >= 12) {
+	    // only for gingerbread and newer versions
+	    if(connect_usb() == true) {
+		Toast.makeText(this, "USB starting...", Toast.LENGTH_SHORT).show();
+	    }
+	}
+
 	// Start periodic timer
 	Message message = Message.obtain();
 	message.what = Client.TIMER;
@@ -186,24 +195,11 @@ public class Client extends RSActivity {
 	EditText et_port = (EditText) findViewById(R.id.server_port);
 
 	if(connectthread != null) {
-	  Toast.makeText(this, "Disconnecting...", Toast.LENGTH_SHORT).show();
+	  Toast.makeText(this, "Disconnecting gateway..", Toast.LENGTH_SHORT).show();
 	  disconnect();
 	  return;
 	}
 
-	if(usbthread != null) {
-	  disconnect();
-	  return;
-	}
-	
-	/* USBConnect introduced in SDK version 12 */
-	Log.d("RStrace", "SDK version="+android.os.Build.VERSION.SDK_INT);
-	if (android.os.Build.VERSION.SDK_INT >= 12) {
-	    // only for gingerbread and newer versions
-	    if(connect_usb() == true) {
-		return;
-	    }
-	}
 	set_server_ip(et_srv.getText().toString());
 	set_server_port(Integer.parseInt(et_port.getText().toString()));
 	connect(get_server_ip(), get_server_port());
@@ -439,7 +435,7 @@ public class Client extends RSActivity {
     }
 
     // Post an interrupt to the connect thread and call its kill method
-    private void disconnect() {
+    private void disconnect_usb() {
 
 	if(usbthread != null) {
 	    try{
@@ -451,6 +447,9 @@ public class Client extends RSActivity {
 		e1.printStackTrace();
 	    }
 	}
+    }
+
+    private void disconnect() {
 
 	if(connectthread != null) {
 	    try{
@@ -534,11 +533,9 @@ public class Client extends RSActivity {
 				usbthread = null;
 			    }
 			    usbthread = null;
-			    buttonConnect.setText("Connect USB");			    
 			    Toast.makeText(Client.client, "USB Disconnected", Toast.LENGTH_SHORT).show();
 			}
 			else if (stat.equals(1)) {
-			    buttonConnect.setText("Disconnect USB");
 			    Toast.makeText(Client.client, "USB Connected", Toast.LENGTH_SHORT).show();
 			}
 		    }
