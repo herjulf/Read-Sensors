@@ -111,6 +111,7 @@ class ConnectUSB extends RSActivity implements Runnable {
     {
 	int j;
 	String line = "";
+	String s1;
 
 	while( true ) {
 	    try {
@@ -122,7 +123,7 @@ class ConnectUSB extends RSActivity implements Runnable {
 	    } 
 	    if(j == 0) 
 		continue;
-	    String s1 = new String(buf, 0, j);
+	    s1 = new String(buf, 0, j);
 	    line = line + s1;
 	    
 	    if(buf[j-1] != 0x1A) {
