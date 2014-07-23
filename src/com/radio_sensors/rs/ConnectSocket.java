@@ -26,6 +26,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import android.content.Context;
@@ -75,8 +76,27 @@ class ConnectSocket implements Runnable {
 	h.sendMessage(message); // To other activity
     }
 
+    
+    void write_socket(Writer wr, String s1)
+    {
+	    try {
+		wr.write(s1, 0, s1.length());
+		wr.flush();
+		Log.d("RStrace", "write");
+	    }
+	    catch (Exception e0){
+		String str = e0.getMessage();
+		Log.d("RStrace", String.format("ConnectSocket exception %s", str));
+		// Send error only if not initiated from main
+		if (!killed)
+		    message(mainHandler, Client.ERROR, str);
+	    }
+    }
+
     public void run() {
 	InputStream streamInput;
+	OutputStream streamOutput;
+	Writer writer;
 
 	Log.d("RStrace", String.format("ConnectSocket Server=%s Port=%d", server_ip, server_port));
 	// Try to connect to server
@@ -108,6 +128,19 @@ class ConnectSocket implements Runnable {
 	    return;
 	}
 
+	// Obtain an output stream
+	try {
+	    streamOutput = socket.getOutputStream();
+	    writer = new OutputStreamWriter(streamOutput);
+	}
+	catch (Exception e0){
+	    String str = e0.getMessage();
+	    Log.d("RStrace", String.format("ConnectSocket getInputStream exception %s", str));	    	    
+	    message(mainHandler, Client.ERROR, str);
+	    message(mainHandler, Client.STATUS, new Integer(0));
+	    return;
+	}
+	
 	// Signal connected
 	message(mainHandler, Client.STATUS, new Integer(1));
 
