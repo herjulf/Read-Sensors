@@ -149,9 +149,16 @@ class ConnectUSB extends RSActivity implements Runnable {
 	}
     }
 
+
+    void compose_report(String s1)
+    {
+	SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+	SimpleDateFormat ftz = new SimpleDateFormat("z ");
+	message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+s1);
+    }
+
     public void run() {
 	boolean done = false;
-	String line = "";
 
 	while (! done ){
 	    if(driver == null)
@@ -159,14 +166,46 @@ class ConnectUSB extends RSActivity implements Runnable {
 	    
 	    try {
 		byte buf[] = new byte[10000];
-		line = readline(buf);
-		/* Check report seq. */
-		if( line.indexOf("&:") > -1 ) { 
-		    SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
-		    SimpleDateFormat ftz = new SimpleDateFormat("z ");
-		    message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+line);
+		String line = readline(buf);
+
+		/*
+		  This section needs comments. The usb-serial packs several reports
+		  into one buffer. This is different from linux reading. The buffer
+		  is finished with 0x1A C^Z. 
+		  
+		  We have to unpack and based on the magic delimiter &: and send 
+		  to message handler.
+
+		 */
+		String result = null;
+		String delim = "&:";
+
+		if( line.indexOf(delim) > -1 ) { 
+		    boolean ready = false;
+		    int first = 0, second;
+
+		     while( !ready ) {
+
+		     	first = line.indexOf(delim, first);
+		     	if(first <= -1) {
+		     	     ready = true;
+		     	     continue;
+		        }
+		     	second = line.indexOf(delim, first+1);
+		     	if(second > -1) {
+		     	    result= line.substring(first, second);			
+		     	    first = second +1;
+		    	}
+		     	else { 
+		     	    result= line.substring(first, line.length());			
+		     	    ready = true;
+			}
+			compose_report(result);
+		     }
 		}
-		else {
+		else { 
+		    /*  No magic delimiter. Response from firmware */
+
 		    if (confh != null)
 			message(confh, Client.SENSD_CMD, line);
 		}
