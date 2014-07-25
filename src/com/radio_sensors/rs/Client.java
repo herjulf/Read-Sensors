@@ -80,6 +80,8 @@ public class Client extends RSActivity {
     final public static int TIMER  = 5;       // Interval timer every 1s (debug)
     final public static int REPLAY = 6;       // Replay all stored sensd data
     final public static int SENSD_CMD  = 10;          // Report arrived from sensd server
+    final public static int SENSD_SEND  = 11;          // Send report to sensd gateway
+    final public static int SENSD_USB  = 12;          // sensd report from USB
 
     private static int TIMERINTERVAL = 2000; // interval between sample receives
 
@@ -101,6 +103,7 @@ public class Client extends RSActivity {
     public static int debug       = DEBUG_NONE;
 
     public static Handler ploth = null; // PlotWindow handler
+    public static Handler sockh = null; // ConnectSocket handler
 
     // Textwindow
     private ArrayList<String> report = new ArrayList<String>();
@@ -483,6 +486,8 @@ public class Client extends RSActivity {
 		Message message;
 		switch (msg.what) {
 		case Client.SENSD: // New report from sensd			
+		case Client.SENSD_USB: // New report via USB			
+
 		    String s = (String)msg.obj;
 		    if (s.length()>0)
 			report.add(s) ;
@@ -492,7 +497,15 @@ public class Client extends RSActivity {
 			message(ploth, Client.SENSD, s);
 		    if (active)
 			textupdate();         // update text if active
+
+		    // Avoid loops
+		    if (msg.what == Client.SENSD_USB && usbthread != null && connectthread != null) {
+			//String s1 = s.substring(0, s.length() - 1); // Remove last char
+			message(sockh, Client.SENSD_SEND, s);
+		    }
+
 		    break;
+
 		case Client.ERROR: // Something went wrong
 		    Log.d("RStrace", "Error"+(String)msg.obj);
 		    Toast.makeText(Client.client, "Error: "+(String)msg.obj, Toast.LENGTH_LONG).show();		    

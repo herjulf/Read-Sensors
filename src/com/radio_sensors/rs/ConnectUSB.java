@@ -154,7 +154,7 @@ class ConnectUSB extends RSActivity implements Runnable {
     {
 	SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
 	SimpleDateFormat ftz = new SimpleDateFormat("z ");
-	message(mainHandler, Client.SENSD, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+s1);
+	message(mainHandler, Client.SENSD_USB, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+s1);
     }
 
     public void run() {

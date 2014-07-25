@@ -61,11 +61,13 @@ class ConnectSocket implements Runnable {
     private Handler mainHandler; 
     private Socket socket;
     private boolean killed = false;
+    private Writer writer = null;
 
     ConnectSocket(String srv_ip, int srv_port, Handler h){ 
 	server_ip = srv_ip;
 	server_port = srv_port;
 	mainHandler = h;
+	Client.sockh = sockh;
     }
 
     // Send a message to other activity
@@ -77,26 +79,28 @@ class ConnectSocket implements Runnable {
     }
 
     
-    void write_socket(Writer wr, String s1)
+    private void write_socket(String s1)
     {
-	    try {
-		wr.write(s1, 0, s1.length());
-		wr.flush();
-		Log.d("RStrace", "write");
+	if(writer == null)
+	    return;
+
+	try {
+	    writer.write(s1, 0, s1.length());
+	    writer.flush();
+	    Log.d("RStrace", "write");
 	    }
-	    catch (Exception e0){
-		String str = e0.getMessage();
-		Log.d("RStrace", String.format("ConnectSocket exception %s", str));
-		// Send error only if not initiated from main
-		if (!killed)
-		    message(mainHandler, Client.ERROR, str);
-	    }
+	catch (Exception e0){
+	    String str = e0.getMessage();
+	    Log.d("RStrace", String.format("ConnectSocket exception %s", str));
+	    // Send error only if not initiated from main
+	    if (!killed)
+		message(mainHandler, Client.ERROR, str);
+	}
     }
 
     public void run() {
 	InputStream streamInput;
 	OutputStream streamOutput;
-	Writer writer;
 
 	Log.d("RStrace", String.format("ConnectSocket Server=%s Port=%d", server_ip, server_port));
 	// Try to connect to server
@@ -196,4 +200,21 @@ class ConnectSocket implements Runnable {
 	}
 	killed = true;
     }
+
+    // Messages comes in from socket-handler due to sensd input or error
+    public final Handler sockh = new Handler() {
+	    public void handleMessage(Message msg ) {
+		Message message;
+		switch (msg.what) {
+		case Client.SENSD_SEND: // New report to send			
+		    String s = (String)msg.obj;
+
+		    if (s.length()>0)
+			write_socket(s);
+
+		    break;
+		}
+	    }
+	};
+
 }
