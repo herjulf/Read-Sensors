@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html>
+<head>
+<style>
+body {background-color:black; color:white}
+body {font-size:80%}
+a:link {color:#FF9999;}
+a:visited {color:#99FF99;}
+a:hover {color:#FF99FF;}
+a:active {color:#9999FF;}
+a:link {text-decoration:none;}
+a:visited {text-decoration:none;}
+a:hover {text-decoration:underline;}
+a:active {text-decoration:underline;}
+</style>
+
+
+<meta content = "width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" name = "viewport" /> 
+
+<title>Wireless Sensor data in your Andriod</title>
+
+
+<h3>Introduction</h3>
+
+<p> The Read Sensors app is a part of small and very simple "eco-system" to 
+    make use of today WSN technology. Currently it uses sensd as an Internet 
+    gateway (GW) for a local WSN-network. The GW accepts incoming "listeners" 
+    on  TCP port 1234 (default). The GW redistributes the data received by 
+    the GW to all it's listeners. The Read Sensors app acts like listener
+    and view and plots real-time data from the sensor network.
+
+    WSN data reports are in ASCII text, unix-like, can be handled netcat, 
+    gnuplot, grep etc.
+
+    The current implementation of WSN motes is using Contiki operating system 
+    with RIME broadcast network protocol.
+
+</p>
+
+<h3>Scope</h3>
+<ul>
+<li> Realtime view & plot from remote WSN via GW
+<li> Plotting scaling of selected data
+<li> Sharing data and plots using email etc.
+</ul>
+
+<h3>With OTG support and a WSN mote</h3>
+<ul>
+<li> View & plot from local WSN via USB mote
+<li> Be a gateway for local WSN. Sending to proxy
+<li> Config of local USB mote. (Limited support)
+</ul>
+
+<h3>Gateways</h3>
+<ul>
+<li> IP address
+<li> TCP port number default is 1234
+<li> See sensd for more info
+</ul>
+
+<h3>Hotlist (Gateway)</h3>
+<ul>
+<li> Alias for gateways
+<li> Easy switching between GW
+<li> 
+</ul>
+
+<h3>Hotlist Format</h3>
+<ul>
+<li> Alias for gateways
+<li> Easy switching between GW
+<li> Location /sdcard/RS-GW.txt
+</ul>
+
+
+<h3>Copyright</h3>
+
+Open-Sourrce via GPL by authors.
+
+<h3>Developing</h3>
+
+To help develop this app. Get code from github.com and follow the instructions.
+<ul>
+  <li> <a href="http://github.com/herjulf/Read-Sensors"> Read Sensors an open source Android app. @ github</a>    
+</ul>
+
+
+<p>
+
+
+<h3>References</h3>
+<ul>
+  <li> <a href="http://github.com/herjulf/sensd"> sensd an open source WSN gateway & daemon @ github</a>
+</ul>
+
+
+<h3> Authors </h3>
+<UL>
+        <LI> Robert Olsson <robert@Radio-Sensors.COM>
+        <LI> Olof Hagsand <olof@hagsand.se>
+</UL>
+        <p> </p>
+
+
+Enjoy!
+
+
+</body>
+</html>
