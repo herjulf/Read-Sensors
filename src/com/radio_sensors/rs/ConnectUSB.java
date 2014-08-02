@@ -73,8 +73,15 @@ class ConnectUSB extends RSActivity implements Runnable {
     private SerialInputOutputManager mSerialIoManager;
     private UsbManager manager;
     public UsbSerialDriver driver;
+    final private static String TAG = "RS-" + Client.class.getName();
 
     public static Handler confh = null; // ConfWindow handler
+
+    public void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	Log.d("TAG", "onCreate");
+	main = Client.client; // Ugh, use a public static just to pass the instance.
+    }
 
     ConnectUSB(Handler h){ 
 	mainHandler = h;
@@ -154,7 +161,15 @@ class ConnectUSB extends RSActivity implements Runnable {
     {
 	SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
 	SimpleDateFormat ftz = new SimpleDateFormat("z ");
-	message(mainHandler, Client.SENSD_USB, ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+s1);
+	String msg = ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+ "DOMAIN="+ " " + s1;
+
+	char c = 0x1a;
+	msg = msg.replace(c,' ');
+	msg = msg.replaceAll("\n", "");
+	msg = msg.replaceAll("\r", "");
+	//String dump = HexDump.dumpHexString(msg.getBytes());
+	//Log.d(TAG, "DUMP " + dump);
+	message(mainHandler, Client.SENSD_USB, msg + "\n");
     }
 
     public void run() {

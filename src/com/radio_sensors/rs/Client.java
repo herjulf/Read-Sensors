@@ -320,7 +320,14 @@ public class Client extends RSActivity {
     @Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 
-	MenuItem item = menu.findItem(R.id.conf);
+	MenuItem item = menu.findItem(R.id.usb_mote_conf);
+
+	if(usbthread != null) 
+	    item.setEnabled(true);
+	else 
+	    item.setEnabled(false);
+
+	item = menu.findItem(R.id.forward_conf);
 
 	if(usbthread != null) 
 	    item.setEnabled(true);
@@ -343,10 +350,16 @@ public class Client extends RSActivity {
 	case R.id.plot:
 	    toActivity("PlotWindow");
 	    return true;
-	case R.id.conf:
+	case R.id.usb_mote_conf:
 	    toActivity("ConfWindow");
 	    return true;
-	case R.id.screen:
+	case R.id.web:
+	    toActivity("Web");
+	    return true;
+	case R.id.forward_conf:
+	    toActivity("Forward");
+	    return true;
+	case R.id.share_screen:
 	    View v1 = getWindow().getDecorView().getRootView();
 	    main.shareScreen(v1);
 	    return true;
@@ -500,7 +513,9 @@ public class Client extends RSActivity {
 
 		    // Avoid loops
 		    if (msg.what == Client.SENSD_USB && usbthread != null && connectthread != null) {
+			String fw_domain = "DOMAIN=" + get_domain();
 			//String s1 = s.substring(0, s.length() - 1); // Remove last char
+			s = s.replace("DOMAIN=", fw_domain);
 			message(sockh, Client.SENSD_SEND, s);
 		    }
 

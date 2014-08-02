@@ -2,13 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 	<item android:id="@+id/about" android:icon="@drawable/ic_launcher"
 		android:title="About" />
-	<item android:id="@+id/conf" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="USB Config" />
-	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Plot Settings" />
+	<item android:id="@+id/web" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Help" />
 	<item android:id="@+id/plot" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Plot" />
-	<item android:id="@+id/screen" android:icon="@drawable/ic_menu_copy_holo_dark"
+	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Plot Settings" />
+	<item android:id="@+id/share_screen" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Share Screen" />
-
+	<item android:id="@+id/forward_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Forward settings" />
+	<item android:id="@+id/usb_mote_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="USB mote config" />
 </menu>

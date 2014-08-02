@@ -69,6 +69,9 @@ import java.io.InputStreamReader;
  * This is useful to collect common methods, such as shared preferences, etc.
  */
 abstract class RSActivity extends Activity{
+
+    final private static String TAG = "RS-" + Client.class.getName();
+
     // Default preference values. 
     // Only place where default values should appear.
     final private static String PREF_SERVER_IP = "Radio-Sensors.com"; 
@@ -80,6 +83,7 @@ abstract class RSActivity extends Activity{
     final private static int    PREF_PLOT_STYLE = Plot.LINES; 
     final private static int    PREF_PLOT_FONTSIZE = 25; 
     final private static float  PREF_PLOT_LINEWIDTH = PlotVector.LINEWIDTH; 
+    final private static String PREF_DOMAIN = "RS-APP.SE"; 
 
     protected RSActivity main; // This is the main activity (Client)
     /* The following variables only have values for main instance.
@@ -96,6 +100,7 @@ abstract class RSActivity extends Activity{
     private Double plot_ymin = null;  
     private Double plot_ymax = null;  
     private float plot_linewidth;  
+    private String domain;  
 
     final public static String FILE = "/RS-screen.png";
 
@@ -129,6 +134,18 @@ abstract class RSActivity extends Activity{
     }
     protected void set_sensor_tag(String tag){
 	main.sensor_tag = tag;
+    }
+    protected String get_domain(){
+	Log.d(TAG, "get_domain 1 " + main.domain);
+	if(main != null) 
+	    return main.domain;
+	else
+	    return "ERR";
+    }
+    protected void set_domain(String domain){
+	if(main != null) 
+	    main.domain = domain;
+	Log.d(TAG, "set_domain 1 " + main.domain);
     }
 /*
     protected String get_user_tag(){
@@ -211,6 +228,9 @@ abstract class RSActivity extends Activity{
     protected String get_pref_sensor_tag(){
 	return getpref().getString("tag", PREF_SENSOR_TAG);
     }
+    protected String get_pref_domain(){
+	return getpref().getString("domain", PREF_DOMAIN);
+    }
 /*
     protected String get_pref_user_tag(){
 	return getpref().getString("user_tag", null);
@@ -244,6 +264,8 @@ abstract class RSActivity extends Activity{
 	set_plot_style(get_pref_plot_style());
 	set_plot_fontsize(get_pref_plot_fontsize());
 	set_plot_linewidth(get_pref_plot_linewidth());
+	set_domain(get_pref_domain());
+	Log.d(TAG, "pref domain 1 " + main.domain);
     }
 
     public void shareScreen(View v1)
