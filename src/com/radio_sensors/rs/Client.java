@@ -327,13 +327,6 @@ public class Client extends RSActivity {
 	else 
 	    item.setEnabled(false);
 
-	item = menu.findItem(R.id.forward_conf);
-
-	if(usbthread != null) 
-	    item.setEnabled(true);
-	else 
-	    item.setEnabled(false);
-
 	return true;
     }
 

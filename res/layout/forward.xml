@@ -6,6 +6,7 @@
     android:stretchColumns="1" 
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
+ <!-- Row 1    Domain -->
 
  <TableRow>
 
@@ -14,7 +15,7 @@
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:layout_column="0"
-      android:text="WSN Domain: " />
+      android:text="Forward Domain: " />
 
   <EditText
       android:id="@+id/domain"
@@ -23,5 +24,27 @@
       android:layout_column="2" />
 
  </TableRow>
+
+ <!-- Row 2    Interval  -->
+
+ <TableRow>
+
+  <TextView
+      android:id="@+id/interval_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Report int. (sec): " />
+
+  <EditText
+      android:id="@+id/interval"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content" 
+      android:numeric="decimal"
+      android:layout_column="2"
+      android:freezesText="true"
+      android:layout_span="2" />
+ </TableRow>
+
 
 </TableLayout>

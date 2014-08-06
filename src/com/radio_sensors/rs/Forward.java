@@ -21,15 +21,28 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.widget.TextView;
 import android.view.View;
 import android.util.Log;
 import android.os.Message;
 import android.widget.EditText;
 import android.content.res.Resources;
+import java.util.*;
+import java.text.*;
+import android.location.*;
+import java.lang.String;
+import java.text.DecimalFormat;
+import android.os.BatteryManager;
+import android.content.Intent;
 
 public class Forward extends RSActivity {
 
     final private static String TAG = "RS-" + Client.class.getName();
+    private static int REPORT_INTERVAL = 10; // In sec
+    final public static int REPORT = 6;      // Message
+    private static int report_interval = REPORT_INTERVAL;
+    public static Handler sockh = null; // ConnectSocket handler
 
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
@@ -40,15 +53,33 @@ public class Forward extends RSActivity {
 	running2gui();
     }
  
+    void set_report_timer(int ms)
+    {
+	Log.d("TAG", "set_report_timer");
+	Message message = Message.obtain();
+	message.what = REPORT;
+	mHandler.sendMessageDelayed(message, ms);
+    }
+
+    void stop_report_timer()
+    {
+	if (mHandler.hasMessages(REPORT))
+	    mHandler.removeMessages(REPORT);
+    }
+
     // GUI -> running
     private void gui2running(){
 	EditText et = (EditText) findViewById(R.id.domain);
 	set_domain(et.getText().toString());
+	et = (EditText) findViewById(R.id.interval);
+	set_interval(Integer.parseInt(et.getText().toString()));
     }
 
     // running -> GUI
     private void running2gui(){
+	set_report_timer(report_interval*1000);
 	setTextVal(R.id.domain, get_domain());
+	setIntVal(R.id.interval, get_interval());
     }
 
     protected void onStart(){
@@ -75,15 +106,92 @@ public class Forward extends RSActivity {
     protected void onDestroy()	{
 	super.onDestroy();
 	Log.d("TAG", "onDestroy");
+	//stop_report_timer();
     }
 
+   private final Handler mHandler = new Handler() {
+	    public void handleMessage(Message msg) {
+		Message message;
+		Pt p;
+		switch (msg.what) {
+	
+		case REPORT: // Periodic 
+		    Log.e(TAG, "Sending report: " + msg.what + " "+(String) msg.obj);  			
+		    set_report_timer(report_interval*1000);
+		    String s1 = " TEST=APP";
+		    compose_report(s1);
+		    break;
+
+		default:	
+		    Log.e(TAG, "Handler Unknown what: " + msg.what + " "+(String) msg.obj);  			
+		    break;
+		}
+	    }
+	};
+
+    void compose_report(String s1)
+    {
+	String lon = "";
+        String lat = "";
+
+	if(sockh == null)
+	    return;
+
+	LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE); 
+	Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+	if (location != null) {
+	    double longitude = location.getLongitude();
+	    double latitude = location.getLatitude();
+	    lon = String.valueOf(longitude);
+	    lat = String.valueOf(latitude);
+	    //String foo = String.format( "Value of a: %.4f",  longitude );
+
+	    Log.d(TAG, "LON " + lon + " LAT " + lat);
+	}
+
+	SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss  ");
+	SimpleDateFormat ftz = new SimpleDateFormat("z ");
+	String msg = ft.format(new Date())+"TZ="+ftz.format(new Date())+"UT="+(int)System.currentTimeMillis()/1000L+" "+ "DOMAIN="+ get_domain() + " " + "GWGPS_LON=" + lon + " " + "GWGPS_LAT=" + lat +" &: " + s1;
+
+	char c = 0x1a;
+	msg = msg.replace(c,' ');
+	msg = msg.replaceAll("\n", "");
+	msg = msg.replaceAll("\r", "");
+	//String dump = HexDump.dumpHexString(msg.getBytes());
+	//Log.d(TAG, "DUMP " + dump);
+
+	message(sockh, Client.SENSD_SEND, msg + "\n");
+    }
+
+    // private int batVoltage()
+    // {
+    // 	IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+    // 	Intent b = this.registerReceiver(null, ifilter);
+    // 	return b.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
+    // }
+
+    protected void set_interval(int ri){
+	    report_interval = ri;
+    }
+
+    protected int get_interval(){
+	    return report_interval;
+    }
     private String getTextVal(int id){
 	final EditText et = (EditText) findViewById(id);
 	return et.getText().toString();
     }
-
     private void setTextVal(int id, String s){
 	final EditText et = (EditText) findViewById(id);
 	et.setText(s);
     }
+    private int getIntVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	return Integer.parseInt(et.getText().toString());
+    }
+    private void setIntVal(int id, int i){
+	final EditText et = (EditText) findViewById(id);
+	et.setText(i+"");
+    }
+
 }

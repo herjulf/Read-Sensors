@@ -68,6 +68,7 @@ class ConnectSocket implements Runnable {
 	server_port = srv_port;
 	mainHandler = h;
 	Client.sockh = sockh;
+	Forward.sockh = sockh;
     }
 
     // Send a message to other activity
