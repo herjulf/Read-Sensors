@@ -35,6 +35,9 @@ import java.lang.String;
 import java.text.DecimalFormat;
 import android.os.BatteryManager;
 import android.content.Intent;
+import android.widget.CheckBox;
+import android.widget.Button;
+import android.content.IntentFilter;
 
 public class Forward extends RSActivity {
 
@@ -43,6 +46,10 @@ public class Forward extends RSActivity {
     final public static int REPORT = 6;      // Message
     private static int report_interval = REPORT_INTERVAL;
     public static Handler sockh = null; // ConnectSocket handler
+    private static Boolean forward = false;
+    private static Boolean forward_gps = false;
+    private static Boolean local_report = false;
+    private static Boolean local_report_gps = false;
 
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
@@ -53,9 +60,51 @@ public class Forward extends RSActivity {
 	running2gui();
     }
  
+    public void onCheckboxClicked(View view) {
+	boolean checked = ((CheckBox) view).isChecked();
+
+	switch(view.getId()) {
+
+        case R.id.cbx_forward:
+            if (checked) 
+		forward = true;
+            else 
+		forward = false;
+
+	    update_forward();
+	    break;
+
+        case R.id.cbx_forward_gps:
+            if (checked) 
+		forward_gps = true;
+            else 
+		forward_gps = false;
+	    break;
+
+        case R.id.cbx_local_report:
+            if (checked) {
+		local_report = true;
+		stop_report_timer();
+		set_report_timer(report_interval*1000);
+		String s1 = " TXT=z1" + "V_BAT=" + String.valueOf(batVoltage()/1000);
+		compose_report(s1);
+		Log.d(TAG, "Report Start");
+	    }
+            else {
+		local_report = false;
+	    	stop_report_timer();
+		Log.d(TAG, "Report Stop");
+	    }
+	    update();
+	    break;
+	default:
+	    Log.d(TAG, "CBX Miss");
+	}
+    }
+
     void set_report_timer(int ms)
     {
-	Log.d("TAG", "set_report_timer");
+	Log.d(TAG, "set_report_timer");
 	Message message = Message.obtain();
 	message.what = REPORT;
 	mHandler.sendMessageDelayed(message, ms);
@@ -67,6 +116,42 @@ public class Forward extends RSActivity {
 	    mHandler.removeMessages(REPORT);
     }
 
+    void update()
+    {
+
+	Button bt;
+	EditText et;
+
+	et = (EditText) findViewById(R.id.interval);
+	if(local_report == true) 
+	    et.setEnabled(true);
+	else
+	    et.setEnabled(false);
+
+	bt = (Button) findViewById(R.id.cbx_forward_gps);
+	if(forward_gps == true) 
+	    bt.setEnabled(true);
+	else
+	    bt.setEnabled(false);
+
+    }
+
+    void update_forward()
+    {
+
+	Button bt;
+	EditText et;
+
+	bt = (Button) findViewById(R.id.cbx_forward_gps);
+	if(forward == true) {
+	    bt.setEnabled(true);
+	}
+	else
+	    bt.setEnabled(false);
+
+    }
+
+
     // GUI -> running
     private void gui2running(){
 	EditText et = (EditText) findViewById(R.id.domain);
@@ -77,35 +162,34 @@ public class Forward extends RSActivity {
 
     // running -> GUI
     private void running2gui(){
-	set_report_timer(report_interval*1000);
 	setTextVal(R.id.domain, get_domain());
 	setIntVal(R.id.interval, get_interval());
     }
 
     protected void onStart(){
 	super.onStart();
-	Log.d("TAG", "onStart");
+	Log.d(TAG, "onStart");
     }
 
     protected void onResume(){
 	super.onResume();
-	Log.d("TAG", "onResume");
+	Log.d(TAG, "onResume");
     }
 
     protected void onPause(){
 	super.onPause();
-	Log.d("TAG", "onPause");
+	Log.d(TAG, "onPause");
 	gui2running(); // commit values to running
     }
 
     protected void onStop(){  // This is called when starting another activity
 	super.onStop();
-	Log.d("TAG", "onStop");
+	Log.d(TAG, "onStop");
     }
 
     protected void onDestroy()	{
 	super.onDestroy();
-	Log.d("TAG", "onDestroy");
+	Log.d(TAG, "onDestroy");
 	//stop_report_timer();
     }
 
@@ -118,7 +202,7 @@ public class Forward extends RSActivity {
 		case REPORT: // Periodic 
 		    Log.e(TAG, "Sending report: " + msg.what + " "+(String) msg.obj);  			
 		    set_report_timer(report_interval*1000);
-		    String s1 = " TEST=APP";
+		    String s1 = " TXT=z1 " + "V_BAT=" + String.valueOf(batVoltage()/1000);
 		    compose_report(s1);
 		    break;
 
@@ -163,12 +247,12 @@ public class Forward extends RSActivity {
 	message(sockh, Client.SENSD_SEND, msg + "\n");
     }
 
-    // private int batVoltage()
-    // {
-    // 	IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-    // 	Intent b = this.registerReceiver(null, ifilter);
-    // 	return b.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
-    // }
+    private double batVoltage()
+    {
+    	IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+    	Intent b = this.registerReceiver(null, ifilter);
+    	return b.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
+    }
 
     protected void set_interval(int ri){
 	    report_interval = ri;

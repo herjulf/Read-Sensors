@@ -6,10 +6,10 @@
     android:stretchColumns="1" 
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
- <!-- Row 1    Domain -->
+
+ <!-- Row1    Domain -->
 
  <TableRow>
-
   <TextView
       android:id="@+id/domain_txt"
       android:layout_width="fill_parent"
@@ -25,8 +25,38 @@
 
  </TableRow>
 
- <!-- Row 2    Interval  -->
+ <!-- Row 2    cbx  Forward  -->
 
+ <TableRow>
+  <CheckBox android:id="@+id/cbx_forward"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WSN Forward"
+        android:onClick="onCheckboxClicked"/>
+ </TableRow>
+
+ <!-- Row 1    cbx gps  -->
+ <TableRow>
+  <CheckBox android:id="@+id/cbx_forward_gps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send GPS position"
+        android:onClick="onCheckboxClicked"/>
+ </TableRow>
+
+
+ <!-- Row 3    cbx Local Report  -->
+ <TableRow>
+    <CheckBox android:id="@+id/cbx_local_report"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Device Reports"
+        android:onClick="onCheckboxClicked"/>
+ </TableRow>
+
+
+
+ <!-- Row 4    Interval  -->
  <TableRow>
 
   <TextView
@@ -34,7 +64,7 @@
       android:layout_width="fill_parent"
       android:layout_height="wrap_content"
       android:layout_column="0"
-      android:text="Report int. (sec): " />
+      android:text="Report interval (sec): " />
 
   <EditText
       android:id="@+id/interval"
