@@ -45,6 +45,14 @@
  </TableRow>
 
 
+ <!-- HR LINE  -->
+
+<View
+       android:id="@+id/view"
+       android:layout_width="match_parent"
+       android:layout_height="2dp"
+       android:background="#FFFFFFFF" />
+
  <!-- Row 3    cbx Local Report  -->
  <TableRow>
     <CheckBox android:id="@+id/cbx_local_report"
@@ -53,8 +61,6 @@
         android:text="Device Reports"
         android:onClick="onCheckboxClicked"/>
  </TableRow>
-
-
 
  <!-- Row 4    Interval  -->
  <TableRow>
@@ -76,5 +82,112 @@
       android:layout_span="2" />
  </TableRow>
 
+
+ <!-- HR LINE  -->
+
+<View
+       android:id="@+id/view"
+       android:layout_width="match_parent"
+       android:layout_height="2dp"
+       android:background="#FFFFFFFF" />
+
+
+ <TableRow>
+    <CheckBox android:id="@+id/cbx_pos_lock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lock current position"
+        android:onClick="onCheckboxClicked"/>
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/pos_lon_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="LON: " />
+
+  <TextView
+      android:id="@+id/pos_lon"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="1"
+      android:text="N/A: " />
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/pos_lat_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="LAT: " />
+
+  <TextView
+      android:id="@+id/pos_lat"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="1"
+      android:text="N/A: " />
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/cur_pos_lon_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="LON: " />
+
+  <TextView
+      android:id="@+id/cur_pos_lon"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="1"
+      android:text="N/A: " />
+ </TableRow>
+
+
+ <TableRow>
+  <TextView
+      android:id="@+id/cur_pos_lat_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="LAT: " />
+
+  <TextView
+      android:id="@+id/cur_pos_lat"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="1"
+      android:text="N/A: " />
+ </TableRow>
+
+
+ <TableRow>
+    <CheckBox android:id="@+id/cbx_pos_calc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calculate Distance"
+        android:onClick="onCheckboxClicked"/>
+ </TableRow>
+
+ <TableRow>
+  <TextView
+      android:id="@+id/dist_txt"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="0"
+      android:text="Distance: " />
+
+  <TextView
+      android:id="@+id/dist"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_column="1"
+      android:text="N/A: " />
+ </TableRow>
 
 </TableLayout>
