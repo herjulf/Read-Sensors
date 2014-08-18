@@ -84,6 +84,7 @@ abstract class RSActivity extends Activity{
     final private static int    PREF_PLOT_FONTSIZE = 25; 
     final private static float  PREF_PLOT_LINEWIDTH = PlotVector.LINEWIDTH; 
     final private static String PREF_DOMAIN = "RS-APP.SE"; 
+    final private static float  PREF_PLOT_FACTOR = 1.0f; 
 
     protected RSActivity main; // This is the main activity (Client)
     /* The following variables only have values for main instance.
@@ -101,6 +102,7 @@ abstract class RSActivity extends Activity{
     private Double plot_ymax = null;  
     private float plot_linewidth;  
     private String domain;  
+    private float plot_factor = 1.0f;  
 
     final public static String FILE = "/RS-screen.png";
 
@@ -197,7 +199,6 @@ abstract class RSActivity extends Activity{
     protected void set_plot_linewidth(float w){
 	main.plot_linewidth = w;
     }
-
     protected void add_sensor_ids(String id){
 	if (!main.sensor_ids.contains(id))
 	    main.sensor_ids.add(id);
@@ -205,6 +206,12 @@ abstract class RSActivity extends Activity{
     protected void add_sensor_tags(String tag){
 	if (!main.sensor_tags.contains(tag))
 	    main.sensor_tags.add(tag);
+    }
+    protected float get_plot_factor(){
+	return main.plot_factor;
+    }
+    protected void set_plot_factor(float y){
+	main.plot_factor = y;
     }
 
     /*------------------------------------------------------*/
@@ -251,6 +258,9 @@ abstract class RSActivity extends Activity{
     protected float get_pref_plot_linewidth(){
 	return getpref().getFloat("plot_linewidth", PREF_PLOT_LINEWIDTH);
     }
+    protected float get_pref_plot_factor(){
+     	return getpref().getFloat("plot_factor", PREF_PLOT_FACTOR);
+    }
 
     // Load preferences -> running values 
     protected void pref2running(){
@@ -265,6 +275,7 @@ abstract class RSActivity extends Activity{
 	set_plot_fontsize(get_pref_plot_fontsize());
 	set_plot_linewidth(get_pref_plot_linewidth());
 	set_domain(get_pref_domain());
+	set_plot_factor(get_pref_plot_factor());
 	Log.d(TAG, "pref domain 1 " + main.domain);
     }
 

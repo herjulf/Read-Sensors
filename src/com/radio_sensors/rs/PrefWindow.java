@@ -188,6 +188,7 @@ public class PrefWindow extends RSActivity {
 	setDoubleVal(R.id.plot_ymin, get_plot_ymin());
 	setDoubleVal(R.id.plot_ymax, get_plot_ymax());
 	setFloatVal(R.id.plot_linewidth, get_plot_linewidth());
+	setFloatVal(R.id.plot_factor, get_plot_factor());
     }
     // GUI -> running
     private void gui2running(){
@@ -206,6 +207,7 @@ public class PrefWindow extends RSActivity {
 	set_plot_ymin(getDoubleVal(R.id.plot_ymin));
 	set_plot_ymax(getDoubleVal(R.id.plot_ymax));
 	set_plot_linewidth(getFloatVal(R.id.plot_linewidth));
+	set_plot_factor(getFloatVal(R.id.plot_factor));
     }
 
     // Read values from running -> GUI
@@ -223,6 +225,7 @@ public class PrefWindow extends RSActivity {
 	setIntVal(R.id.plot_style, get_pref_plot_style());
 	setIntVal(R.id.plot_fontsize, get_pref_plot_fontsize());
 	setFloatVal(R.id.plot_linewidth, get_pref_plot_linewidth());
+	setFloatVal(R.id.plot_factor, get_pref_plot_factor());
     }
 
     // Read values from layout and into file
@@ -242,6 +245,7 @@ public class PrefWindow extends RSActivity {
 	ed.putInt("plot_style", getIntVal(R.id.plot_style));
 	ed.putInt("plot_fontsize", getIntVal(R.id.plot_fontsize));
 	ed.putFloat("plot_linewidth", getFloatVal(R.id.plot_linewidth));
+	ed.putFloat("plot_factor", getFloatVal(R.id.plot_factor));
 	ed.commit();
     }
 
