@@ -110,6 +110,22 @@
 
       <TableRow>
 	<TextView
+	    android:id="@+id/plot_factor_txt"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content"
+	    android:layout_column="0"
+	    android:text="Data factor: " />
+	<EditText
+	    android:id="@+id/plot_factor"
+	    android:layout_width="0dip"
+	    android:layout_height="wrap_content" 
+	    android:numeric="decimal"
+	    android:layout_column="1"
+	    />
+      </TableRow>
+
+      <TableRow>
+	<TextView
 	    android:id="@+id/max_samples_txt"
 	    android:layout_width="0dip"
 	    android:layout_height="wrap_content"
