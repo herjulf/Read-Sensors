@@ -8,10 +8,12 @@
 		android:title="Plot" />
 	<item android:id="@+id/prefs" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Plot Settings" />
+	<item android:id="@+id/forward_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Forward Settings" />
+	<item android:id="@+id/usb_mote_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="Mote Settings (USB)" />
+	<item android:id="@+id/usb_settings_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
+		android:title="USB Settings" />
 	<item android:id="@+id/share_screen" android:icon="@drawable/ic_menu_copy_holo_dark"
 		android:title="Share Screen" />
-	<item android:id="@+id/forward_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="Forward settings" />
-	<item android:id="@+id/usb_mote_conf" android:icon="@drawable/ic_menu_copy_holo_dark"
-		android:title="USB mote config" />
 </menu>

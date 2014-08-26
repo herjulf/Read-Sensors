@@ -213,7 +213,6 @@ abstract class RSActivity extends Activity{
     protected void set_plot_factor(float y){
 	main.plot_factor = y;
     }
-
     /*------------------------------------------------------*/
     private SharedPreferences getpref(){
 	return getSharedPreferences("Read-Sensors", 0);
@@ -262,6 +261,21 @@ abstract class RSActivity extends Activity{
      	return getpref().getFloat("plot_factor", PREF_PLOT_FACTOR);
     }
 
+    /*
+     * Access methods for persistent data
+     * setting persisting values only in USBSettings class
+     */
+
+    protected int get_pref_serial_speed(){
+	return getpref().getInt("serial_speed", USBSettings.PREF_SERIAL_SPEED);
+    }
+    protected int get_serial_speed(){
+	return USBSettings.serial_speed;
+    }
+    protected void set_serial_speed(int speed){
+	USBSettings.serial_speed = speed;
+    }
+
     // Load preferences -> running values 
     protected void pref2running(){
 	set_server_ip(get_pref_server_ip());
@@ -276,6 +290,7 @@ abstract class RSActivity extends Activity{
 	set_plot_linewidth(get_pref_plot_linewidth());
 	set_domain(get_pref_domain());
 	set_plot_factor(get_pref_plot_factor());
+	set_serial_speed(get_pref_serial_speed());
 	Log.d(TAG, "pref domain 1 " + main.domain);
     }
 

@@ -343,9 +343,6 @@ public class Client extends RSActivity {
 	case R.id.plot:
 	    toActivity("PlotWindow");
 	    return true;
-	case R.id.usb_mote_conf:
-	    toActivity("ConfWindow");
-	    return true;
 	case R.id.web:
 	    toActivity("Web");
 	    return true;
@@ -355,6 +352,12 @@ public class Client extends RSActivity {
 	case R.id.share_screen:
 	    View v1 = getWindow().getDecorView().getRootView();
 	    main.shareScreen(v1);
+	    return true;
+	case R.id.usb_settings_conf:
+	    toActivity("USBSettings");
+	    return true;
+	case R.id.usb_mote_conf:
+	    toActivity("ConfWindow");
 	    return true;
 	default:
 	    return super.onOptionsItemSelected(item);

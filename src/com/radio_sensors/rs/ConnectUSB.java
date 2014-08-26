@@ -96,7 +96,11 @@ class ConnectUSB extends RSActivity implements Runnable {
 	if (driver != null) {
 	    try {
 		driver.open();
-		driver.setParameters(38400, UsbSerialDriver.DATABITS_8, UsbSerialDriver.STOPBITS_1, UsbSerialDriver.PARITY_NONE);
+		
+		driver.setParameters(USBSettings.serial_speed, 
+				     UsbSerialDriver.DATABITS_8, 
+				     UsbSerialDriver.STOPBITS_1, 
+				     UsbSerialDriver.PARITY_NONE);
 	    } catch (IOException e) {
 		Toast.makeText(Client.client, "Error setting up device: " + e.getMessage(), Toast.LENGTH_SHORT).show();
 		Log.e("USB", "Error setting up device: " + e.getMessage(), e);
