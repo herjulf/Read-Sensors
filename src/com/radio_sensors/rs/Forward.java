@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.view.View;
 import android.util.Log;
 import android.os.Message;
+import android.widget.Toast;
 import android.widget.EditText;
 import android.content.res.Resources;
 import java.util.*;
@@ -37,10 +38,12 @@ import android.os.BatteryManager;
 import android.content.Intent;
 import android.widget.CheckBox;
 import android.widget.Button;
+import android.content.SharedPreferences;
 import android.content.IntentFilter;
 import java.lang.Math;
 import android.os.SystemClock;
 import android.location.GpsStatus.Listener;
+
 
 public class Forward extends RSActivity {
 
@@ -55,16 +58,19 @@ public class Forward extends RSActivity {
     private static Boolean local_report = false;
     private static Boolean local_report_gps = false;
     private static Boolean gpsfix = false;
-    private double tmp_lon = 0;
-    private double tmp_lat = 0;
-    private double saved_lon = 0;
-    private double saved_lat = 0;
+    private float tmp_lon = 0;
+    private float tmp_lat = 0;
     private Location mLastLocation;
     private long mLastLocationMillis;
+    private float locked_lon = -1;
+    private float locked_lat = -1;
+    final private static float PREF_LOCKED_LON = -1;
+    final private static float PREF_LOCKED_LAT = -1;
+
 
     public void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
-	Log.d("TAG", "onCreate");
+	Log.d(TAG, "onCreate");
 	main = Client.client; // Ugh, use a public static just to pass the instance.
 	Resources res = getResources();
 	setContentView(R.layout.forward);
@@ -113,17 +119,17 @@ public class Forward extends RSActivity {
 	case R.id.cbx_pos_lock:
             if (checked) {
 		if( read_gps(true) ) {
-		    saved_lat = tmp_lat;
-		    saved_lon = tmp_lon;
+		    locked_lat = tmp_lat;
+		    locked_lon = tmp_lon;
 		}
 		else {
-		    saved_lat = -1;
-		    saved_lon = -1;
+		    locked_lat = -1;
+		    locked_lon = -1;
 		}
 	    }
 	    else {
-		saved_lat = -1;
-		saved_lon = -1;
+		locked_lat = -1;
+		locked_lon = -1;
 	    }
 	    break;
 
@@ -132,7 +138,7 @@ public class Forward extends RSActivity {
 	    tv = (TextView) findViewById(R.id.dist);
             if (checked) {
 		read_gps(true);
-		double dist = gps2m(tmp_lat, tmp_lon, saved_lat, saved_lon);
+		double dist = gps2m(tmp_lat, tmp_lon, locked_lat, locked_lon);
 		tv.setText(String.format( "%.0f m", dist ));
 	    }
 	    else {
@@ -207,6 +213,22 @@ public class Forward extends RSActivity {
 
     }
 
+    // Read values from layout and into file
+    private void locked_lon2pref() {
+	Button bt;
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	SharedPreferences.Editor ed = sPref.edit();
+	ed.putFloat("locked_lon", locked_lon);
+	ed.commit();
+    }
+
+    private void locked_lat2pref() {
+	Button bt;
+	SharedPreferences sPref = getSharedPreferences("Read-Sensors", 0);
+	SharedPreferences.Editor ed = sPref.edit();
+	ed.putFloat("locked_lat", locked_lat);
+	ed.commit();
+    }
 
     // GUI -> running
     private void gui2running(){
@@ -214,12 +236,22 @@ public class Forward extends RSActivity {
 	set_domain(et.getText().toString());
 	et = (EditText) findViewById(R.id.interval);
 	set_interval(Integer.parseInt(et.getText().toString()));
+	locked_lon2pref();
+	locked_lat2pref();
     }
 
     // running -> GUI
     private void running2gui(){
+	set_locked_lat(get_pref_locked_lat());
+	set_locked_lon(get_pref_locked_lon());
+	if (locked_lon != -1) {
+	    CheckBox checkBox = (CheckBox) findViewById(R.id.cbx_pos_lock);
+	    checkBox.setChecked(true);
+	}
 	setTextVal(R.id.domain, get_domain());
 	setIntVal(R.id.interval, get_interval());
+	//setFloatVal(R.id.pos_lon, get_locked_lon);
+	//setFloatVal(R.id.pos_lat, get_locked_lat());
 	set_gps_timer(1*1000);
     }
 
@@ -291,7 +323,7 @@ public class Forward extends RSActivity {
 	    if (gpsfix) { // A fix has been acquired.
 		// Do something.
 		//read_gps(true);
-		double dist = gps2m(tmp_lat, tmp_lon, saved_lat, saved_lon);
+		double dist = gps2m(tmp_lat, tmp_lon, locked_lat, locked_lon);
 		tv.setText(String.format( "%.0f m", dist ));
 	    } else { // The fix has been lost.
 		// Do something.
@@ -341,11 +373,11 @@ public class Forward extends RSActivity {
 	locationManager.requestLocationUpdates(bestProvider, 0, 0, loc_listener);
 	location = locationManager.getLastKnownLocation(bestProvider);
 	try {
-	    tmp_lat = location.getLatitude();
-	    tmp_lon = location.getLongitude();
+	    tmp_lat = (float) location.getLatitude();
+	    tmp_lon = (float) location.getLongitude();
 	} catch (NullPointerException e) {
-	    tmp_lat = -1.0;
-	    tmp_lon = -1.0;
+	    tmp_lat = -1.0f;
+	    tmp_lon = -1.0f;
 	    return false;
 	}
 	//String foo = String.format( "Value of a: %.4f",  longitude );
@@ -359,45 +391,20 @@ public class Forward extends RSActivity {
 	tv.setText(lat);
 
 	if (update) {
-	    lon = String.valueOf(tmp_lon);
-	    lat = String.valueOf(tmp_lat);
+	    if(locked_lon == -1) {
+		lon = "";
+		lat = "";
+	    }
+	    else {
+		lon = String.valueOf(locked_lon);
+		lat = String.valueOf(locked_lat);
+	    }
 	    tv = (TextView) findViewById(R.id.pos_lon);
 	    tv.setText(lon);
 	    tv = (TextView) findViewById(R.id.pos_lat);
 	    tv.setText(lat);
 	}
 	return true;
-    }
-
-    Boolean read_gps_old(Boolean update)
-    {
-	String lon = "";
-        String lat = "";
-
-	LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE); 
-	Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-	//LocationListener locationListener = new MyLocationListener();
-	//lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
-	//lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
-
-	if (location != null) {
-	    tmp_lon = location.getLongitude();
-	    tmp_lat = location.getLatitude();
-	    lon = String.valueOf(tmp_lon);
-	    lat = String.valueOf(tmp_lat);
-	    //String foo = String.format( "Value of a: %.4f",  longitude );
-	    Log.d(TAG, "LON " + lon + " LAT " + lat);
-
-	    if (update) {
-		TextView tv = (TextView) findViewById(R.id.pos_lon);
-		tv.setText(lon);
-		tv = (TextView) findViewById(R.id.pos_lat);
-		tv.setText(lat);
-	    }
-
-	    return true;
-	}
-	return false;
     }
 
     void compose_report(String s1)
@@ -452,6 +459,19 @@ public class Forward extends RSActivity {
     	return b.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
     }
 
+    /*------------------------------------------------------*/
+    private SharedPreferences getpref(){
+    	return getSharedPreferences("Read-Sensors", 0);
+    }
+
+    protected float get_pref_locked_lon(){
+       	return (float) getpref().getFloat("locked_lon", PREF_LOCKED_LON);
+    }
+
+    protected float get_pref_locked_lat(){
+      	return (float) getpref().getFloat("locked_lat", PREF_LOCKED_LAT);
+    }
+
     protected void set_interval(int ri){
 	    report_interval = ri;
     }
@@ -474,5 +494,52 @@ public class Forward extends RSActivity {
     private void setIntVal(int id, int i){
 	final EditText et = (EditText) findViewById(id);
 	et.setText(i+"");
+    }
+
+    private void setFloatVal(int id, Float d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.floatValue()+"");
+    }
+
+    private Double getDoubleVal(int id){
+	final EditText et = (EditText) findViewById(id);
+	if (et.getText()==null || et.getText().toString().equals(""))
+	    return null;
+	else{
+	    try {
+		Double d = new Double(et.getText().toString());
+		return d;
+	    }
+	    catch (Exception e1) {
+		String str = e1.getMessage();
+		Toast.makeText(this, "Error when parsing floar:"+str, Toast.LENGTH_SHORT).show();
+		return null;
+	    }
+	}
+    }
+
+    private void setDoubleVal(int id, Double d){
+	final EditText et = (EditText) findViewById(id);
+
+	if (d==null)
+	    et.setText(null);
+	else
+	    et.setText(d.doubleValue()+"");
+    }
+    protected float get_locked_lon(){
+	return locked_lon;
+    }
+    protected void set_locked_lon(float y){
+	locked_lon = y;
+    }
+    protected float get_locked_lat(){
+	return locked_lat;
+    }
+    protected void set_locked_lat(float y){
+	locked_lat = y;
     }
 }
