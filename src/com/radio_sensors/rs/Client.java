@@ -164,7 +164,8 @@ public class Client extends RSActivity {
 	if (android.os.Build.VERSION.SDK_INT >= 12) {
 	    // only for gingerbread and newer versions
 	    if(connect_usb() == true) {
-		Toast.makeText(this, "USB starting...", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, "USB connect at " +  Integer.toString(USBSettings.serial_speed) + " bps", 
+			       Toast.LENGTH_SHORT).show();
 	    }
 	}
 
