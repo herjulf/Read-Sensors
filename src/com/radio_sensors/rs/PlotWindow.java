@@ -475,12 +475,16 @@ public class PlotWindow extends RSActivity implements OnTouchListener{
 	    else if (tag.equals("TXT")) // Symbolic name
 		name = val;
 	}
-	if (id == null || time == null){
+
+	if ((id == null && name == null) || time == null){
 	    Log.e("RStrace", "Sensd report does not contain id or time");
 	    return -1;
 	}
 	if (get_sensor_id().equals("Learn")){
-	    learn_id = id;
+	    if(id != null) 
+		learn_id = id;
+	    else
+		learn_id = name;
 	    set_plot_title();
 	}
 
