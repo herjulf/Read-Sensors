@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Read-Sensors; see the file COPYING.
 
-
 package com.radio_sensors.rs;
 
 import android.app.Activity;
@@ -228,7 +227,7 @@ public class Client extends RSActivity {
 
     /*
      * onGWSelect
-     * Called when 'chan' button is clicked in pref.xml
+     * Called when 'hotlist' button is clicked in pref.xml
      * Build a dialogue menu of radio chans and select one
      */
 
@@ -390,6 +389,14 @@ private void writeToFile(String data) {
         String ret = "";
 	try {
 	    File file = new File( Environment.getExternalStorageDirectory() + FILE);
+
+	    if( ! file.exists())  {
+		Log.e(TAG, "RS File not found: ");
+		ret = DEMO_GW;
+		writeToFile(ret);
+		new SlowOperation().execute(URL_GW_LIST);
+	    }
+
 	    FileInputStream fIn = new FileInputStream(file);
 	    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fIn));
 	    String str = "";
@@ -416,12 +423,8 @@ private void writeToFile(String data) {
 	    ret = stringBuilder.toString();
 	}
         catch (FileNotFoundException e) {
-	    Toast.makeText(getBaseContext(), e.getMessage(),
-			   Toast.LENGTH_SHORT).show();
             Log.e(TAG, "RS File not found: " + e.toString());
-	    ret = DEMO_GW;
 
-	    writeToFile(ret);
 	    new SlowOperation().execute(URL_GW_LIST);
 
         } catch (IOException e) {
@@ -659,6 +662,8 @@ private void writeToFile(String data) {
         }
 
 	protected void onPostExecute(Void unused) {
+	    Log.e(TAG, "onPostExecute");
+	    gw = readFromFile();
         }
     }
 };
