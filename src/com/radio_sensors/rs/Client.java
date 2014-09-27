@@ -23,6 +23,7 @@ import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.AsyncTask;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,6 +51,8 @@ import android.view.MenuInflater;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.net.URL;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.lang.Thread;
 import android.util.Log;
@@ -70,6 +73,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.lang.String;
+import java.lang.Object;
 
 public class Client extends RSActivity {
     // Messages
@@ -111,6 +115,8 @@ public class Client extends RSActivity {
 
     final private static String TAG = "RS-" + Client.class.getName();
     final public static String FILE = "/RS-GW.txt";
+    final public static String FILE2 = "/RS-GW2.txt";
+    final public static String URL_GW_LIST = "http://www.radio-sensors.com/app/Read-Sensors/RS-GW.txt";
     final public static String DEMO_GW = "DEMO-WSN radio-sensors.com 1235 # WSN in Upppsala, Sweden\n";
 
     private int conf_gw;    
@@ -365,7 +371,8 @@ public class Client extends RSActivity {
 	}
     }
 
-    private void writeToFile(String data) {
+
+private void writeToFile(String data) {
 	try {
 		File myFile = new File( Environment.getExternalStorageDirectory() + FILE);
 		myFile.createNewFile();
@@ -413,12 +420,14 @@ public class Client extends RSActivity {
 			   Toast.LENGTH_SHORT).show();
             Log.e(TAG, "RS File not found: " + e.toString());
 	    ret = DEMO_GW;
+
 	    writeToFile(ret);
+	    new SlowOperation().execute(URL_GW_LIST);
+
         } catch (IOException e) {
             Log.e(TAG, "Can't read file: " + e.toString());
         }
- 
-        return ret;
+	return ret;
     }
 
     // Connect to a server: create connectsocket object, a thread and start it.
@@ -488,7 +497,6 @@ public class Client extends RSActivity {
         tv.setText(text);
         sv.smoothScrollTo(0, tv.getBottom());
     }
-
 
     // Messages comes in from socket-handler due to sensd input or error
     public final Handler mHandler = new Handler() {
@@ -588,5 +596,69 @@ public class Client extends RSActivity {
 	    }
 	};
 
-}
+    private Boolean get_GW_list_from_URL(String urls) {    
 
+	URL url = null;
+	InputStream input = null;
+
+	try{
+	    url = new URL(urls);
+	}
+	catch(MalformedURLException e) {
+            Log.e(TAG, "URL failed: " + e.toString());
+	    return false;
+	}
+	try {
+	    input = url.openStream();
+	}
+	catch(IOException e) {
+            Log.e(TAG, "get_GW_list_from_URL failed: " + e.toString());
+	    return false;
+	}
+	try {
+	    File myFile = new File( Environment.getExternalStorageDirectory() + FILE);
+	    myFile.createNewFile();
+
+	    OutputStream output = new FileOutputStream (myFile);
+
+	    try {
+		byte[] buffer = new byte[1024];
+		int bytesRead = 0;
+		while ((bytesRead = input.read(buffer, 0, buffer.length)) >= 0) {
+		    output.write(buffer, 0, bytesRead);
+		}
+		output.close();
+		input.close();
+	    }
+	    catch(IOException e) {
+		Log.e(TAG, "URL failed: " + e.toString());
+		return false;
+	    }
+	}
+	catch(IOException e) {
+	    Log.e(TAG, "URL failed: " + e.toString());
+	    return false;
+	}
+	return true;
+    }
+
+    /*
+      Private subclass for dealing with tasks not allowed in UI.
+      For example getting the GW hotlist from a server.
+    */
+
+    private class SlowOperation  extends AsyncTask <String, Void, Void> {
+        protected Void doInBackground(String... urls) {
+                 
+	    get_GW_list_from_URL(urls[0]);
+             
+            return null;
+        }
+
+	protected void onPreExecute() {
+        }
+
+	protected void onPostExecute(Void unused) {
+        }
+    }
+};
