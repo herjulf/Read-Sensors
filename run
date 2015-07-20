@@ -36,7 +36,9 @@ function update_project()
 function sign()
 {
     ant clean release
-    jarsigner -verbose -keystore RS.keystore bin/Client-release-unsigned.apk RS
+    #jarsigner -verbose -keystore RS.keystore bin/Client-release-unsigned.apk RS
+    jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore RS.keystore bin/Client-release-unsigned.apk RS
+    jarsigner -verify -verbose -certs my_application.apk
     rm -f Read-Sensors.apk 
     zipalign 4 bin/Client-release-unsigned.apk Read-Sensors.apk
 }
@@ -44,7 +46,8 @@ function sign()
 function make_key()
 {
 #CN=Robert Olsson, OU=RD, O=Radio Sensors AB, L=Uppsala, ST=Unknown, C=SE
-    keytool -genkey -v -keystore RS.keystore -alias RS -keyalg RSA -validity 10000
+    #keytool -genkey -v -keystore RS.keystore -alias RS -keyalg RSA -validity 10000
+    keytool -genkey -v -keystore RS.keystore -alias RS -keyalg RSA -keysize 2048 -validity 10000
 }
 
 function debug_over_ip()
@@ -63,10 +66,7 @@ function screenshot()
 }
 
 
-
-remove
-run
-
-
-
+#remove
+sign
+#run
 
